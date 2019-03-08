@@ -1,0 +1,1161 @@
+<apex:page title="Promotion Material Items" standardController="Promotion__c" extensions="PromotionMaterialItemHTML_Controller" tabStyle="Promotion_Material_Item__c" sidebar="false" docType="html-5.0" standardStylesheets="false" showHeader="false">
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="" />
+        <meta name="author" content="" />
+        
+        <script src='https://ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js'></script>        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/numeral.js//1.4.5/numeral.min.js"></script>
+		<script src="https://www.b-fonline.com/salesforceresources/SFA/js/fastclick/lib/fastclick.js"></script>
+		<script src="https://www.b-fonline.com/salesforceresources/SFA/lib/tokenize/Tokenize-2.4/jquery.tokenize.js"></script>
+		<script src="https://www.b-fonline.com/salesforceresources/Bootgrid/js/jquery.bootgrid.js"></script>
+		<script src="https://www.b-fonline.com/salesforceresources/Bootgrid/js/jquery.bootgrid.fa.min.js"></script>        
+        
+        <apex:includeScript value="/lightning/lightning.out.js" />
+        
+	    <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SFA/css/font-awesome.min.css" />
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SFA/css/accountSurvey.css" />
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SFA/lib/tokenize/Tokenize-2.4/jquery.tokenize.css" />
+		<link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/BootstrapModernPages/css/bootstrap.min.css" />
+		<link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/BootstrapModernPages/css/bootstrap-theme.min.css" />
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SLDS091/assets/styles/salesforce-lightning-design-system-ltng.min.css" />
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/Bootgrid/css/jquery.bootgrid.min.css" />
+    </head>
+    <style>
+        input.slds-input-clone {
+            background-color: white;
+            color: #16325c;
+            border: 1px solid #d8dde6;
+            border-radius: 0.25rem;
+            -webkit-transition: border 0.1s linear, background-color 0.1s linear;
+            transition: border 0.1s linear, background-color 0.1s linear;
+            display: inline-block;
+            padding: 0 1rem 0 0.75rem;
+            line-height: 2.125rem;
+            min-height: calc(2.125rem + 2px); 
+            margin-bottom: 0.5rem;
+        }
+        .productName {
+            min-width: 25%;
+        }
+        .sf-font {
+            font: 100%/1.5 "Salesforce Sans", Arial, sans-serif;
+        }
+        .jplist-pagination-info{
+            margin: 15px 15px 0 40px;
+        }
+        
+        .jplist-items-per-page{
+            margin: 15px 10px 0 0;
+        }
+        
+        .jplist-pagination{
+            margin: 10px 10px 0 30px;
+        }
+        .jplist-panel {
+            border-style: none;
+        }
+        .jplist-checkbox-dropdown {
+            width: 180px;
+            margin: 20px 0 0 10px;
+        }
+        .jplist-checkbox-dropdown ul {
+            width: 400px;
+        }
+        i.fa-plus:hover {
+            cursor: pointer;
+        }
+        .disabled {
+            cursor: not-allowed;
+            pointer-events: none;
+            disabled: true;
+            background-color: 'transparent';
+            box-shadow: none;
+            -webkit-box-shadow: none;
+        }
+        td.currency, td.double, td.percent {
+            text-align: right;
+        }
+        td.currency > span:before {
+            content: attr(data-currency-code) " ";
+            font-size: smaller;
+        }
+    </style>            
+    <script src="{!urlPrefix}/soap/ajax/35.0/connection.js" type="text/javascript"></script>
+    <script>
+        var j$ = jQuery.noConflict();
+
+        //Initialize sforce Connection for MetaDataApi calls
+        sforce.connection.sessionId = '{!$Api.Session_ID}';
+        var urlPrefix = '{!urlPrefix}';
+        if(urlPrefix == '/sales'){
+            UserContext.siteUrlPrefix = urlPrefix;
+            sforce.connection.serverUrl = urlPrefix + sforce.connection.serverUrl;
+        }
+
+        var filterRowsPerPage = 10;
+        
+        var thisPromotion = {!serializedPromotion};
+        var pmiList = {!serializedMaterialItemList};        
+        var productList = {!serializedProductList};
+        var pmiFS = {!serializedMaterialItemFS};
+        var readOnlyFields = [{!serializedReadOnlyFieldList}][0];
+        var promotionType;
+        var pmiRecordTypeId = '{!pmiRecordTypeId}';
+        var marketName = '{!marketName}';
+        var userCurrency = '{!userCurrency}';
+        var channel;
+        var returnURL = '{!$CurrentPage.Parameters.retUrl}';
+        var fromAccountsNearby = '{!$CurrentPage.Parameters.fromAccountsNearby}';
+        var deviceType;
+        var redirect = false;
+        var inSF1 = false;
+        var isDesktop = true;
+        var lockPMI = {!lockPMI};
+        var labelEmpty = '{!$Label.All}';
+        var addSelectedProductsLabel = '{!$Label.Add_Selected_Products}';
+        
+        //arrays for each of the filters to build out select options
+        var brandSearch = [];
+        var spiritTypesSearch = [];
+        var sizeSearch = [];
+        var supplierSearch = [];
+        var statusSearch = [];
+    	var usedForSearch = [];
+        var relationships = [];
+        var itemsToDelete = [];
+        var productsSelected = [];
+
+        var picklistValuesMap = {};
+    
+        if (readOnlyFields == null) { readOnlyFields = []; }
+        
+        //map to create corresponding HTML input type for Salesforce field type
+        var inputTypeMap = {
+            'boolean':  'checkbox',
+            'double':   'number',
+            'currency': 'number',
+            'picklist': 'select',
+            'reference':'link',
+            'date':     'date',
+            'percent':  'number',
+            'textarea': 'text',
+            'string':   'text'
+        }
+
+        var relatedFields = {
+            'Product_Unit_Cost__c': 'Unit_Cost__c'
+        };
+        j$(document).ready(function() {
+            j$(function() {
+                FastClick.attach(document.body);
+            });
+            
+            if( (typeof sforce != 'undefined') && (sforce.one != null) ) {
+                inSF1 = true;
+            }else{
+                inSF1 = false;
+            }
+                        
+            //get window width to determine whether or not to use tokenize, 768 = tablet
+            //sniff user agent to figure out if it's an iPad because screen resolution varies
+            var IS_IPAD = navigator.userAgent.match(/iPad/i) != null;
+            if(j$(window).width() >= 992 && !IS_IPAD){
+                deviceType = 'desktop';
+            }else{
+                j$('#expandButton').show();             //for cards layout
+                if(j$(window).width() >= 768){
+                    deviceType = 'tablet';
+                }else{
+                    deviceType = 'phone';
+                }
+            }
+            isDesktop = deviceType == 'desktop';
+            j$('#bootgrid').bootgrid({
+                selection: true,
+                multiSelect: true,
+                keepSelection: true,
+                caseSensitive: false,
+                rowSelect: true,
+                formatters: {
+                    "product": function(col, row) {
+                        var v = "";
+                        if (row.added == true) {
+                            v = "<i class=\"fa fa-check-square-o\"></i>" + row.product;
+                        } else {
+                            v = row.product;
+                        }
+                        return v;
+                    }
+                },
+				labels: {
+                    all: "{!$Label.All}",
+                    infos: "{!$Label.BootgridInfos}",
+                    loading: "{!$Label.Loading}",
+                    noResults: "{!$Label.NoResults}",
+                    refresh: "{!$Label.Refresh}",
+                    search: "{!$Label.Search}"
+                }                
+            }).on("selected.rs.jquery.bootgrid", function(e, rows) {
+                var rowIds = [];
+                for (var i = 0; i < rows.length; i++)
+                {
+                    rowIds.push(rows[i].product + '[' + rows[i].id + '], added: ' + rows[i].added);
+                    rows[i].added = true;
+                    productsSelected.push({id:rows[i].id,name:rows[i].product});
+                }
+            });
+            
+            var v = "<button class='btn btn-default bg-primary add-products-button' type='button' style='float:left; margin-right:10px; z-index: 99;'>"+addSelectedProductsLabel+"</button>";
+            j$('.actionBar').prepend(v);
+            j$('.bootgrid-footer > div.row > div:first-child').prepend(v);
+            j$('.bootgrid-footer > div.row > div:first-child').removeClass('col-sm-6');
+            j$('.bootgrid-footer > div.row > div:first-child').addClass('col-sm-9');
+            j$('.bootgrid-footer > div.row > div.infoBar').removeClass('col-sm-6');            
+            j$('.bootgrid-footer > div.row > div.infoBar').addClass('col-sm-3');
+            if (deviceType == 'phone') {
+	            j$.each(j$('.dropdown-item-checkbox'), function() {
+    	            if (this.name !== "product" && this.name !== "id") { j$(this).trigger('click'); }
+        	    });
+            }
+            j$('.add-products-button').click(function() {
+                var selectedRows = j$('#bootgrid').bootgrid("getSelectedRows");
+                j$.each(productsSelected, function() {
+                    addProductToPMIList(this.id, this.name, true);
+                });
+                
+                j$('#bootgrid').bootgrid('deselect');
+                productsSelected = [];
+            });
+            
+            buildHeaderSection();
+            buildPMITableHeader();
+            buildFilterSection(isDesktop);
+            
+            j$.when(getPicklistValuesForRecordType('Promotion_Material_Item__c')).then(buildMaterialItems());            
+            filterProducts();
+            checkApprovalStatus();
+            
+            bindEvents(isDesktop);
+        });
+        
+        function buildFilterSection(buildTokenize) {            
+            var spiritOptionsHtml = '';
+            var brandOptionsHtml = '';
+            var sizeOptionsHtml = '';
+            var supplierOptionsHtml = '';
+            var usedForOptionsHtml = '';
+            var spiritType = '';
+            var brandName = '';
+            var unitSize = '';
+            var supplierName = '';
+            var usedFor = '';
+            j$.each(productList, function(key, value) {
+                spiritType = value.Brand__r == null || value.Brand__r.Spirit_Type__c == null ? '' : value.Brand__r.Spirit_Type__c;
+                if (spiritType != '' && j$.inArray(spiritType, spiritTypesSearch) < 0) {
+                    spiritTypesSearch.push(spiritType);
+                }
+                brandName = value.Brand__r == null ? '' : value.Brand__r.Name;
+                if (brandName != '' && j$.inArray(brandName, brandSearch) < 0) {
+                    brandSearch.push(brandName);
+                }
+                
+                supplierName = value.Supplier__c;
+                if (supplierName != '' && j$.inArray(supplierName, supplierSearch) < 0) {
+                    supplierSearch.push(supplierName);
+                }
+                unitSize = value.Unit_Size__c;
+                if (unitSize != undefined) {
+                    if (unitSize != '' && j$.inArray(unitSize, sizeSearch) < 0) {
+                        sizeSearch.push(unitSize);
+                    }
+                }
+                usedFor = value.Used_For__c;
+                if (usedFor != undefined) {
+                    usedForValues = usedFor.split(';');
+                    for(var y = 0; y < usedForValues.length; y++) {
+                        if (usedForValues[y] != '' && j$.inArray(usedForValues[y], usedForSearch) < 0) {
+                            usedForSearch.push(usedForValues[y]);
+                        }
+                    }
+                }                
+            });
+
+            spiritTypesSearch.sort();
+            brandSearch.sort();
+            sizeSearch.sort();
+            supplierSearch.sort();
+            usedForSearch.sort();
+            filterHTML = '';
+            var tempHTML = '';
+            var dropDownHtml = '<li><input data-path=".group1" id="group1" type="checkbox"/><label for="group1">Group 1</label>';
+            for(var i = 0; i < spiritTypesSearch.length; i++){
+                tempHTML += '<option value="'+spiritTypesSearch[i]+'">'+spiritTypesSearch[i]+'</option>';
+                dropDownHtml += '<li><input data-path=".'+spiritTypesSearch[i].replace(/ /g,'_')+'" id="'+spiritTypesSearch[i].replace(/ /g, '_')+'" type="checkbox" />';
+                dropDownHtml += '<label for="'+spiritTypesSearch[i].replace(/ /g,'_')+'">'+spiritTypesSearch[i]+'</label></li>';
+            }
+            if(tempHTML != ''){
+                filterHTML+= '<div class="selectDiv col-xs-12 col-sm-12 col-md-2 col-lg-2"><span class="selectLabel label col-xs-4">{!$ObjectType.Brand__c.fields.Spirit_Type__c.label}</span><select id="spiritTypeSearch" multiple="multiple" class="spiritTypeSearch tokenize col-xs-8" data-role="none">'
+                filterHTML+= tempHTML + '</select></div>';
+            }
+            j$('#cbSpiritTypeDropDown ul').html(dropDownHtml);
+            
+            tempHTML = '';
+            for(var b = 0; b < brandSearch.length; b++){
+                tempHTML += '<option value="' + brandSearch[b] + '">' + brandSearch[b] + '</option>';
+            }
+            if(tempHTML != ''){
+                filterHTML+= '<div class="selectDiv col-xs-12 col-sm-12 col-md-2 col-lg-2"><span class="selectLabel label col-xs-4">{!$ObjectType.Brand__c.label}</span><select id="brandSearch" multiple="multiple" class="brandSearch tokenize col-xs-8" data-role="none">'
+                filterHTML+= tempHTML + '</select></div>';
+            }
+            
+            tempHTML = '';
+            for(var s = 0; s < sizeSearch.length; s++){
+                tempHTML += '<option value="' + sizeSearch[s] + '">' + sizeSearch[s] + '</option>';
+            }
+            if(tempHTML != ''){
+                filterHTML += '<div class="selectDiv col-xs-12 col-sm-12 col-md-2 col-lg-2"><span class="selectLabel label col-xs-4">{!$ObjectType.Product__c.fields.Unit_Size__c.label}</span><select id="sizeSearch" multiple="multiple" class="sizeSearch tokenize col-xs-8" data-role="none">'
+                filterHTML += tempHTML + '</select></div>';
+            }
+            tempHTML = '';
+            for(var x = 0; x < supplierSearch.length; x++){
+                tempHTML += '<option value="' + supplierSearch[x] + '">' + supplierSearch[x] + '</option>';
+            }
+            if(tempHTML != ''){
+                filterHTML += '<div class="selectDiv col-xs-12 col-sm-12 col-md-2 col-lg-2"><span class="selectLabel label col-xs-4">{!$ObjectType.Supplier__c.label}</span><select id="supplierSearch" multiple="multiple" class="supplierSearch tokenize col-xs-8" data-role="none">'
+                filterHTML += tempHTML + '</select></div>';
+            }
+            tempHTML = '';
+            for(var x = 0; x < usedForSearch.length; x++) {
+                tempHTML += '<option value="' + usedForSearch[x] + '">' + usedForSearch[x] + '</option>';
+            }
+            if (tempHTML != '') {
+                filterHTML += '<div class="selectDiv col-xs-12 col-sm-12 col-md-2 col-lg"><span class="selectLabel label col-xs-4">{!$ObjectType.Product__c.Fields.Used_For__c.label}</span><select id="usedForSearch" multiple="multiple" class="usedForSearch tokenize col-xs-8" data-role="none">';
+                filterHTML += tempHTML + '</select></div>';
+            }
+            
+            j$('#filterContent').append(filterHTML);
+            if(buildTokenize){
+                //call tokenize for filters, pass in which filter they used (e.select[0].id) 
+                j$('.tokenize').tokenize({
+                    onAddToken: function(value, text, e){ console.log('filter'); filterProducts()}, 
+                    onRemoveToken: function(value, e){filterProducts()},
+                    displayDropdownOnFocus: true
+                });
+                /*
+                j$('.spiritTypeSearch').select2();
+                j$('.brandSearch').select2();
+                j$('.sizeSearch').select2();
+                j$('.supplierSearch').select2();
+                j$('.select2Search').on("change", function(evt) {
+                    filterProducts();
+                });
+                */
+            }else{
+                j$('select.tokenize').show().change(function(){filterProducts();});
+            }
+        }
+
+        function closePage() {
+            var hasAccessToAccountSurvey  = {!$Permission.AccountVisit_AccountSurvey};
+            if (hasAccessToAccountSurvey && inSF1 && fromAccountsNearby == 'true') {
+                var rUrl = urlPrefix + '/apex/Promotion?id=' + thisPromotion.Id + '&promotionType='+thisPromotion.RecordType.Name+'&recordTypeId='+thisPromotion.RecordTypeId+'&accountId='+thisPromotion.Account__c+'&callcardId='+thisPromotion.CallCard__c;
+                sforce.one.navigateToURL(rUrl, true);
+            } else {
+                if (inSF1) {
+                    sforce.one.navigateToSObject(thisPromotion.Id, 'detail');
+                } else {
+                    if (returnURL == undefined || returnURL == "") {
+                        rUrl = '{!URLFOR($Action.Promotion__c.view, thisPromotion.Id)}'; 
+                    }
+                    window.location.href = rUrl;
+                }
+            }
+
+        }
+        function bindEvents(buildTokenize){            
+            j$('.save').click(function(){
+                //redirect to returnURL on click of save and close
+                if(j$(this).hasClass('saveAndClose')){
+                    redirect = true;
+                }
+                //check for connection, if offline display modal warning
+                //alert(navigator.onLine);
+                if(navigator.onLine){
+                    j$('.save').button('loading');
+                    buildItemsToSave();
+                }else{
+                    j$('#offlineModal').modal();
+                }           
+            });
+            //redirect to returnURL
+            j$('.cancel').click(function(){
+                closePage();
+            });
+            j$('.submitapproval').click(function() {
+                if(navigator.onLine){
+                    j$('.submitapproval').button('loading');
+                    submitForApproval();
+                }else{
+                    j$('#offlineModal').modal();
+                }           
+            });
+            //clear all filter options
+            j$('#clearFilter').click(function(){
+                if(buildTokenize){
+                    j$('select.tokenize').each(function(){
+                        j$(this).data('tokenize').clear();
+                        
+                    });
+                    //j$('select.select2Search').val(null).trigger("change");                
+                }else{
+                    j$('select.tokenize :selected').removeAttr("selected");
+                    filterProducts();
+                }
+            });
+            //either expand or collapse all cards
+            j$('#expandButton').click(function(){
+                if(j$(this).hasClass('expandBtn')){
+                    j$('.fields').addClass('expanded fieldsShadow').slideDown();
+                    j$('div.rowHeader').addClass('headerShadow');
+                    j$(this).toggleClass('expandBtn collapseBtn').html('{!$Label.Collapse_All}');
+                }else{
+                    j$('.fields').removeClass('expanded fieldsShadow').slideUp();
+                    j$('div.rowHeader').removeClass('headerShadow');
+                    j$(this).toggleClass('expandBtn collapseBtn').html('{!$Label.Expand_All}');
+                }
+                j$('.bg-success').removeClass('bg-success');
+            });
+            //expand or collapse section
+            j$('div.header').click(function(){
+                j$(this).siblings().slideToggle();
+            });
+            //product distribution button group - only allow one to be selected
+            j$('.btn-group').children().click(function(){
+                j$(this).siblings().removeClass('btn-primary').addClass('btn-default');
+                j$(this).toggleClass('btn-primary btn-default');
+            });
+        }
+        
+        function buildHeaderSection(){
+            //build header info 
+            //always add account link
+            var accountNavUrl = urlPrefix + '\\' + thisPromotion.Account__c;
+            var promotionNavUrl = urlPrefix + '\\' + thisPromotion.Id;
+            
+            headerHTML = thisPromotion.AccountName__c + ' - ' + thisPromotion.Name + ' (' + thisPromotion.RecordType.Name + ')';
+            j$('#promotionHeader').html(headerHTML);            
+
+        }
+        function buildPMITableHeader() {
+            if (deviceType == 'desktop') {
+                var headerHTML = '<div class="table-responsive col-md-12"><table id="pmiTable" class="pmiTable table table-striped"><thead class="headers">';
+                headerHTML += '<th class="headerRow" data-column-id="selected" scope="col" colspan="1"><div>&nbsp;</div></th>';
+                headerHTML += '<th class="headerRow" data-column-id="product" scope="col" colspan="2"><div class="text-left">{!$ObjectType.Product__c.Label}</div></th>';
+                if (marketName == 'China' && thisPromotion.RecordType.Name == 'Sales Promotion') {
+	                headerHTML += '<th class="headerRow" data-column-id="productcode" scope="col" colspan="1"><div class="text-left">{!$ObjectType.Product__c.Fields.ProductCode__c.Label}</div></th>';
+                }
+                j$.each(pmiFS, function(key, value) {
+                    headerHTML += '<th class="headerRow" data-column-id="' + value.fieldPath + '" scope="col" colspan="1"><div>' + value.label + '</div></th>';
+                });
+            
+                headerHTML += '</thead><tbody class="tableBody"></tbody></table></div>';
+                j$('div#content').append(headerHTML);
+            }
+        }                    
+        
+        function filterProducts() {            
+            j$('#bootgrid').bootgrid("clear");
+            
+            var filterRowHTML = '';
+            var brandName = '';
+            var spiritType = '';
+            var unitSize = '';
+            var supplierName = '';
+            var recordTypeName = '';
+            var selector='';
+            var spiritTypes = [];
+            var brands = [];
+            var unitSizes = [];
+            var suppliers = [];
+            var usedFors = [];
+            //loop through each filter select input
+            j$('select.tokenize').each(function(key, value){   
+                var searchType = j$(this)[0].id;
+                //if there is a value for this filter select input
+                if(j$(this).val() != null){
+                    var filterSelector = '';
+                    //loop through array of selected values and add to a jQuery selector (escaping single quotes)
+                    j$.each(j$(this).val(), function(key, value){
+                        if(searchType == 'spiritTypeSearch') {
+                            spiritTypes.push(value);
+                        } else if (searchType == 'brandSearch') {
+                            brands.push(value);
+                        } else if (searchType == 'unitSizeSearch') {
+                            unitSizes.push(value);
+                        } else if (searchType == 'supplierSearch') {
+                            suppliers.push(value);
+                        } else if (searchType == 'usedForSearch') {
+                            usedFors.push(value);
+                        }
+                        if(searchType == 'statusSearch'){
+                            filterSelector += '['+searchType+'*="'+value.replace(/'/g,"\\'")+'"],';
+                        }else{
+                            filterSelector += '['+searchType+'="'+value.replace(/'/g,"\\'")+'"],';
+                        }
+                    }); 
+                    //trimming last comma and adding to a jQuery filter function
+                    filterSelector = filterSelector.substring(0,filterSelector.length -1);
+                    selector += '.filter(\''+filterSelector+'\')';
+                }   
+            });
+
+            var includeProduct = true;
+            var filteredList = [];
+            var groupName = '';
+            var classHidden = 'hidden';
+            var rows = [];
+            var isAdded = false;
+            console.log('[filterproducts] usedFors', usedFors);
+            j$.each(productList, function(key, value) {
+                var r = {};
+                includeProduct = true;
+                spiritType = value.Brand__r == null || value.Brand__r.Spirit_Type__c == null ? '' : value.Brand__r.Spirit_Type__c;
+                brandName = value.Brand__r == null ? '' : value.Brand__r.Name;
+                supplierName = value.Supplier__c == null ? '' : value.Supplier__c;
+                unitSize = value.Unit_Size__c == undefined || value.Unit_Size__c == null ? '' : value.Unit_Size__c;
+                usedFor = value.Used_For__c == undefined || value.Used_For__c == null ? '' : value.Used_For__c;
+                recordTypeName = value.RecordType == undefined || value.RecordType.Name == null ? '' : value.RecordType.Name;
+                console.log('value.recordtype: ',value.RecordType);
+                console.log('product: ' + value.Name + ', recordtype: ' + recordTypeName);
+                if (spiritTypes.length > 0 && j$.inArray(spiritType, spiritTypes) < 0) { includeProduct = false; }
+                if (brands.length > 0 && j$.inArray(brandName, brands) < 0) { includeProduct = false; }
+                if (unitSizes.length > 0 && j$.inArray(unitSize, unitSizes) < 0) { includeProduct = false; }
+                if (suppliers.length > 0 && j$.inArray(supplierName, suppliers) < 0) { includeProduct = false; }                
+				if (usedFors.length > 0 && includeProduct == true) {
+                    if (usedFor == '') {
+                        includeProduct = false;
+                    } else {
+                        console.log('[filterproducts] ' + value.Name + ' includeProduct', includeProduct);
+                        var usedForVals = usedFor.split(';');
+                        for(var y = 0; y < usedForVals.length; y++) {
+                            console.log('[filterproducts] ' + value.Name + ' usedfor val', usedForVals[y]);
+                            if (j$.inArray(usedForVals[y], usedFors) < 0) { includeProduct = false; } else { includeProduct = true; }
+                        }
+                        console.log('[filterproducts] ' + value.Name + ' includeProduct', includeProduct);
+                    }
+                }
+
+                groupName = '';
+                isAdded = false;
+                if (includeProduct == true) {
+                    
+                    //classHidden = 'hidden';
+                    j$(pmiList).each(function() {
+                        if (this.Product_Custom__c == value.Id) {
+                            isAdded = true;
+                            return false;
+                        }
+                    });
+                    
+                    filterRowHTML = '<tr class="list-item">';
+                    filterRowHTML += '<td data-column-id="addproduct"><i class="fa fa-plus" id="' + value.Id + '" data-name="' + value.Name + '"></i></td>';
+                    filterRowHTML += '<td data-column-id="checkmark"><i class="fa fa-check-square-o ' + classHidden + '" data-id="' + value.Id + '"></i></td>';
+                    filterRowHTML += '<td data-column-id="product" class="text-left ' + groupName + ' ' + spiritType.replace(/ /g,'_') +'">' + value.Name + '</td>';
+                    filterRowHTML += '<td data-column-id="brand" class="text-left ' + brandName.replace(/ /g,'_') + '">' + brandName + '</td>';
+                    filterRowHTML += '<td data-column-id="spirittype" class="text-left">' + spiritType + '</td>';
+                    filterRowHTML += '<td data-column-id="unitsize" class="text-right unitSize' + unitSize + '">' + unitSize + '</td>';
+                    filterRowHTML += '<td data-column-id="supplier" class="text-left ' + supplierName + '">' + supplierName + '</td>';
+                    filterRowHTML += '</tr>';
+                    
+                    r.id = value.Id;
+                    r.added = isAdded;
+                    r.product = value.Name;
+                    r.brand = brandName;
+                    r.spirittype = spiritType;
+                    r.unitsize = unitSize;
+                    r.supplier = supplierName;
+                    r.recordtypename = recordTypeName;
+                    filteredList.push(value);
+                    rows.push(r);
+                }
+            });
+            console.log('rows', rows);
+            j$('#bootgrid').bootgrid("append", rows);
+            j$('#bootgridTableBody i').click(function() {
+                j$('i[data-id="' + this.id + '"]').removeClass('hidden');
+                addProductToPMIList(this.id, this.getAttribute('data-name'), true);
+            });
+        }
+        function addProductToPMIList(productId, productName, isNewRow) {
+            j$.each(productList, function(key, value) {
+                if (value.Id == productId) {
+                    // add item to pmi list and exit loop
+                    var row = buildItemRow(null, value, isNewRow);
+                    if (row != null) {
+                        appendToPMITable(row);
+                    }
+                    
+                    return false;
+                }
+            });
+        }
+        function appendToPMITable(linesToAppend) {
+            var selector = 'div#content';
+            if (deviceType == 'desktop') { selector = '#pmiTable tbody'; }
+            j$(selector).append(linesToAppend);
+            j$(selector + ' i').click(function() {
+                removeFromPMITable(this.getAttribute('data-line-id'), this.getAttribute('data-pmi-id'));
+            });
+            //on click of card header, toggle display
+            j$('div.rowHeader').off("click");
+            j$('div.rowHeader').click(function(){
+                if(j$(this).siblings('.fields').hasClass('expanded')){
+                    j$(this).removeClass('headerShadow').siblings('.fields').removeClass('expanded fieldsShadow').slideUp();
+                }else{
+                    j$(this).addClass('headerShadow').siblings('.fields').addClass('expanded fieldsShadow').slideDown();
+                }
+            });
+            console.log('marketName', marketName);
+            if(marketName == 'China') {
+                j$("input[field='Monthly_Bottle_Qty__c']").change(function() {
+                    console.log('act qty .change caught. qty: ' + j$(this).val());
+                    var totalFldId = '#Total_Planned_Quantity__c' + j$(this).attr('data-prod-id');
+                    console.log('totalFldId: ' + totalFldId);
+                    var totalQty = j$(this).val() * thisPromotion.Number_of_Periods__c;
+                    j$(totalFldId).text(totalQty.toFixed(2));
+                });
+                console.log('adding event for quantity__c change');
+                j$("input[field='Quantity__c']").change(function() {
+                    var totalFldId = '#Total_Product_Cost__c' + j$(this).attr('data-prod-id');
+                    console.log('totalFldId', totalFldId);
+                    var unitCost = j$('#Product_Unit_Cost__c' + j$(this).attr('data-prod-id')).text();
+                    var totalCost = j$(this).val() * unitCost;
+                    console.log('unitcost', unitCost);
+                    j$(totalFldId).text(numeral(totalCost).format('0,0'));
+                });
+            }
+            j$(selector + ' div:last-of-type > div.rowHeader').click();
+        }
+        function buildItemRow(pmi, product, isNewRow) {
+            if (product == undefined && pmi == undefined) { return null; }
+console.log('product', product);
+            var pmiId = '';
+            var productId = '';
+            var productName = '';
+            var productCode = '';
+            if (pmi == null) {
+                productId = product.Id;
+                productName = product.Name;
+                productCode = product.ProductCode__c;
+            } else {
+                pmiId = pmi.Id;
+                productId = pmi.Product_Custom__c;
+                if (pmi.Product_Custom__r == null) {
+                    j$.each(productList, function(key, value) {
+                        if (value.Id == pmi.Product_Custom__c) {
+                            productName = value.Name;
+                            productCode = value.ProductCode__c;
+                            return false;
+                        }
+                    });
+                } else {
+                    productName = pmi.Product_Custom__r.Name;
+                    productCode = pmi.Product_Custom__r.ProductCode__c;
+                }
+            }
+            var selector = 'div';
+            if (deviceType == 'desktop') {
+                selector = 'tr';
+            }
+            var cnt = j$(selector + '[data-product-id*="'+productId+'"]').length + 1;
+            var rowId = "pmi." + productId + "." + cnt;
+            var pmiHTML = '';
+            if (deviceType == 'desktop') {
+                pmiHTML = '<tr id="' + rowId + '" data-product-id="' + productId + '" data-pmi-id="' + pmiId + '">';
+                pmiHTML += '<td><i class="fa fa-remove" data-pmi-id="' + pmiId + '" data-product-id="' + productId + '" data-line-id="pmi.' + productId + '.' + cnt + '"></i></td>';
+                pmiHTML += '<td class="productName" colspan="2"><span class="text-left">' + productName + '</span></td>';
+                if (marketName == 'China' && thisPromotion.RecordType.Name == 'Sales Promotion') {
+                    pmiHTML += '<td class="productCode"><span class="text-left">' + productCode + '</span></td>';
+                }
+            } else {
+                pmiHTML += '<div class="row" id="' + rowId + '" data-product-id="' + productId + '" data-pmi-id="' + pmiId + '">';
+                pmiHTML += '<div class="rowHeader headerShadow"><i class="fa fa-remove" data-pmi-id="' + pmiId + '" data-product-id="' + productId + '" data-line-id="' + rowId + '"></i><span class="productName lead">' + productName + '</span>';
+                if (marketName == 'China' && thisPromotion.RecordType.Name == 'Sales Promotion') {
+	                pmiHTML += '<span class="productCode text-left">' + productCode + '</span>';
+                }
+                pmiHTML += '</div><div class="fields mandatory fieldsShadow">';
+                
+            }
+            var elementTag = 'div';
+            var section = 'cards';
+            var cssClass = ' col-xs-12 col-sm-6';
+            if (deviceType == 'desktop') { 
+                elementTag = 'td'; 
+                cssClass = '';
+                section = 'table';
+            }
+            j$.each(pmiFS, function(key, value) {
+                pmiHTML += '<' + elementTag + ' class="' + value.type + cssClass + '" data-currency-code="'+userCurrency+'">' + buildInput(value, isNewRow, product, productId, pmi, section) + '</' + elementTag + '>';
+            });
+            if (deviceType == 'desktop') {
+                pmiHTML += '</tr>';
+            } else {
+                pmiHTML += '</div></div>';
+            }
+            return pmiHTML;
+        }
+        function removeFromPMITable(id, pmiId) {
+            if (id == undefined) { return; }
+            var parts = id.split('.');
+            
+            if (pmiId != undefined && pmiId != '') {
+                var pmi = {};
+                pmi['Id'] = pmiId;
+                itemsToDelete.push(pmi);
+            }
+            j$('#pmi\\.' + parts[1] + '\\.' + parts[2]).remove();
+            if(j$('tr[data-product-id*="'+parts[1]+'"]').length == 0) {
+                j$('i[data-id="'+parts[1]+'"]').addClass('hidden');
+            }
+        }
+        function buildMaterialItems() {
+            var lines = '';
+            var row;
+            j$.each(pmiList, function(key, value) {
+                row = buildItemRow(value, null, false);
+                if (row != null) { lines += row; }
+            });
+            if (lines.length > 0) {
+                appendToPMITable(lines);
+            }
+        }
+        
+        //build out the actual input tags for each type
+        function buildInput(obj, isNewRow, product, prodId, pmi, section){
+            console.log('[buildInput] pmi', pmi);
+            var html = '';
+            var value = '';
+            if (pmi != null) {
+                value = pmi[obj.fieldPath];
+            } else {
+                var relatedObjectFieldName = relatedFields[obj.fieldPath];
+                value = product[relatedObjectFieldName];
+            }
+            var objectName = 'Promotion_Material_Item__c';
+
+            if(value == undefined){
+                value = '';
+            }
+            if (section == 'cards') {
+                html += '<label for="' + prodId + '" class="fieldLabel">' + obj.label + '</label>';
+            }
+            var isReadOnly = false;
+            var pos = readOnlyFields.indexOf(obj.fieldPath);            
+            if (pos >= 0) {
+                isReadOnly = true;
+            }
+            
+            //build the correct HTML input type, read only in Account Info section if not required on field set
+            switch(inputTypeMap[obj.type]){                             
+                case 'number':
+                    if (isReadOnly == true || lockPMI == true) {
+                        value = numeral(value).format('0,0');
+                        html += '<span id="'+obj.fieldPath+prodId+'" field="'+obj.fieldPath+'" style="margin-bottom: 0.5rem;" data-currency-code="'+userCurrency+'">'+value+'</span>';
+                    } else {
+                        html += '<input id="'+obj.fieldPath+prodId+'" field="'+obj.fieldPath+'" data-prod-id="'+prodId+'" type="'+inputTypeMap[obj.type]+'" step="any" value="'+value+'" class="fieldInput slds-input" ' + (isReadOnly ? 'disabled' : '') + ' />';
+                    }
+                    break;
+                case 'select':
+                    if(isReadOnly == true || lockPMI == true){
+                        html += '<span id="'+obj.fieldPath+prodId+'" field="'+obj.fieldPath+'" style="margin-bottom: 0.5rem;">'+value+'</span>';
+                    }else{
+                        html += '<select id="'+obj.fieldPath+'-'+prodId+'" field="'+obj.fieldPath+'" class="fieldInput slds-select  "><option value=""></option>';
+                        var options = getSelectOptions(obj.fieldPath, objectName);
+                        console.log('[buildInput] options', options);
+                        console.log('[buildInput] value', value);
+                        if (options != null) {
+                            for(var i=0;i<options.values.length;i++){
+                                if(value == options.values[i]){
+                                    html+= '<option value="'+options.values[i]+'" selected>'+options.labels[i]+'</option>';
+                                }else{
+                                    html+= '<option value="'+options.values[i]+'">'+options.labels[i]+'</option>';
+                                }
+                            }
+                        }
+                        html += '</select>';
+                    }
+                    break;
+                case 'checkbox':
+                    if(isReadOnly == true || lockPMI == true){
+                        html += '<input id="'+obj.fieldPath+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" disabled="disabled" class="fieldInput cmn-toggle cmn-toggle-round-flat"/>';
+                        html += '<label for="'+obj.fieldPath+'" class="'+section+'Checkbox"></label>';
+                    }else{
+                        if(value == true){
+                            html += '<input id="'+obj.fieldPath+prodId+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" checked="checked" class="fieldInput cmn-toggle cmn-toggle-round-flat"/>';
+                        }else{
+                            html += '<input id="'+obj.fieldPath+prodId+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" class="fieldInput btn cmn-toggle cmn-toggle-round-flat"/>';
+                        }
+                        html += '<label for="'+obj.fieldPath+prodId+'" class="'+section+'Checkbox"></label>';
+                    }                    
+                    break;
+                case 'link':
+                    
+                    var relationshipName = obj.fieldPath.replace('__c', '__r');
+                    var infoField = eval("pmiList." + relationshipName);
+                    var relatedValue = '';
+                    if (infoField != null && infoField != undefined) {
+                        relatedValue = infoField.Name;
+                    }
+                    var lookupField;
+                    for(var i = 0; i < relationships.length; i++) {
+                        if (relationships[i].name == obj.fieldPath) {
+                            lookupField = relationships[i];
+                            break;
+                        }
+                    }
+                                        
+                    if (lookupField) {                            
+                        html += '<div id="' + obj.fieldPath + '">';
+
+                        $Lightning.use("c:CustomLookup", function() {
+                            $Lightning.createComponent(
+                                "c:lookupComponent",
+                                { searchString: relatedValue, recordId: value, label:obj.fieldPath, pluralLabel: '', sObjectAPIName: lookupField.objectName, filterClause: lookupField.filter, listIconSVGPath:"/resource/SLDS091/assets/icons/standard-sprite/svg/symbols.svg#account", listIconClass:"slds-icon-standard-account"},
+                                obj.fieldPath,
+                                function(cmp) {
+                                }
+                            );
+                        });
+                    }
+                    break;
+                case 'date':
+                    console.log('[buildInput.date] value', value);
+                    if (!isNaN(value)) {
+                    	try {
+                        	var d = new Date(value);
+	                        value = d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).substr(-2) + '-' + ('0'+d.getDate()).substr(-2);
+    	                } catch(ex) {
+        	            }
+                    }
+                    html += '<input id="'+obj.fieldPath+prodId+'" field="'+obj.fieldPath+'" class="'+inputTypeMap[obj.type]+'Input slds-input-clone" type="'+inputTypeMap[obj.type]+'" value="'+value+'" ' + (isReadOnly == true || lockPMI == true ? 'disabled' : '') + ' />';
+                    break;
+                default:
+                    if (obj.type == 'textarea') {
+                        html += '<textarea id="'+obj.fieldPath+prodId+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" value="'+value+'" class="fieldInput slds-textarea" row="4" ' + (isReadOnly == true || lockPMI == true ? 'disabled' : '') + '/>';
+                    } else {
+                        html += '<input id="'+obj.fieldPath+prodId+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" value="'+value+'" class="fieldInput slds-input" ' + (isReadOnly == true || lockPMI == true ? 'disabled' : '') + '/>';
+                    }
+            } 
+            return html;               
+        }
+    
+        //get url param
+        function getQueryVariable(variable) {
+           var query = window.location.search.substring(1);
+           var vars = query.split("&");
+           for (var i=0;i<vars.length;i++) {
+               var pair = vars[i].split("=");
+               if(pair[0] == variable){return pair[1];}
+           }
+           return(false);
+        }
+        
+        //get all picklist values for this market's recordtype
+        function getPicklistValuesForRecordType (objectName) {
+            try {
+            var bigString = [];
+            var masterBigString = [];
+            var recordTypeName = thisPromotion.RecordType.Name;
+
+            var vl = {};
+            var recordTypeMappings = sforce.connection.describeLayout(objectName).recordTypeMappings;
+            console.log('recordtypemappings', recordTypeMappings);
+            if(recordTypeMappings.length == undefined){
+                for(var x=0; x<recordTypeMappings.picklistsForRecordType.length; x++){
+                    vl = returnPickListValue(recordTypeMappings.picklistsForRecordType[x]);
+                   var field = {
+                    	name: recordTypeMappings.picklistsForRecordType[x].picklistName,
+                       //values: returnPickListValue(recordTypeMappings.picklistsForRecordType[x])                        
+                       values: vl.values,
+                       labels: vl.labels
+                   };                           
+                   bigString.push(field);
+               }
+            }else{
+                for (var i=0; i <recordTypeMappings.length; i++) {
+                    if (recordTypeMappings[i].name == recordTypeName){
+                        for(var x=0; x<recordTypeMappings[i].picklistsForRecordType.length; x++){
+                            vl = returnPickListValue(recordTypeMappings[i].picklistsForRecordType[x]);
+                            var field = {
+                                name: recordTypeMappings[i].picklistsForRecordType[x].picklistName,
+                                //values: returnPickListValue(recordTypeMappings[i].picklistsForRecordType[x])                        
+                                values: vl.values,
+                                labels: vl.labels
+                            };                          
+                            bigString.push(field);
+                        }
+                    } else if (recordTypeMappings[i].name == 'Master') {
+                        for(var x=0; x<recordTypeMappings[i].picklistsForRecordType.length; x++){
+                            vl = returnPickListValue(recordTypeMappings[i].picklistsForRecordType[x]);
+                            var field = {
+                                name: recordTypeMappings[i].picklistsForRecordType[x].picklistName,
+                                //values: returnPickListValue(recordTypeMappings[i].picklistsForRecordType[x])                        
+                                values: vl.values,
+                                labels: vl.labels
+                            };                          
+                            masterBigString.push(field);
+                        }
+                    }
+                }
+            }
+            if (bigString.length == 0) {
+                picklistValuesMap[objectName] = masterBigString;
+            } else {
+                picklistValuesMap[objectName] = bigString;
+            }
+            }catch(ex) {
+                console.log('[getPicklistForRecordType] exception', ex);
+            }
+        }
+    
+        //get the individual values
+        function returnPickListValue (obj) {
+            var values = [];
+            var labels = [];
+            if (obj.picklistValues) {
+                if (obj.picklistValues.label == undefined) {
+                    for (var y=0; y <obj.picklistValues.length; y++) {
+                        values.push(obj.picklistValues[y].value);
+                        labels.push(obj.picklistValues[y].label);
+                    }
+                } else {
+                    values.push(obj.picklistValues.value);
+                    labels.push(obj.picklistValues.label);
+                }
+            }
+            return { values: values, labels: labels };
+        }
+    
+        //find the picklist values for this field
+        function getSelectOptions(fieldName, objectName){
+            for(var i=0;i<picklistValuesMap[objectName].length;i++){
+                if(picklistValuesMap[objectName][i].name == fieldName){
+                    return picklistValuesMap[objectName][i];
+                }
+            }
+            
+            return { values: [], labels: [] };
+        }
+    
+        //toggle loading gif and saved message
+        function loading(val) {
+            if (val) {
+                j$(".loadingImage").fadeIn(100).css("display","inline").css('visibility','visible');
+            }
+            else {
+                j$(".loadingImage").css('visibility', 'hidden');    
+                j$(".savedMessage").fadeIn(100).css("display","inline").delay(3000).fadeOut();    
+            }
+        }
+        
+        function clearForm(){
+            j$('#content input,select').val('');
+            j$('#content .btn-group').find('button').addClass('btn-default').removeClass('btn-primary');
+            j$('#content input:checkbox').prop('checked',false);
+        }
+
+        function checkApprovalStatus(){
+            if(lockPMI){
+                j$('.pmiTable :input').addClass('disabled');
+                j$('#pmiTable i').hide();
+                j$('.save').hide();
+                j$('.clearForm').hide();
+                j$('#filterSection').hide();
+            }
+        }
+        
+        function buildItemsToSave() {
+            var selector = 'div#content .row';
+            if (deviceType == 'desktop') {
+                selector = '#pmiTable tbody tr';
+            }
+            
+            var items = [];
+            j$(selector).each(function() {
+                var pmi = {};
+                var row = j$(this);
+                var pmiId = this.getAttribute('data-pmi-id');
+                var productId = this.getAttribute('data-product-id');
+
+                pmi['Id'] = pmiId == '' ? null : pmiId;
+                pmi['RecordTypeId'] = pmiRecordTypeId;
+                pmi['Promotion__c'] = thisPromotion.Id;
+                pmi['Product_Custom__c'] = productId;
+                            
+                j$(row).find('input,select,textarea').each(function() {
+                    var fld = j$(this);
+                    var fldName = fld.attr('field');
+                    if (fld.is('input')) {
+                        if (fld.is(':checkbox')) {
+                            pmi[fldName] = fld.is(':checked');
+                        } else if (fld.attr('type') == 'date' || fld.attr('type') == 'datetime') {
+                            var d = new Date(fld.val());
+                            if (d != null) {
+                            	pmi[fldName] = d.getTime();
+                            }
+                        } else {
+                            pmi[fldName] = fld.val();
+                        }
+                    } else if (fld.is('textarea')) {
+                        pmi[fldName] = fld.val();
+                    } else if (fld.is('select')){
+                        pmi[fldName] = fld.find(':selected').val();
+                    }
+                });        
+                
+                items.push(pmi);
+            });
+console.log("items", items);
+            console.log("itemsToDelete", itemsToDelete);
+            console.log("thisPromotionId", thisPromotion.Id);
+            console.log("marketName", marketName);
+            console.log("recordTypeName", thisPromotion.RecordType.Name);
+            PromotionMaterialItemHTML_Controller.savePMI(items, itemsToDelete, thisPromotion.Id, marketName, thisPromotion.RecordType.Name, function(result, event) {
+                if (event.status) {
+                    itemsToDelete = [];
+                    j$('.save').button('reset');
+                    loading(false);
+                    //if save and close is clicked, redirect to returnURL
+                    if(redirect){
+                        closePage();
+                    } else {
+                        // rebuild rows with returned data
+                        j$(selector).remove();
+                        pmiList = result;
+                        buildMaterialItems();
+                    }
+                } else {
+                    //handling errors.
+                    j$('.save').button('reset');
+                    alert(event.message);
+                }
+            });
+            
+        }
+    </script>
+    <div class="bootstrap" style="height:100%">
+        <div class="container-fluid theme-showcase" role="main">            
+            <div id="headerSection" class="section">
+                <div id="promotionHeader" class="header btn-info">{!UPPER(promotionType)}</div>
+            </div>
+            <div class="clear"></div>
+            <div id="filterSection" class="section text-center">
+                <div id="filterContent" class="text-center"></div>
+                <div class="clear"></div>
+                <div class="rowButtons text-center" style="padding-top: 5px; padding-bottom: 5px;">
+                    <button type="button" value="Clear All" id="clearFilter" data-role="none" class="btn bg-primary col-xs-push-3 col-lg-2">{!$Label.Clear_All}</button>
+                    <br />
+                    <span id="filterError" class="filterError label-warning label">{!$Label.No_Products_Found}</span>
+                </div>
+                <div class="clear"></div>
+                
+                <div id="productListContainer" class="container col-xs-12">
+                    <table id="bootgrid" class="bootgridtable table table-hover table-striped">
+                        <thead>
+							<th class="headerRow" data-column-id="id" scope="col" colspan="1" data-identifier="true" data-visible="false"><div>id</div></th>
+                            <th class="headerRow" data-column-id="product" data-formatter="product" scope="col" colspan="1" data-identifier="false"><div>{!$ObjectType.Product__c.Fields.Name.Label}</div></th>
+                            <th class="headerRow" data-column-id="brand" scope="col" colspan="1"><div>{!$ObjectType.Brand__c.Label}</div></th>
+                            <th class="headerRow" data-column-id="spirittype" scope="col" colspan="1"><div>{!$ObjectType.Brand__c.Fields.Spirit_Type__c.Label}</div></th>
+                            <th class="headerRow" data-column-id="unitsize" data-type="numeric" data-visibleInSelection="false" scope="col" colspan="1"><div>{!$ObjectType.Product__c.Fields.Unit_Size__c.Label}</div></th>
+                            <th class="headerRow" data-column-id="supplier" scope="col" colspan="1"><div>{!$ObjectType.Supplier__c.Label}</div></th>
+                            <th class="headerRow" data-column-id="recordtypename" scope="col" colspan="1"><div>{!$ObjectType.RecordType.Label}</div></th>
+                        </thead>
+                        <tbody id="bootgridTableBody">
+                        </tbody>
+                    </table>
+                        
+                </div>
+            </div>                
+
+            <div class="clear"></div>
+            <div id="topButtonDiv" class="buttonDiv text-center">
+                <button type="button" value="{!$Label.Save}" class="btn button save bg-primary" data-role="none" data-loading-text="{!$Label.Saving}">{!$Label.Save}</button>
+                <button type="button" value="{!$Label.Save_and_Close}" class="btn button save saveAndClose bg-primary" data-role="none" data-loading-text="{!$Label.Saving}">{!$Label.Save_and_Close}</button>
+                <button type="button" value="{!$Label.Cancel}" class="btn button cancel bg-primary" data-role="none">{!$Label.Cancel}</button>
+                <div id="loadingImage" class="loadingImage" style="display:none">
+                    <!--<img src="{!URLFOR($Resource.SFA, '/img/transparentLoading.gif')}"/>-->
+                    <img src="https://www.b-fonline.com/salesforceresources/SFA/img/transparentLoading.gid" />
+                </div>
+                <div id="savedMessage" class="savedMessage" style="display:none">
+                    {!$Label.Saved}
+                    <apex:pagemessages id="messages"/>
+                </div>
+            </div>
+            <div id="content" class="content section">
+                <div id="contentHeader" class="header btn-info">{!UPPER($ObjectType.Product__c.LabelPlural)}</div>
+                <div class="clear"></div>
+                <div class="rowButtons text-center">
+                    <button id="expandButton" class="btn rowButton expandBtn bg-primary" type="button" value="{!$Label.Expand_All}">{!$Label.Expand_All}</button>               
+                </div>
+            </div>
+            <div id="bottomButtonDiv" class="buttonDiv text-center">
+                <button type="button" value="{!$Label.Save}" class="btn button save bg-primary" data-loading-text="{!$Label.Saving}">{!$Label.Save}</button>
+                <button type="button" value="{!$Label.Save_and_Close}" class="btn button save saveAndClose bg-primary" data-loading-text="{!$Label.Saving}">{!$Label.Save_and_Close}</button>
+                <button type="button" value="{!$Label.Cancel}" class="btn button cancel bg-primary">{!$Label.Cancel}</button>
+                <div class="loadingImage" style="display:none">
+                    <!--<img src="{!URLFOR($Resource.SFA, '/img/transparentLoading.gif')}"/>-->
+                    <img src="https://www.b-fonline.com/salesforceresources/SFA/img/transparentLoading.gid" />
+                </div>
+                <div class="savedMessage" style="display:none">
+                    {!$Label.Saved}
+                </div>
+            </div>
+            <div id="offlineModal" class="modal fade" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title">{!$Label.No_Connection}</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>{!$Label.Find_Connection}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">{!$Label.Close}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="clearFormModal" class="modal fade" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title">{!$Label.Clear_Form}</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>{!$Label.Clear_Form_Confirm}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">{!$Label.Cancel}</button>
+                            <button id="clearFormConfirm" type="button" value="{!$Label.Clear_Form}" class="btn button clearForm btn-danger" data-dismiss="modal" onclick="clearForm()" >{!$Label.Clear_Form}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--<script src="{!URLFOR($Resource.bootstrapmodernp, '/startbootstrap-modern-business-gh-pages/js/bootstrap.min.js')}"></script>-->
+    <script src="https://www.b-fonline.com/salesforceresources/BootstrapModernPages/js/bootstrap.min.js"></script>
+    <script> 
+        (function(){try{var a=navigator.userAgent; 
+        if((a.indexOf('Salesforce')!=-1)&&(a.indexOf('iPhone')!=-1||a.indexOf('iPad')!=-1)&&(a.indexOf('Safari')==-1)){ 
+        var s=document.createElement('style'); 
+        s.innerHTML="html,html body{overflow: auto;-webkit-overflow-scrolling:touch;}body{position:absolute;left:0;right:0;top:0;bottom:0;}"; 
+        document.getElementsByTagName('head')[0].appendChild(s);}}catch(e){}})(); 
+        window.onkeydown=function(){window.focus();}
+    </script> 
+</apex:page>

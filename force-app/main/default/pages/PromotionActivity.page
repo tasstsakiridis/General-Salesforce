@@ -1,0 +1,865 @@
+<apex:page title="Sales Proposal" standardController="Promotion_Activity__c" extensions="PromotionActivity_Controller" tabStyle="Promotion_Activity__c" sidebar="false" docType="html-5.0" standardStylesheets="false" showHeader="false">
+<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="" />
+        <meta name="author" content="" />
+        
+        <script src='https://ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js'></script>        
+        
+		<script src="https://www.b-fonline.com/salesforceresources/SFA/js/fastclick/lib/fastclick.js"></script>
+        
+        <apex:includeScript value="/lightning/lightning.out.js" />
+        
+	    <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SFA/css/font-awesome.min.css" />
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SFA/css/accountSurvey.css" />
+		<link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/BootstrapModernPages/css/bootstrap.min.css" />
+		<link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/BootstrapModernPages/css/bootstrap-theme.min.css" />
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SLDS091/assets/styles/salesforce-lightning-design-system-ltng.min.css" />
+        
+        <!--<script src="../../soap/ajax/33.0/connection.js" type="text/javascript"></script>-->
+        <!--<apex:includeScript value="{!URLFOR($Resource.SFA, '/js/fastclick/lib/fastclick.js')}" />-->
+            
+        <!--<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css"/>-->
+        <!--<apex:stylesheet value="{!URLFOR($Resource.SFA, '/css/accountSurvey.css')}" />-->
+        <!--<apex:stylesheet value="{!URLFOR($Resource.bootstrapmodernp, '/startbootstrap-modern-business-gh-pages/css/bootstrap.min.css')}" />-->
+        <!--<apex:stylesheet value="{!URLFOR($Resource.bootstrapmodernp, '/startbootstrap-modern-business-gh-pages/css/bootstrap-theme.min.css')}"/>-->
+        <!--<apex:stylesheet value="{!URLFOR($Resource.SLDS091, '/assets/styles/salesforce-lightning-design-system-ltng.min.css')}" />-->
+    </head>
+    <style>
+        @media only screen and (min-width: 801px) {
+            dl.rowheader {
+                width: 100%;
+                overflow: hidden;
+                padding: 0;
+                margin: 0;
+            }
+            .dtField {
+                float: left;
+                width: 25%;
+                padding: 0;
+                margin: 0;
+            }
+            .ddField {
+                float: left;
+                width: 72%;
+                padding: 0;
+                margin: 0;
+            }
+            input.fieldInput,
+            textarea.fieldInput {
+                width: 75%;
+            }
+        }
+        input.slds-input-clone {
+            background-color: white;
+            color: #16325c;
+            border: 1px solid #d8dde6;
+            border-radius: 0.25rem;
+            -webkit-transition: border 0.1s linear, background-color 0.1s linear;
+            transition: border 0.1s linear, background-color 0.1s linear;
+            display: inline-block;
+            padding: 0 1rem 0 0.75rem;
+            line-height: 2.125rem;
+            min-height: calc(2.125rem + 2px); 
+            margin-bottom: 0.5rem;
+        }
+        .sf-font {
+            font: 100%/1.5 "Salesforce Sans", Arial, sans-serif;
+        }
+        .slds-is-required-clone:before {
+          content: '*';
+          color: #c23934;
+          position: absolute;
+          left: -0.5rem;
+        }
+        .requiredField:after {
+            content: '*';
+            color: #c23934;  
+            margin-left: 10px;
+        }
+        #auraErrorMessage {
+        	display: none;
+        }
+
+    </style>
+    <script src="{!urlPrefix}/soap/ajax/35.0/connection.js" type="text/javascript"></script>    
+    <script>
+		var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;        
+        var j$ = jQuery.noConflict();
+        loading('load', true);
+
+        //Initialize sforce Connection for MetaDataApi calls
+        sforce.connection.sessionId = '{!$Api.Session_ID}';
+        var urlPrefix = '{!urlPrefix}';
+        if(urlPrefix == '/sales'){
+            UserContext.siteUrlPrefix = urlPrefix;
+            sforce.connection.serverUrl = urlPrefix + sforce.connection.serverUrl;
+        }
+        
+        var headerInfo = [{!serializedActivity}][0];				//values        
+        var headerFS = [{!serializedActivityFS}][0];				//field set
+        var readOnlyFields = [{!serializedReadOnlyFieldList}][0];
+        var relationships = [{!serializedRelationshipList}][0];
+        var newActivity = [{!newActivity}][0];
+        var marketName = ['{!marketName}'][0];
+        var marketId = ['{!marketId}'][0];
+        var activityHasAccounts = [{!hasAccounts}][0];
+        var activityLocked = [{!lockActivity}][0];
+        var lookupDialogs = [];
+        var headerHTML = '';
+        var filterHTML = '';
+        var headersHTML = '';
+        var bodyHTML = '';
+        var deviceType = '';
+        var toggleHTML = '';
+        var expandedClass = '';
+        var returnURL = '{!$CurrentPage.Parameters.retURL}';
+        var activityId = '{!$CurrentPage.Parameters.id}';
+        var recordTypeId = '{!$CurrentPage.Parameters.recordTypeId}';
+        var closeResultListLabelText = '{!$Label.CloseSearchResults}';
+        var redirect = false;
+        var inSF1 = false;
+        var picklistValuesMap = [];
+		var requiredFields = [];
+        
+        //map to create corresponding HTML input type for Salesforce field type
+        var inputTypeMap = {
+            'boolean'		: 'checkbox',
+            'double'		: 'number',
+            'currency'		: 'number',
+            'picklist'		: 'select',
+            'multipicklist' : 'select',
+            'reference'		: 'link',
+            'date'			: 'date',
+            'percent'		: 'number',
+            'textarea'		: 'text',
+            'string'		: 'text'
+        }
+                    
+        j$(document).ready(function() { 
+            
+            j$(function() {
+                FastClick.attach(document.body);
+            });
+            
+            if( (typeof sforce != 'undefined') && (sforce.one != null) ) {
+                inSF1 = true;
+            }else{
+                inSF1 = false;
+            }
+                        
+            //get window width to determine whether or not to use tokenize, 768 = tablet
+            //sniff user agent to figure out if it's an iPad because screen resolution varies
+            var IS_IPAD = navigator.userAgent.match(/iPad/i) != null;
+            if(j$(window).width() >= 992 && !IS_IPAD){
+                deviceType = 'desktop';
+            }else{
+                j$('#expandButton').show();             //for cards layout
+                if(j$(window).width() >= 768){
+                    deviceType = 'tablet';
+                }else{
+                    deviceType = 'phone';
+                }
+            }
+            if (newActivity == false) {
+                activityId = headerInfo.Id;
+                recordTypeId = headerInfo.RecordTypeId;
+            }
+
+            if (recordTypeId == null || recordTypeId == '') {
+                recordTypeId = '{!recordTypeId}';
+            }
+            
+            if (returnURL == '') {
+                //returnURL = '{!URLFOR($Action.Promotion_Activity__c.Tab, $ObjectType.Promotion_Activity__c)}';
+                returnURL = '/apex/PromotionActivity_SalesProposal_ListView';
+            }
+            
+            //grab all the picklist values for this market's record type and then build out the promotion grid
+            j$.when(getPicklistValuesForRecordType('Promotion_Activity__c')).then(buildHeaderSection());
+            
+            if (!newActivity) {
+                j$('.addAccounts').removeAttr('disabled');
+                if (activityHasAccounts && activityHasAccounts == true) {
+                    j$('.addProducts').removeAttr('disabled');
+                    j$('.addItems').removeAttr('disabled');
+                    j$('.submitApproval').removeAttr('disabled');
+                }
+            }
+            j$('#clearForm').click(function(){
+                j$('#clearFormModal').modal();
+            });
+            
+            j$('#clearFormConfirm').click(function(){
+                clearForm();
+            });
+            
+            if(deviceType == 'desktop'){
+                bindEvents(true);
+            }else{
+                bindEvents(false);
+            }
+             
+            loading('load', false);
+            if (activityLocked == true) {
+            	j$('.save').hide();
+                j$('.submitApproval').hide();
+            }
+        });
+        
+        function closePage() {
+            if(inSF1) {
+                if (activityId == null || activityId == "") {
+	                sforce.one.navigateToURL(returnURL);
+                } else {
+                    sforce.one.navigateToSObject(activityId);
+                }
+            }else{
+                console.log('activityId', activityId);
+                if (activityId == null || activityId == "") {
+                	window.location.href = returnURL;
+                } else {
+                    window.location.href = '/' + activityId;
+                }
+            }
+        }
+        function bindEvents(buildTokenize){         
+            j$('.save').click(function(){
+                //redirect to returnURL on click of save and close
+                if(j$(this).hasClass('saveAndClose')){
+                    redirect = true;
+                }
+                //check for connection, if offline display modal warning
+                if(navigator.onLine){
+                    disableActionButtons('loading');
+                    buildActivityToSave();
+                }else{
+                    j$('#offlineModal').modal();
+                }           
+            });
+            j$('.submitApproval').click(function() {
+                if(navigator.onLine){
+                    disableActionButtons('loading');
+                    submitForApproval();
+                }else{
+                    j$('#offlineModal').modal();
+                }           
+            });
+            
+            //redirect to returnURL
+            j$('.cancel').click(function(){
+                closePage();
+            });
+            j$('.addAccounts').click(function(){
+                try {
+	                var rUrl = urlPrefix + '/apex/PromotionActivity?recordTypeId='+recordTypeId+'&id=' + activityId+'&retUrl='+returnURL;
+                    var newUrl = urlPrefix + '/apex/PromotionActivity_Accounts?id='+activityId;
+                    //alert('additem clicked. inSF1: ' + inSF1 + ', newUrl: ' + newUrl);
+                     if (inSF1) {
+                         sforce.one.navigateToURL(newUrl);
+                     } else {
+		                window.location.href = newUrl;
+                     }
+                }
+                catch(err) {
+                    console.log('error: ' + err.message);
+                }
+            });
+            j$('.addProducts').click(function() {
+                try {
+                    var newUrl = urlPrefix + '/apex/PromotionActivity_Products?id='+activityId+'&type=WetGoods&returnTo=proposal';
+                     if (inSF1) {
+                         sforce.one.navigateToURL(newUrl);
+                     } else {
+		                window.location.href = newUrl;
+                     }                      
+                } catch(err) {
+                    console.log('error: ' + err.message);
+                }
+            });
+            j$('.addItems').click(function(){
+                try {
+    	            var newUrl = urlPrefix + '/apex/PromotionActivity_APItems?id='+activityId+'&type=APItem&returnTo=proposal';
+                     if (inSF1) {
+                         sforce.one.navigateToURL(newUrl);
+                     } else {
+		                window.location.href = newUrl;
+                     }
+                }
+                catch(err) {
+                    console.log('error: ' + err.message);
+                }
+            });
+            
+            //on click of card header, toggle display
+            j$('div.rowHeader').click(function(){
+                if(j$(this).siblings('.fields').hasClass('expanded')){
+                    j$(this).removeClass('headerShadow').siblings('.fields').removeClass('expanded fieldsShadow').slideUp();
+                }else{
+                    j$(this).addClass('headerShadow').siblings('.fields').addClass('expanded fieldsShadow').slideDown();
+                }
+            });
+            //either expand or collapse all cards
+            j$('#expandButton').click(function(){
+                if(j$(this).hasClass('expandBtn')){
+                    j$('.fields').addClass('expanded fieldsShadow').slideDown();
+                    j$('div.rowHeader').addClass('headerShadow');
+                    j$(this).toggleClass('expandBtn collapseBtn').html('{!$Label.Collapse_All}');
+                }else{
+                    j$('.fields').removeClass('expanded fieldsShadow').slideUp();
+                    j$('div.rowHeader').removeClass('headerShadow');
+                    j$(this).toggleClass('expandBtn collapseBtn').html('{!$Label.Expand_All}');
+                }
+                j$('.bg-success').removeClass('bg-success');
+            });
+            //expand or collapse section
+            j$('div.header').click(function(){
+                j$(this).siblings().slideToggle();
+            });
+        }
+                
+        function buildHeaderSection(){
+            //build header info             
+            //always add account link
+			if (headerFS != null) {
+            	headerFS.sort(function(a, b) { return a.index > b.index ? 1 : -1 });
+            } else {
+                headerFS = [];
+            }
+            j$.each(headerFS, function(key, value){
+                var thisSectionHTML = '<div id="' + value.name + '" class="section">';
+                thisSectionHTML += '<div id="' + value.name + 'Header" class="header btn-info sf-font">' + value.title + '</div>';
+                thisSectionHTML += '<dl id="' + value.name + 'headerDL" class="dl-horizontal headerDL left list-group row rowHeader">';
+                
+                var requiredHTML = '';
+                j$.each(value.fields, function(key, value) {
+                    if (value.fieldPath.indexOf('__r') < 0) { 
+                        //thisSectionHTML += '<dt class="dtField">';
+                        requiredHTML = '';
+                        if (value.required || value.dbRequired) {
+                            //thisSectionHTML += '<span class="slds-is-required-clone">'+value.label+'</span>';
+                            //} else {
+                            //thisSectionHTML += value.label;
+                            requiredHTML = ' requiredField';
+                            requiredFields.push(value.fieldPath);
+                        }
+                        thisSectionHTML += '<dt class="dtField' + requiredHTML + '">'+value.label+'</dt><dd class="ddField">'+buildInput(value, headerInfo, 'header')+'</dd>';
+                    }
+                });
+                thisSectionHTML += '</dl></div>';
+                headerHTML += thisSectionHTML;
+            });
+            j$('div#sectionContent').append(headerHTML);
+        }
+                
+        //build out the section header div for each section
+        function buildSectionHeader(sectionInfo) {
+            var html = '<div id="' + sectionInfo.name + '" class="section">';
+            html += '<div id="' + sectionInfo.name + 'Header" class="header btn-info">' + sectionInfo.title + '</div>';
+            html += '<dl id="' + sectionInfo.name + 'headerDL" class="dl-horizontal headerDL left list-group row"></dl>';
+            html += '</div>';
+            return html;
+        }
+        
+        //build out the actual input tags for each type
+        function buildInput(obj, section, prodId){
+            var html = '';
+            var value = eval('headerInfo.'+obj.fieldPath);
+            var objectName = 'Promotion_Activity__c';
+
+            if(value == undefined){
+                value = '';
+            }
+
+            var isReadOnly = false;
+            var pos = -1;
+            if (readOnlyFields != null) {
+                pos = readOnlyFields.indexOf(obj.fieldPath);            
+            }
+            if (pos >= 0 || activityLocked == true) {
+                isReadOnly = true;
+            }
+                        
+            //build the correct HTML input type, read only in Account Info section if not required on field set
+            switch(inputTypeMap[obj.type]){                             
+                case 'number':
+                    //if (isReadOnly == true) {
+                    //    html += '<span id="'+obj.fieldPath+prodId+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" step="any">'+value+'</span>';
+                    //} else {
+                    	html += '<input id="'+obj.fieldPath+prodId+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" step="any" value="'+value+'" class="fieldInput slds-input" ' + (isReadOnly ? 'disabled' : '') + '/>';
+                    //}
+                    break;
+                case 'select':
+                    //if(isReadOnly == true){
+                    //    html += '<span style="margin-bottom: 0.5rem;">'+value+'</span>';
+                    //}else{
+                        html += '<select id="'+obj.fieldPath+'-'+prodId+'" field="'+obj.fieldPath+'" class="fieldInput slds-select"' + (isReadOnly ? 'disabled' : '') + '><option value=""></option>';
+                        var options = getSelectOptions(obj.fieldPath, objectName);
+                        for(var i=0;i<options.length;i++){
+                            if(value == options[i]){
+                                html+= '<option value="'+options[i]+'" selected>'+options[i]+'</option>';
+                            }else{
+                                html+= '<option value="'+options[i]+'">'+options[i]+'</option>';
+                            }
+                        }
+                        html += '</select>';
+                    //}
+                    break;
+                case 'checkbox':
+                    if(isReadOnly == true){
+                        html += '<input id="'+obj.fieldPath+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" disabled="disabled" class="fieldInput cmn-toggle cmn-toggle-round-flat"/>';
+                        html += '<label for="'+obj.fieldPath+'" class="'+section+'Checkbox"></label>';
+                    }else{
+                        if(value == true){
+                            html += '<input id="'+obj.fieldPath+prodId+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" checked="checked" class="fieldInput cmn-toggle cmn-toggle-round-flat"/>';
+                        }else{
+                            html += '<input id="'+obj.fieldPath+prodId+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" class="fieldInput btn cmn-toggle cmn-toggle-round-flat"/>';
+                        }
+                        html += '<label for="'+obj.fieldPath+prodId+'" class="'+section+'Checkbox"></label>';
+                    }                    
+                    break;
+                case 'link':
+                    //if (isReadOnly == true) {
+                    //    html += '<span id="'+obj.fieldPath+prodId+'" field="'+obj.fieldPath+'" class="'+inputTypeMap[obj.type]+'" type="'+inputTypeMap[obj.type]+'">'+thisValue+'</span>';
+                    //} else {
+                        var relationshipName = obj.fieldPath.replace('__c', '__r');
+                        var thisValue = eval("headerInfo." + obj.fieldPath);
+                        var infoField = eval("headerInfo." + relationshipName);                    
+                        var relatedValue = '';
+                        if (infoField != null && infoField != undefined) {
+                            relatedValue = infoField.Name;
+                        }
+                        var lookupField;
+                        for(var i = 0; i < relationships.length; i++) {
+                            if (relationships[i].name == obj.fieldPath) {
+                                lookupField = relationships[i];
+                                break;
+                            }
+                        }
+                    console.log('obj', obj);
+                    console.log('relationships', relationships);
+                        console.log('relationshipname', relationshipName);
+                        console.log('thisvalue',thisValue);
+                        console.log('infofield',infoField);
+                        console.log('relatedValue',relatedValue);
+                        console.log('lookupField', lookupField);
+                        if (lookupField) {                            
+                            html += '<div id="' + obj.fieldPath + '">';
+    
+                            $Lightning.use("c:CustomLookup", function() {
+                                $Lightning.createComponent(
+                                    "c:lookupComponent",
+                                    { searchString: relatedValue, recordId: thisValue, label:obj.fieldPath, pluralLabel: '', sObjectAPIName: lookupField.objectName, filterClause: lookupField.filter, listIconSVGPath:"/resource/SLDS091/assets/icons/standard-sprite/svg/symbols.svg#"+lookupField.svgClass, listIconClass:"slds-icon-standard-"+lookupField.svgClass, objectLabel: lookupField.objectLabel, closeResultListLabel:closeResultListLabelText, showCreateNewOption: false, isReadOnly: isReadOnly, nameField: lookupField.nameFieldToReturn},
+                                    obj.fieldPath,
+                                    function(cmp) {
+                                    }
+                                );
+                            });
+                        }
+                    //}
+                    break;
+                case 'date':
+                    //if (isReadOnly == true) {
+                    //    html += '<span id="'+obj.fieldPath+prodId+'" field="'+obj.fieldPath+'" class="'+inputTypeMap[obj.type]+'" type="'+inputTypeMap[obj.type]+'">'+value+'</span>';
+                    //} else {
+	                    html += '<input id="'+obj.fieldPath+prodId+'" field="'+obj.fieldPath+'" class="'+inputTypeMap[obj.type]+'Input slds-input-clone" type="'+inputTypeMap[obj.type]+'" value="'+value+'" ' + (isReadOnly ? 'disabled' : '') + ' />';
+                    //}
+                    break;
+                default:
+                    //if (isReadOnly == true) {
+                    //    html += '<span id="'+obj.fieldPath+prodId+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'">'+value+'</span>';
+                    //} else {
+                        if (obj.type == 'textarea') {
+                            html += '<textarea id="'+obj.fieldPath+prodId+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" value="'+value+'" class="fieldInput slds-textarea" row="4" ' + (isReadOnly ? 'disabled' : '') + '>'+value+'</textarea>';
+                        } else {
+                            html += '<input id="'+obj.fieldPath+prodId+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" value="'+value+'" class="fieldInput slds-input" ' + (isReadOnly ? 'disabled' : '') + '/>';
+                        }
+                    //}
+            } 
+            //html += '</div>';
+            return html;               
+        }
+        
+        function addFieldToLookupDialog(fieldInfo) {
+            var fieldParts = fieldInfo.fieldPath.split('.');
+            var objectName = fieldParts[0];
+            var lookupField = {name:fieldParts[fieldParts.length-1], includeInFilter: fieldInfo.required};
+            var index = lookupDialogs.indexOf(objectName);
+            if (index < 0) {
+                lookupDialog = {
+                    objectName: objectName,
+                    fields: [lookupField]
+                }
+            } else {
+                lookupDialogs[index].fields.push(lookupField);
+            }
+        }
+        
+        //get all picklist values for this market's recordtype
+        function getPicklistValuesForRecordType (objectName) {
+            var bigString = [];
+            var recordTypeName = '{!recordTypeName}';
+
+            var recordTypeMappings = sforce.connection.describeLayout(objectName).recordTypeMappings;
+            console.log('recordTypeName', recordTypeName);
+            console.log('recordTypeMappings', recordTypeMappings);
+            if(recordTypeMappings.length == undefined){
+                for(var x=0; x<recordTypeMappings.picklistsForRecordType.length; x++){
+                   var field = {
+                    name: recordTypeMappings.picklistsForRecordType[x].picklistName,
+                    values: returnPickListValue(recordTypeMappings.picklistsForRecordType[x])                        
+                   };                           
+                   bigString.push(field);
+               }
+            }else{
+                for (var i=0; i <recordTypeMappings.length; i++) {
+                    if (recordTypeMappings[i].name == recordTypeName){
+                        if (recordTypeMappings[i].picklistsForRecordType.length == undefined) {
+                            var field = {
+                                name: recordTypeMappings[i].picklistsForRecordType.picklistName,
+                                values: returnPickListValue(recordTypeMappings[i].picklistsForRecordType) 
+                            };                          
+                            bigString.push(field);
+                        } else {
+                            for(var x=0; x<recordTypeMappings[i].picklistsForRecordType.length; x++){
+                                var field = {
+                                    name: recordTypeMappings[i].picklistsForRecordType[x].picklistName,
+                                    values: returnPickListValue(recordTypeMappings[i].picklistsForRecordType[x])                        
+                                };                          
+                                bigString.push(field);
+                            }
+                        }
+                    }
+                }
+            }
+            picklistValuesMap[objectName] = bigString;
+            
+            console.log('bigString', bigString);
+            console.log('picklistValuesMap', picklistValuesMap);
+        }
+        
+        //get the individual values
+        function returnPickListValue (obj) {
+            var values = [];
+            if (obj.picklistValues) {
+                if (obj.picklistValues.label == undefined) {
+                    for (var y=0; y <obj.picklistValues.length; y++) {
+                        values.push(obj.picklistValues[y].label);
+                        }
+                } else {
+                    values.push(obj.picklistValues.label);
+                }
+            }
+            return values;
+        }
+        
+        //find the picklist values for this field
+        function getSelectOptions(fieldName, objectName){
+            var values = [];
+            console.log('[getSelectOptions] picklistValuesMap', picklistValuesMap);
+            if (picklistValuesMap != null) {
+                for(var i=0;i<picklistValuesMap[objectName].length;i++){
+                    if(picklistValuesMap[objectName][i].name == fieldName){
+                        values = picklistValuesMap[objectName][i].values;
+                    }
+                }
+            }
+            return values;
+        }
+        
+        function PromotionActivity() {
+            this.Id = null;
+            this.Name = null;
+            this.RecordTypeId = null;
+            this.Wholesaler__c = null;
+            this.Status__c = 'New';
+            this.Begin_Date__c = new Date();
+            this.End_Date__c = new Date();
+            this.Channel__c = 'On';
+            this.Premise__c = 'Not Applicable';
+            this.Account_Region__c = '';
+        }
+        
+        function buildActivityToSave(){
+            //display loading gif
+            loading('save', true);
+            var today = new Date();
+            
+            //save Promotion fields
+            //set promotion id on new promotion object
+            var activity = {};
+            console.log('IsNewActivity', newActivity);
+            if(!newActivity){
+                activity = headerInfo;
+                if (headerInfo.RecordType.Name == 'Sales Proposal Locked' && (activity.Status__c == 'Approved' || activity.Status__c == 'Rejected' || activity.Status__c == 'New')) {
+                    activity.Status__c = 'Updated';
+                }
+            }else{
+                activity.Id = null;
+                activity.Status__c = 'New';
+				activity.Name = 'SalesProposal-' + today.getFullYear() + (today.getMonth()+1) + today.getDate() + today.getHours() + today.getMinutes();
+                activity.RecordTypeId = headerInfo.RecordTypeId;
+                activity.Market__c = headerInfo.Market__c;
+                activity.Premise__c = 'Not Applicable';
+                activity.Active__c = true;
+            }
+            
+            console.log('[Save] activity', activity);
+            //loop through each input in the header table and add it's value to our object
+            j$('#sectionContent').find('input,select,textarea').each(function(){                
+                var fldName = j$(this).attr('field');
+				if (readOnlyFields.indexOf(fldName) > -1) { console.log('fld: ' + fldName + ' is read only'); return true; }
+                if (j$(this).attr('field') != undefined) {
+                    if(j$(this).is(':checkbox')){
+                        activity[fldName] = j$(this).is(':checked');
+                    }else if (j$(this).is('select')) {
+                        if (j$(this).attr('multiple')) {
+	                        var selValues = j$(this).val();
+                            activity[fldName] = '';
+                            if (selValues) {
+                                for(var i = 0; i < selValues.length; i++) {
+                                    activity[fldName] += selValues[i];
+                                    if (i < selValues.length) { activity[fldName] += ';'; }
+                                }
+                            }
+                            console.log('selvalues', selValues);
+                            console.log('fld', activity[fldName]);
+                        } else {
+	                        activity[fldName] = j$(this).val();
+                        }
+                    }else if (j$(this).attr('type') == 'date') {
+                        var d = j$(this).val();
+                        if (d) {
+                        	var formattedDate = new Date(j$(this).val()).getTime();
+                        	activity[fldName] = formattedDate;
+                        }
+                    }else {
+                        activity[fldName] = j$(this).val();
+                    }
+                }
+            });
+            console.log('activity', activity);
+            for(var i = 0; i < relationships.length; i++) {
+                var el = j$('#' + relationships[i].name).find('.' + relationships[i].name + '_lookupId');
+                var val = el.html();
+                if (val != undefined) {
+                    activity[relationships[i].name] = el.html();
+                }
+            }
+            console.log('requiredfields', requiredFields);
+            var errormessage = '';
+            for(var i = 0; i < requiredFields.length; i++) {
+                if (activity[requiredFields[i]] == null || activity[requiredFields[i]] == '') {
+                    errormessage += requiredFields[i] + ', ';
+                }
+            }
+            if (errormessage.length > 0) {
+                j$('.actionButton').button('reset');
+                loading('save',false, 0);
+                errormessage = errormessage.substr(0, errormessage.length - 2);
+                errormessage = '<p style="font-weight:normal;font-size:small;">The following fields are required:\n</p><p style="font-size:smaller;font-weight:bold;">' + errormessage+'</p>';
+                showMessage(errormessage);
+            } else {
+                j$('#pageMessages').empty();
+                PromotionActivity_Controller.saveActivity(JSON.stringify(activity), function(result, event) {
+                    if (event.status) {
+                        newActivity = false;
+                        activityId = result.Id;
+                        activity.Id = result.Id;
+                        j$('.addAccounts').removeAttr('disabled')
+                                          .show();
+                        
+                        //j$('.save').button('reset');
+                        //j$('.cancel').button('reset');
+                        
+                        if (activity.Status__c == 'Updated') {
+                            submitForApproval();
+                        } else {                            
+                            j$('.actionButton').button('reset');
+                            console.log('activityHasAccounts', activityHasAccounts);
+                            if (activityHasAccounts && activityHasAccounts == true) {
+                                j$('.submitApproval').removeAttr('disabled')
+                                                        .show();
+                                j$('.addProducts').removeAttr('disabled')
+                                               .show();
+                                j$('.addItems').removeAttr('disabled')
+                                               .show();
+                            } else {
+                                j$('.submitApproval').attr('disabled','disabled');
+                                j$('.addProducts').attr('disabled','disabled');
+                                j$('.addItems').attr('disabled','disabled');
+                            }
+                            if (redirect == true) {
+                                closePage();
+                            }
+                            j$('.save').trigger('blur');
+                        }
+                    } else {
+                        //handling errors.
+                        console.log('event', event);
+                        showMessage(event.message);
+                        j$('.actionButton').button('reset');
+                    }
+                    loading('save',false);
+                });
+            }
+            
+        }
+        function submitForApproval() {
+            PromotionActivity_Controller.submitForApproval(activityId, function(result, event) {
+                j$('.actionButton').button('reset');
+                if (event.status) {
+                    loading(false);
+                    closePage();
+                } else {
+                    //handling errors.
+                    alert(event.message);
+                }
+            });
+        }
+                
+        //get url param
+        function getQueryVariable(variable)
+        {
+           var query = window.location.search.substring(1);
+           var vars = query.split("&");
+           for (var i=0;i<vars.length;i++) {
+               var pair = vars[i].split("=");
+               if(pair[0] == variable){return pair[1];}
+           }
+           return(false);
+        }
+        
+        //toggle loading gif and saved message
+        function loading(val, visible, delay) {
+            if (val == 'load') {
+                if (visible) {
+                    j$("#loadingMessage").fadeIn(100).css("display","inline").css("visibility","visible");
+                } else {
+                    j$("#loadingMessage").fadeOut();
+                }
+            } else if (val == 'save') {
+                if (visible) {
+                    j$(".savedMessage").fadeIn(100).css("display","inline").css('visibility','visible');
+                }
+                else {
+                    if (delay == undefined) { delay = 3000; }
+                    j$(".savedMessage").fadeIn(100).css("display","inline").delay(delay).fadeOut();    
+                }
+            }
+        }
+        function disableActionButtons(action) {
+            if (activityHasAccounts && activityHasAccounts == true) {
+                j$('.actionButton').button(action);
+            } else {
+        		j$('.save').button(action);
+            	j$('.cancel').button(action);
+            }
+        }
+        function clearForm(){
+            j$('#content input,select').val('');
+            j$('#content .lookup').html('');          
+            j$('#content .btn-group').find('button').addClass('btn-default').removeClass('btn-primary');
+            j$('#content input:checkbox').prop('checked',false);
+            j$('.addAccounts').hide();
+            j$('.addItems').hide();
+        }
+        function showMessage(msg) {
+            j$('#pageMessages').empty()
+            				  .append('<p>'+msg+'</p>');
+        }
+    </script>
+    <div class="bootstrap" style="height:100%">
+        <div class="container-fluid theme-showcase" role="main">
+            <div id="topButtonDiv" class="buttonDiv text-center">
+                <button type="button" value="{!$Label.Save}" class="btn button save actionButton bg-primary" data-role="none" data-saving-text="{!$Label.Saving}">{!$Label.Save}</button>
+                <button type="button" value="{!$Label.Save_and_Close}" class="btn button save saveAndClose actionButton bg-primary" data-role="none" data-saving-text="{!$Label.Saving}">{!$Label.Save_and_Close}</button>
+                <button type="button" value="{!$Label.Cancel}" class="btn button cancel actionButton bg-primary" data-role="none" data-saving-text="{!$Label.Saving}">{!$Label.Cancel}</button>
+                <button type="button" value="{!$Label.Submit_For_Approval}" class="btn button submitApproval actionButton bg-primary" data-role="none" data-saving-text="{!$Label.Saving}" data-loading-text="{!$Label.Submit_For_Approval}" disabled="disabled">{!$Label.Submit_For_Approval}</button>
+                <button type="button" value="{!$Label.Add_Edit_Accounts}" class="btn button addAccounts actionButton bg-primary" data-role="none" disabled="disabled" data-saving-text="{!$Label.Saving}">{!$Label.Add_Edit_Accounts}</button>
+                <button type="button" value="{!$Label.Add_Edit_Products}" class="btn button addProducts actionButton bg-primary" data-role="none" disabled="disabled" data-saving-text="{!$Label.Saving}">{!$Label.Add_Edit_Products}</button>
+                <button type="button" value="{!$Label.Add_Edit_Items}" class="btn button addItems actionButton bg-primary" data-role="none" disabled="disabled" data-saving-text="{!$Label.Saving}">{!$Label.Add_Edit_Items}</button>
+                <div id="savedMessage" class="savedMessage" style="display:none">
+                    {!$Label.Saved}
+                    <apex:pagemessages id="messages"/>
+                </div>
+                <div id="loadingMessage" class="savedMessage" style="display:inline">
+                    {!$Label.Loading}<img src="https://www.b-fonline.com/salesforceresource/SFA/img/transparentLoading.gif"/>
+                    <apex:pageMessages id="loadingMessages"></apex:pageMessages>
+                </div>
+            </div>
+            <div id="pageMessages" style="text-align:center;color:red;font-weight:bold;">
+                
+            </div>
+            <div style="float:left;">
+                <span class="requiredField" style="margin-left: 20px; margin-right: 10px;"></span><span style="font-size: x-small;font-weight:bold;">{!$Label.AsteriskDenotesRequireField}</span>
+            </div>
+            <div id="sectionContent" class="slds">
+                
+            </div>
+            <div class="clear"></div>
+            <div id="bottomButtonDiv" class="buttonDiv text-center">
+                <button type="button" value="{!$Label.Save}" class="btn button save actionButton bg-primary" data-saving-text="{!$Label.Saving}">{!$Label.Save}</button>
+                <button type="button" value="{!$Label.Save_and_Close}" class="btn button save saveAndClose actionButton bg-primary" data-saving-text="{!$Label.Saving}">{!$Label.Save_and_Close}</button>
+                <button type="button" value="{!$Label.Cancel}" class="btn button cancel actionButton bg-primary" data-saving-text="{!$Label.Saving}">{!$Label.Cancel}</button>
+                <button type="button" value="{!$Label.Submit_For_Approval}" class="btn button submitApproval actionButton bg-primary" data-role="none" data-saving-text="{!$Label.Saving}" data-loading-text="{!$Label.Submit_For_Approval}" disabled="disabled">{!$Label.Submit_For_Approval}</button>
+                <button type="button" value="{!$Label.Add_Edit_Accounts}" class="btn button addAccounts actionButton bg-primary" data-role="none" disabled="disabled" data-saving-text="{!$Label.Saving}">{!$Label.Add_Edit_Accounts}</button>
+                <button type="button" value="{!$Label.Add_Edit_Products}" class="btn button addProducts actionButton bg-primary" data-role="none" disabled="disabled" data-saving-text="{!$Label.Saving}">{!$Label.Add_Edit_Products}</button>
+                <button type="button" value="{!$Label.Add_Edit_Items}" class="btn button addItems actionButton bg-primary" data-role="none" disabled="disabled" data-saving-text="{!$Label.Saving}">{!$Label.Add_Edit_Items}</button>
+                <div class="loadingImage" style="display:none">
+                    <img src="https://www.b-fonline.com/salesforceresource/SFA/img/transparentLoading.gif"/>
+                </div>
+                <div class="savedMessage" style="display:none">
+                    {!$Label.Saved}
+                </div>
+            </div>
+            <div id="offlineModal" class="modal fade" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title">{!$Label.No_Connection}</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>{!$Label.Find_Connection}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">{!$Label.Close}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="clearFormModal" class="modal fade" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title">{!$Label.Clear_Form}</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>{!$Label.Clear_Form_Confirm}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">{!$Label.Cancel}</button>
+                            <button id="clearFormConfirm" type="button" value="{!$Label.Clear_Form}" class="btn button clearForm btn-danger" data-dismiss="modal" onclick="clearForm()" >{!$Label.Clear_Form}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--<script src="{!URLFOR($Resource.bootstrapmodernp, '/startbootstrap-modern-business-gh-pages/js/bootstrap.min.js')}"></script>-->
+    <script src="https://www.b-fonline.com/salesforceresources/BootstrapModernPages/js/bootstrap.min.js"></script>
+    <script> 
+        (function(){try{var a=navigator.userAgent; 
+        if((a.indexOf('Salesforce')!=-1)&&(a.indexOf('iPhone')!=-1||a.indexOf('iPad')!=-1)&&(a.indexOf('Safari')==-1)){ 
+        var s=document.createElement('style'); 
+        s.innerHTML="html,html body{overflow: auto;-webkit-overflow-scrolling:touch;}body{position:absolute;left:0;right:0;top:0;bottom:0;}"; 
+        document.getElementsByTagName('head')[0].appendChild(s);}}catch(e){}})(); 
+        window.onkeydown=function(){window.focus();}
+    </script> 
+    </html>
+</apex:page>

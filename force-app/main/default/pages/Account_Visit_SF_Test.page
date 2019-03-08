@@ -1,0 +1,124 @@
+<apex:page standardController="Account" extensions="Account_Visit_Controller" title="Account Visit SF" sidebar="false" showHeader="false" docType="html-5.0" standardStylesheets="false">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="" />
+        <meta name="author" content="" />
+
+        <script src='https://ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js'></script>
+        <script src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.0/jquery-ui.min.js'></script>
+        <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.0/themes/smoothness/jquery-ui.css" />
+        
+	    <script src="https://www.b-fonline.com/salesforceresources/SFA/js/fastclick/lib/fastclick.js"></script>
+        <script src="https://www.b-fonline.com/salesforceresources/moment-with-locales.min.js"></script>
+        <script src="https://www.b-fonline.com/salesforceresources/BootstrapModernPages/js/bootstrap.min.js"></script>
+        <script src="https://www.b-fonline.com/salesforceresources/SFA/js/imageResizer/ExifRestorer.js"></script>
+        <script src="https://www.b-fonline.com/salesforceresources/SFA/js/imageResizer/ImageResizer.js"></script>
+        <script src="https://www.b-fonline.com/salesforceresources/SFA/js/js.cookie.js"></script>
+        
+	    <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SFA/css/font-awesome.min.css" />
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SFA/css/accountSurvey.css" />
+		<link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/BootstrapModernPages/css/bootstrap.min.css" />
+		<link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/BootstrapModernPages/css/bootstrap-theme.min.css" />
+
+    <style>
+
+    </style>
+    </head>
+    
+    <script>
+        var j$ = jQuery.noConflict();
+
+        j$(document).ready(function() {
+            //j$(".main").css("margin-top", (j$("#top-panel").height() + 34) + "px");
+            //j$( window ).resize(function() {
+            //	j$(".main").css("margin-top", (j$("#top-panel").height() + 34) + "px");
+            //});
+            
+        });
+    </script>
+    <div class="bootstrap">        
+        <div class="container-fluid theme-showcase " role="main"> 
+            <div class="navbar-fixed-top header col-xs-12" id="top-panel">
+                <div class="col-xs-7 nopadding" style="padding-left:5px !important;">
+                    <a id="sectionTitleAccountName">{!a.Name}</a> - <div id="sectionTitle">{!$Label.Surveys}</div>
+                </div>
+                <div class="rightSideButtonsDiv col-xs-5 nopadding ">
+                    <div class="options-dropdown" id='overflowmenu'>
+                        <button id="optionMenuButton" type="button" class="btn-sm btn-flat btn-info optionMenuButton" onclick="showOptionsDropdown()">&#x22EE;</button>
+                        <div id="optionsMenuDropdown" class="options-dropdown-content"></div>
+                    </div>
+                    <button id="saveBtn" class="btn-sm btn-flat btn-primary saveBtn bfOnly">
+                        <i class="fa white fa-floppy-o faButton" title="Save"></i>
+                    </button>
+                    <button id="checkInBtn" class="btn-sm btn-flat btn-primary bfOnly checkIn hide" onclick="checkIn()">
+                        <i class="fa white fa-sign-in faButton" title="{!$ObjectType.CallCard__c.Fields.Check_In__c.Label}"></i>
+                        <span id="checkInBtnText" class="checkInText"></span>
+                    </button>
+                    <button id="checkOutBtn" class="btn-sm btn-flat btn-primary bfOnly checkIn hide disabled" disabled="disabled" onclick="checkOut()">
+                        <i class="fa white fa-sign-out faButton" title="{!$ObjectType.CallCard__c.Fields.Check_Out__c.Label}"></i>
+                        <span id="checkOutBtnText" class="checkInText"></span>
+                    </button>
+                </div>
+            </div>
+            <div class="main container col-xs-12" style="height: 500px !important;">                
+                <div class="callCard content col-xs-12 bfOnly activeContainer" id="callCardContainer" object="CallCard">
+                    <div style="float:left;">
+                        <span class="requiredField" style="margin-left: 20px; margin-right: 10px;"></span><span style="font-size: x-small;font-weight:bold;">{!$Label.AsteriskDenotesRequireField}</span>
+                    </div><br />
+                    <div>
+                        <label for="Call_Card_Date__c" class="col-xs-12 col-md-6 col-lg-12 requiredField labelMargin-top">Call Card Date</label>
+                        <input id="Call_Card_Date__c" class="form-control col-xs-12 col-md-6 col-lg-12 date" type="date" placeholder="Call Card Date" value="2019-02-26"></input>
+                        <label for="Call_Card_Type__c" class="col-xs-12 col-md-6 requiredField labelMargin-top">Call Card Type</label>
+                        <select id="Call_Card_Type__c" field="Call_Card_Type__c" class="form-control col-xs-12 col-md-6 picklist">
+                            <option disabled="" selected="" label="Select a Call_Card_Type__c" value=""></option>
+                            <option value="Off Sales Call" selected="">Off Sales Call</option>
+                            <option value="On and Off Sales Call">On and Off Sales Call</option>
+                            <option value="On Sales Call">On Sales Call</option>
+                        </select>
+                        <label for="Contact__c" class="col-xs-12 col-md-6 requiredField labelMargin-top">
+                            Contact<button id="createNewContactButton" class="btn btn-primary btn-sm" style="margin-left: 10px;">Create new Contact</button>
+                        </label>
+                        <select id="Contact__c" class="form-control col-xs-12 col-md-6 reference">
+                            <option disabled="" selected="" label="Select a Contact" value=""></option>
+                            <option label="Damian Bircher" value="0031300002TWwCkAAL" selected="">Damian Bircher</option>
+                            <option label="Steve Gibbons" value="0031300002RPiAjAAL">Steve Gibbons</option>
+                        </select>
+                        <label for="Objectives__c" class="col-xs-12 col-md-6 labelMargin-top">Objectives</label>
+                        <textarea id="Objectives__c" rows="5" class="form-control col-xs-12 col-md-6 textarea" placeholder="Objectives"></textarea>
+                        <label for="Follow_Up__c" class="col-xs-12 col-md-6 labelMargin-top">Follow Up</label>
+                        <textarea id="Follow_Up__c" rows="5" class="form-control col-xs-12 col-md-6 textarea" placeholder="Follow Up"></textarea>
+                        <label for="Comments__c" class="col-xs-12 col-md-6 labelMargin-top">Comments</label>
+                        <textarea id="Comments__c" rows="5" class="form-control col-xs-12 col-md-6 textarea" placeholder="Comments"></textarea>
+                    </div>                    
+                </div>
+                <div class="tasks content col-xs-12 bfOnly" id="tasksContainer" object="Tasks">
+                </div>
+                
+                <div class="surveys content col-xs-12" id="surveysContainer" object="Surveys" style="height: 100vh;" >
+                </div>                     
+                
+                <div class="orders content col-xs-12 bfOnly" id="ordersContainer" object="Orders">
+                </div>                
+                <div class="camera content col-xs-12 bfOnly" id="ordersContainer" object="Orders">
+                </div>                
+                <div class="promotions content col-xs-12 bfOnly" id="ordersContainer" object="Orders">
+                </div>                
+            </div>
+            <nav class="navbar-fixed-bottom bfOnly" style="background-color: white; margin-bottom: 5px;" role="navigation">
+                <div class="col-xs-12">
+                    <i class="fa fa-2x gray col-xs-1 text-center tab tabSpacer gone" title="spacer"></i>
+                    <i id="tabCallCard" class="fa fa-2x gray col-xs-2 text-center tab callCard fa-comments" title="{!$ObjectType.CallCard__c.LabelPlural}" object="callCard"></i>
+                    <i id="tabKeyTask" class="fa fa-2x gray col-xs-2 text-center tab tasks fa-tasks" title="{!$ObjectType.Key_Task__c.LabelPlural}" object="tasks"></i>
+                    <i id="tabSurvey" class="fa fa-2x gray highlighted col-xs-2 text-center tab surveys fa-pencil" title="{!$Label.Surveys}" object="surveys"></i>
+                    <i id="tabOrder" class="fa fa-2x gray col-xs-2 text-center tab orders fa-list-alt" title="{!$ObjectType.Order__c.LabelPlural}" object="orders"></i>
+                    <i id="tabCamera" class="fa fa-2x gray col-xs-2 text-center tab camera fa-camera" title="{!$Label.Camera}" object="camera"></i>
+                    <i id="tabPromotion" class="fa fa-2x gray col-xs-2 text-center tab promotions fa-ticket" title="{!$ObjectType.Promotion__c.LabelPlural}" object="promotions"></i>
+                    <i class="fa fa-2x gray col-xs-1 text-center tab tabSpacer gone" title="spacer"></i>
+                </div>
+            </nav>
+        </div>
+    </div>    
+</apex:page>

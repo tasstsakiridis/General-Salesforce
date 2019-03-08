@@ -1,0 +1,3388 @@
+<apex:page standardController="Account" extensions="Account_Visit_Controller" title="Account Visit New" sidebar="false" showHeader="false" docType="html-5.0" standardStylesheets="false">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="" />
+        <meta name="author" content="" />
+        
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <!--<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>-->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>        
+        <script src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js'></script>
+        <script src="https://www.b-fonline.com/salesforceresources/SFA/js/imageResizer/ExifRestorer.js"></script>
+        <script src="https://www.b-fonline.com/salesforceresources/SFA/js/imageResizer/ImageResizer.js"></script>
+        <script src="https://www.b-fonline.com/salesforceresources/SFA/js/js.cookie.js"></script>
+        <script src="https://www.b-fonline.com/salesforceresources/moment-with-locales.min.js"></script>
+        
+        <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css" />
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/fontawesome-5.5.0-web/css/all.min.css" />
+        <!--<link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SFA/css/accountSurvey.css" />-->
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous" />
+
+        <script type="text/javascript">
+	    	var __sfdcSessionId = '{!GETSESSIONID()}';
+	    </script>
+            
+        <script src="{!urlPrefix}/soap/ajax/35.0/connection.js" type="text/javascript" />
+
+    <style>
+        .hidden {
+            display: none;
+        }
+        .options-dropdown {
+            float:right;
+            margin-left: 5px !important;
+            margin-right: 5px !important;
+        }
+        .options-dropdown-content {
+            display: none;
+            position: absolute;
+            right: 5px;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            overflow: auto;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            font-weight: normal;
+            font-size: 75%;
+            text-align: right;
+        }
+        .options-dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+        .options-dropdown-content a:hover {
+            background-color: #f1f1f1;
+            text-decoration: none !important;
+        }
+        .options-show {
+            display:block;
+        }
+
+        .object-content_container {
+            margin-bottom: 40px;
+            overflow: scroll;
+            
+        }
+        @media screen and (max-width: 768px) {
+            .object-content_container {
+                margin-left: 0px !important;
+                margin-right: 0px !important;
+                padding-left: 0px !important;
+                padding-right: 0px !important;
+            }
+
+        }
+        .object-content_hidden {
+            display: none;
+        }
+        .object-content {
+            margin-bottom: 40px;
+            overflow: scroll;
+            padding-bottom: 15px;
+        }
+        #tasksContainer .row:first-child {
+            border-top: 0px;
+        }
+        .requiredField:after {
+            content: '*';
+            color: #c23934;  
+            margin-left: 10px;
+        }
+    
+        .labelMargin-top {
+            margin-top: 10px;
+        }
+
+        .gray{
+            color:rgb(159, 170, 181);
+        }
+        .highlighted{
+            background-color:white;
+            color:rgb(21, 137, 238);
+        }
+
+        .cptLink, .completedTable, .multiChannelLink, .singleChannelLink, .existingSurvey, #noSurveysMessage {
+            display: none;
+        }
+
+        .btn-file {
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-file input[type=file] {
+            position: absolute;
+            top: 0;
+            right: 0;
+            min-width: 100%;
+            min-height: 100%;
+            font-size: 100px;
+            text-align: right;
+            filter: alpha(opacity=0);
+            opacity: 0;
+            outline: none;
+            background: white;
+            cursor: inherit;
+            display: block;
+        }        
+        .cmn-toggle {
+            position: absolute;
+            margin-left: -9999px;
+            visibility: hidden;
+        }
+        .cmn-toggle + label {
+            display: block;
+            position: relative;
+            cursor: pointer;
+            outline: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        input.cmn-toggle-round-flat + label {
+            padding: 2px;
+            width: 60px;
+            height: 30px;
+            background-color: #dddddd;
+            -webkit-border-radius: 60px;
+            -moz-border-radius: 60px;
+            -ms-border-radius: 60px;
+            -o-border-radius: 60px;
+            border-radius: 60px;
+            -webkit-transition: background 0.4s;
+            -moz-transition: background 0.4s;
+            -o-transition: background 0.4s;
+            transition: background 0.4s;
+        }
+        input.cmn-toggle-round-flat + label:before, input.cmn-toggle-round-flat + label:after {
+            display: block;
+            position: absolute;
+            content: "";
+        }
+        input.cmn-toggle-round-flat + label:before {
+            top: 2px;
+            left: 2px;
+            bottom: 2px;
+            right: 2px;
+            background-color: #fff;
+            -webkit-border-radius: 30px;
+            -moz-border-radius: 30px;
+            -ms-border-radius: 30px;
+            -o-border-radius: 30px;
+            border-radius: 30px;
+            -webkit-transition: background 0.4s;
+            -moz-transition: background 0.4s;
+            -o-transition: background 0.4s;
+            transition: background 0.4s;
+        }
+        input.cmn-toggle-round-flat + label:after {
+            top: 4px;
+            left: 4px;
+            bottom: 4px;
+            width: 22px;
+            background-color: #dddddd;
+            -webkit-border-radius: 22px;
+            -moz-border-radius: 22px;
+            -ms-border-radius: 22px;
+            -o-border-radius: 22px;
+            border-radius: 22px;
+            -webkit-transition: margin 0.4s, background 0.4s;
+            -moz-transition: margin 0.4s, background 0.4s;
+            -o-transition: margin 0.4s, background 0.4s;
+            transition: margin 0.4s, background 0.4s;
+        }
+        input.cmn-toggle-round-flat:checked + label {
+            background-color: #337ab7;
+        }
+        input.cmn-toggle-round-flat:checked + label:after {
+            margin-left: 30px;
+            background-color: #337ab7;
+        }
+        .sm_max-width {
+            max-width: 325px;
+        }
+        .green{
+  	    	color: #4AB471;
+      	}
+
+    </style>
+    </head>
+    
+    <script>        
+        var j$ = jQuery.noConflict();
+        var account;
+        var urlPrefix = '{!urlPrefix}';
+        var communityUser = {!communityUser};
+        var inSF1 = false;
+		var iOS = false;
+        var returnURL = urlPrefix + '/apex/AccountsNearby';
+		var deviceType = 'desktop';
+        //absurd hack since salesforce is in perptual beta
+        if(urlPrefix != ""){
+            //console.log('prefix not blank');
+            sforce.connection.serverUrl = "{!urlPrefix}"+sforce.connection.serverUrl;
+        }
+        
+        //survey variables
+        var survey;
+        var skipCallCard = '{!$CurrentPage.Parameters.skip}';
+        var jumpToCamera = '{!$CurrentPage.Parameters.jumpToCamera}';
+    	var jumpToView = '{!$CurrentPage.Parameters.view}';
+        var uploadToPromotionId = '{!$CurrentPage.Parameters.uploadToPromotionId}';
+        var showProofOfConcept = '{!$CurrentPage.Parameters.showProofOfConcept}';
+        var returnToPromotion = '{!$CurrentPage.Parameters.returnToPromotion}';
+        var myManagersName = "{!myManagersName}";
+        var myManagersId = '{!myManagersId}';
+        var contactRecordTypeId = '{!contactRecordTypeId}';  
+        var contactRecordTypeName = '{!contactRecordTypeName}';
+        var hasAccessToTitlePicklist = '{!hasAccessToTitlePicklist}';
+        var pricingSurveyURL;
+        var showCPT = false;
+        var adHocSurveys;
+        var completedSurveys;
+        var newWindow;
+        var showCompletedMessage = false;
+        var promotionActivitiesList;
+        var chatterGroups;
+        var chatterTabs;
+        var canUploadMultipleItems = '{!canUploadMultipleItems}';
+    	var defaultLandingPage = '{!defaultLandingPage}';
+        var saveAllKeyTasks = '{!saveAllKeyTasks}';
+        var enableCheckInService = '{!enableCheckInService}';
+		var showSalesMaterials = {!showSalesMaterials};
+		var allSalesMaterials = {!serializedSalesMaterials};
+        var uploadedFileIds = [];
+    	var requiredFields = [];
+        var ccReadOnlyFields = [{!serializedCCReadOnlyFieldList}][0];
+        var attachmentBody;
+        var feedItemId = '';
+        var uiTheme = '{!$User.UIThemeDisplayed }'
+        var isUsingLightningTheme = (uiTheme == 'Theme4d' || uiTheme == 'Theme4t');
+		var imageResizeRatio = {!imageResizeRatio};
+    	var isSaving = false;
+        var hasAssets = false;
+        
+        /*  Remove below line when ready to allow markets to be able to select multiple items to attach */       
+		//canUploadMultipleItems = false;
+
+        // Custom Labels
+        var selectOtherConfirmMessage = '{!$Label.Select_Other_Confirmation_Message}';
+        var hashtagMessage 			  = '{!$Label.Hashtag_Something}';
+        var promotionLabel 			  = '{!$ObjectType.Promotion__c.Label}';
+        var promotionPluralLabel 	  = '{!$ObjectType.Promotion__c.LabelPlural}';
+        var channelLabel 			  = '{!$ObjectType.Promotion__c.Fields.Channel__c.Label}';
+        var startDateLabel 			  = '{!$ObjectType.Promotion__c.Fields.Promotion_Start_Date__c.Label}';
+        var endDateLabel 			  = '{!$ObjectType.Promotion__c.Fields.Promotion_End_Date__c.Label}';
+        var uploadAttachmentError 	  = '{!$Label.UploadAttachmentError}';
+        var selectLabel 			  = '{!$Label.Select_a_Something}';
+        var contactLabel 			  = '{!$ObjectType.Contact.Label}';
+        var removeLabel 			  = '{!$Label.Remove}';
+		var callCardLabel 			  = '{!$ObjectType.CallCard__c.Label}';
+    	var requiredErrorMsg 		  = '{!$Label.RequiredFieldsErrorMsg}';
+        var sightAssetsReminderMessage = '{!$Label.SightAssetsReminder}';
+        var createNewContactLabel     = '{!$Label.CreateNewContact}';
+        var newContactRequiredFieldsMessage = '{!$Label.NewContactRequiredFieldsMessage}';
+		var returnToRecordLabel 	  = '{!$Label.Return_To_Record}';
+        
+        // Custom Permissions
+        var hasAccessToCallCard       = '{!$Permission.AccountVisit_CallCard}';
+        var hasAccessToKeyTask        = '{!$Permission.AccountVisit_KeyTask}';
+        var hasAccessToSurvey         = '{!$Permission.AccountVisit_Survey}';
+        var hasAccessToCamera     	  = '{!$Permission.AccountVisit_Camera}';
+        var hasAccessToPromotion      = '{!$Permission.AccountVisit_Promotion}';
+        var hasAccessToOrder	  	  = '{!$Permission.AccountVisit_Order}';
+		var hasAccessToAccountSurvey  = {!$Permission.AccountVisit_AccountSurvey};
+                
+        //task variables
+        var allTasks;
+
+        //call card variables
+        var ccFields;
+        var callCard = {};
+    	var ccRecordTypeName 		  = '{!ccRecordTypeName}';
+    	var ccRecordTypeId 			  = '{!ccRecordTypeId}';
+        var CCDCallCardRecordType 	  = '{!CCDCallCardRecordType}';
+		var storeCallCardGeolocation  = {!storeCallCardGeolocation};
+
+		//promotion variables
+		var promotion;
+        var promotionList = [];
+        var canAutoCreatePromotionFromActivity = "{!canAutoCreatePromotionFromActivity}";
+
+    	//Order variables
+    	var order;
+		var canEditOrders = {!canEditOrders};       
+    	var orderList = [];
+    
+        // Flow variables
+        var flowTaskId;
+        var flowObject = 'keytask'; 
+        
+	    var picklistValuesMap = {};
+    	var recordTypesForObject = {};
+
+        j$(document).ready(function() {
+            if( (typeof sforce != 'undefined') && (sforce.one != null) ) {
+                inSF1 = true;
+            }else{
+                inSF1 = false;
+            }
+            
+            var IS_IPAD = navigator.userAgent.match(/iPad/i) != null;
+            if (j$(window).width() >= 992 && !IS_IPAD) {
+                deviceType = 'desktop';
+            } else {
+                if (j$(window).width() >= 768) {
+                    deviceType = 'tablet';
+                } else {
+                    deviceType = 'phone';
+                }
+            }
+
+            if (deviceType == 'phone') {
+                j$('.table').addClass('table-sm');
+                j$('#cameraContainer').addClass('sm_max-width');
+                j$('#ordersContainer').addClass('sm_max-width');
+                j$('#promotionsContainer').addClass('sm_max-width');
+            }
+
+            let marginTop = j$('#top-panel').height() + (deviceType == 'desktop' ? 0 : 10);
+            if (deviceType != 'desktop') {
+                marginTop += 20;
+            }
+
+            let marginBottom = j$('#bottom-panel').height() + (deviceType == 'desktop' ? 0 : 10);
+            let mainHeight = j$('.main').height() - (deviceType == 'desktop' ? 0 : (marginTop + marginBottom + 20));
+            console.log('mainHeight', mainHeight);
+            j$(".main").css("margin-top", marginTop + "px");
+            j$(".main").css("margin-bottom", marginBottom + "px");
+            //j$('.object-content').css('height', mainHeight + 'px');
+            j$( window ).resize(function() {
+            	j$(".main").css("margin-top", marginTop + "px");
+                j$(".main").css("margin-bottom", marginBottom + "px");
+                //j$('.object-content').css('height', mainHeight + 'px');
+            });
+            
+            j$('#callCardContainer').removeClass('object-content_hidden');
+
+            /*
+            j$(function() {
+                FastClick.attach(document.body);
+            });
+            */ 
+
+            if(communityUser){
+                j$('.bfOnly').hide();
+            }
+
+
+            account = [{!serializedAccount}][0];
+            callCard = [{!serializedCC}][0];
+
+            delete callCard['attributes'];
+            
+            survey = [{!serializedSurvey}][0];
+            accountSurveys = [{!serializedAccountSurveys}][0];
+            delete callCard['Account_Surveys__r'];
+            
+            promotionActivitiesList = [{!serializedPromotionActivities}][0];
+            promotionList = [{!serializedPromotions}][0];
+            chatterGroups = [{!serializedChatterGroups}][0];
+            orderList = [{!serializedOrders}][0];
+            
+            var recordTypeList = [];
+            if (hasAccessToCallCard == 'true') {
+                recordTypeList.push({"objectName": 'CallCard__c', "recordTypeName":ccRecordTypeName});
+            }
+            if (hasAccessToOrder == 'true' ) {
+                recordTypeList.push({"objectName":'Order__c',"recordTypeName":""});
+            }
+            recordTypeList.push({"objectName":'Contact',"recordTypeName":contactRecordTypeName});    
+            
+            if (enableCheckInService == 'true') {
+                if (deviceType == 'phone') {
+                    j$('#checkInBtnText').hide();
+                    j$('#checkOutBtnText').hide();
+                }
+                console.log('showing check in buttons');
+                console.log('callCard', callCard);
+                if(callCard) {
+                    if (callCard.Check_In__c) { checkIn(moment(callCard.Check_In__c).toDate(), false); }
+                    if (callCard.Check_Out__c) { checkOut(moment(callCard.Check_Out__c).toDate(), false); }
+                }
+                j$('.checkIn').removeClass('hide').show();
+            } else {
+                console.log('hiding check in buttons');
+                j$('.checkIn').hide();
+            }
+
+	        j$.when(getPicklistValuesForRecordTypes(recordTypeList)).then(buildPage());
+
+        });
+
+        /**
+         * Begin Page and Configuration functions
+         */
+        function buildPage() {
+            buildCallCardPage();
+            buildTasksPage();
+            buildSurveyPage();
+            if (hasAccessToOrder == 'true') { buildOrderPage(); }
+            buildPromotionPage();
+            buildPromotionActivityList();
+            buildCameraPage();
+            buildChatterPanel();
+
+            generateOptionsMenu();
+
+            bindEvents();
+            configureTabs();
+            configureForLightning();
+            configureHeaders();
+        }
+
+        function bindEvents() {
+            /** TABS - switch between tabs */
+            j$('.tab').click(function(){
+                console.log('tab clicked');
+                document.activeElement.blur();
+                
+                j$('.highlighted').removeClass('highlighted');
+                j$(this).addClass('highlighted');
+
+                var object = j$(this).attr('object');
+                console.log(object + ' tab clicked');
+                console.log('tab.click.  object: ', object);
+                j$('div.content').hide();
+                j$('div.'+object).show();
+                j$('div #sectionTitle').text(j$(this).attr('title'));
+                if(object == 'surveys' || object == 'promotions' || object == 'camera' || object == 'orders'){
+                    j$('#saveBtn').attr('data-object',null)
+                                  .hide();
+                }else{
+                    j$('#saveBtn').attr('data-object',object)
+                                  .show();                    
+                }
+            });    
+            /** End TABS */        
+
+            /** Begin DIALOG button events */
+            j$("#orderRecordTypeDialog").modal({
+                keyboard: true,
+                show: false
+            });
+            j$("#promoRecordTypeDialog").modal({
+                keyboard: true,
+                show: false
+            });
+            j$('#promoRecordTypeDialog').on("show.bs.modal", function() {
+                j$('#promoRecordTypeDialog').css('overflow-y', 'auto');
+                j$('#promoRecordTypeDialog').css('max-height', j$(window).height * 0.8);
+            });
+            /** End DIALOG button events */
+
+            /** BUTTONS */
+            /** Begin Page button events */
+            j$('#saveBtn').dblclick(function(e){
+                console.log('dblclick');
+                e.preventDefault();
+            });
+
+            j$('#saveBtn').click(function(){
+                console.log("Pressed saveBtn at: ", new Date());
+                console.log('click. issaving:', isSaving);
+                if (isSaving == true) { return; }
+                isSaving = true;
+
+                var object = j$(this).attr('data-object');
+                console.log('[savebtn.click] object', object);
+                if (object == 'callcard') {
+                    console.log("click. saveCallCard");
+                    saveCallCard();
+                } else if (object == 'tasks') {
+                    if (callCard == null || callCard.Id == null) { 
+                        console.log("click. saveCallCard then saveKeyTasks");
+                        saveCallCard(true);
+                    } else {
+                        saveKeyTasks();
+                        console.log("click. saveKeyTasks");
+                    }
+                }
+            });
+            /** End Page button events */
+
+            /** Begin Promotion page button events */
+            j$("#newPromoBtn").click(function() {
+                j$("#promoRecordTypeDialog").modal("show");
+            });
+            /** End Promotion page button events */
+
+            /** Begin Order page button events */
+            j$("#newOrderBtn").click(function() {
+                var orderRTList = j$('#orderRecordTypesList button');
+                console.log('orderRTList', orderRTList);
+                if (orderRTList && orderRTList.length == 1) {
+                    var rt = orderRTList[0];
+                    newOrder(rt.id, rt.value);
+                } else {
+                    j$("#orderRecordTypeDialog").modal("show");
+                }
+            });
+            /** End Order page button events */
+
+            /** Begin New Contact Dialog events */
+            j$('#createNewContactButton').click(function() {
+                j$("#newContactDialog").modal("show");                
+            });
+            j$('#newContactSaveButton').click(function() {                
+                var firstName = j$('#newContactFirstName').val();
+                var lastName = j$('#newContactLastName').val();
+                var phone = j$('#newContactPhone').val();
+                var mobile = j$('#newContactMobile').val();
+                var email = j$('#newContactEmail').val();
+                var title = j$('#newContactTitleText').val();
+                if (hasAccessToTitlePicklist == 'true') {
+                    title = j$('#newContactTitleSelect').val();
+                }
+                if (firstName == null || firstName.length == 0 || lastName == null || lastName.length == 0) {
+                    j$("#newContactDialogMessages").empty()
+                                                   .text(newContactRequiredFieldsMessage);
+                    j$("#newContactDialogMessagesContainer").removeClass('hidden')
+                                                            .show();
+                } else {
+                    j$("#newContactDialogMessages").empty()
+                                                   .hide();
+                    j$('#Contact__c').addClass('disabled');
+                    j$('#newContactSaveButton.spinner-border').show();
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.Account_Visit_Controller.saveNewContact}',
+                        account.Id, firstName, lastName, phone, mobile, email, title,
+                        function(result, event) {
+                            if (event.status) {
+                                console.log(result);
+                                var newContactName = firstName + ' ' + lastName;
+                                var ccHTML = '<option label="'+newContactName + '" value="' + result.Id + '">'+newContactName+'</option>';
+                                j$('#Contact__c').append(ccHTML)
+                                                 .removeClass('disabled');
+                                
+                            } else if (event.type === 'exception') {
+                                console.log(event);
+                            } else {
+                                console.log(event.message);
+                            }
+                            j$('#newContactSaveButton.spinner-border').hide();
+
+                            j$("#newContactDialog").modal("hide");                
+                        },
+                        {escape: false}
+                    );
+                }
+            });
+            /** End New Contact Dialog events */
+
+
+            /** Begin Account Survey and AdHocSurvey events */
+            j$('.surveyBtn').click(function() {
+                if(j$(this).hasClass('btn-light')) {
+                    var tbl = j$(this).attr('tbl');
+                    j$('#surveyContainer table').hide();
+                    if(j$('#'+tbl+' tbody').find('tr').length > 0){
+                        j$('#'+tbl).show();
+                        j$('#noSurveysMessage').hide();
+                    }else{
+                        j$('#noSurveysMessage').show();
+                    }
+                    j$(this).addClass('btn-primary').removeClass('btn-light');
+                    j$(this).siblings('button').addClass('btn-light').removeClass('btn-primary');
+                }
+            });
+            /** End Account Survey and AdHocSurvey events */
+
+        }
+
+        //toggle loading gif and saved message
+        function loading(val) {
+            console.log("Call loading: " + val, new Date());
+            if (val) {
+                j$('#saveBtn').removeClass('btn-primary').addClass('btn-info');
+                j$('.actionButton').prop('disabled', true);
+                //j$(".loadingImage").fadeIn(100).show()
+                j$('#saveBtn .spinner-border').removeClass('hidden').show();
+
+            }
+            else {
+                //j$(".loadingImage").hide();
+                j$('#saveBtn').removeClass('btn-info').addClass('btn-success').delay(2000).queue(function() {
+                    j$(this).removeClass('btn-success').addClass('btn-primary').dequeue();
+                    j$('#saveBtn .spinner-border').hide();
+                    j$('.actionButton').prop('disabled', false);
+                });
+            }
+        }
+        
+        function configureTabs() {
+            var tabsAvailable = [];
+            var defaultPageSet = false;
+            console.log('[configureTabs] defaultLandingPage', defaultLandingPage);
+            if (hasAccessToSurvey == 'false') { j$('#tabSurvey').hide(); } else { defaultPageSet = true; tabsAvailable.push('tabSurvey'); }
+            if (hasAccessToCallCard == 'false') { 
+                j$('#navCallCard').hide(); 
+            } else { 
+                tabsAvailable.push('tabCallCard');
+                if (defaultLandingPage == 'Call Card' || defaultPageSet == false || jumpToView == 'callcard') {
+                    console.log('[configureTabs] triggering callcard tab click');
+                    j$('.fixed-bottom .callcard').click(); 
+                    defaultPageSet = true; 
+                }
+            }
+            if (hasAccessToKeyTask == 'false') { 
+                j$('#navKeyTasks').hide(); 
+            } else { 
+                tabsAvailable.push('tabKeyTask');
+                if (defaultLandingPage == 'Key Task' || defaultPageSet == false || jumpToView == 'keytask') {
+                    j$('.fixed-bottom .tasks').click(); 
+                    defaultPageSet = true; 
+                }
+            } 
+            console.log('hasAccessToOrder', hasAccessToOrder);
+            if (hasAccessToOrder == 'false') {
+                j$('#navOrders').hide();
+            } else {
+                tabsAvailable.push('tabOrder');
+                if (defaultPageSet == false || jumpToView == 'order') {
+                    j$('.fixed-bottom .orders').click();
+                    defaultPageSet = true;
+                }
+            }
+            if (hasAccessToPromotion == 'false') { 
+                j$('#navPromotions').hide(); 
+            } else {
+                tabsAvailable.push('tabPromotion');
+                console.log('defaultpageset: ' + defaultPageSet);
+                if (defaultPageSet == false || jumpToView == 'promotion') {
+                    j$('.fixed-bottom .promotions').click(); 
+                    defaultPageSet = true; 
+                }
+            }
+            if (hasAccessToCamera == 'false') { 
+                j$('#navCamera').hide(); 
+            } else {
+                tabsAvailable.push('tabCamera');
+                if (defaultPageSet == false || jumpToView == 'camera') {
+                    j$('.fixed-bottom .camera').click(); 
+                    defaultPageSet = true; 
+                }
+            }
+            
+            console.log('defaultpageset: ' + defaultPageSet);
+            if (defaultPageSet == false) {
+                j$('.content').hide();
+                j$('#messagesContainer').removeClass('hidden')
+                                        .show();
+            } else {
+                j$('#messagesContainer').hide();
+                j$('.fixed-bottom').show();                
+            }
+            
+            var numberOfTabs = tabsAvailable.length;
+            if (numberOfTabs < 6) {
+                if (numberOfTabs == 5) {
+                    j$('.tabSpacer').removeClass('gone');
+                } else {
+                    var colSize = Math.ceil(12 / numberOfTabs);
+                    for(var i = 0; i < numberOfTabs; i++) {
+                        j$('#'+tabsAvailable[i]).removeClass('col-xs-2')
+                                                .addClass('col-xs-'+colSize);
+                    }
+                }
+            }
+            
+        }
+
+        function configureHeaders() {
+            j$("#sectionTitleAccountName").click(function(e) {
+                if (inSF1) {
+                    sforce.one.navigateToSObject(account.Id);
+                } else {
+                    if(urlPrefix)
+                        window.location = urlPrefix + "/" + account.Id;
+                    else
+                        window.location = '/'+account.Id;
+                }
+            });
+            if (hasAccessToTitlePicklist == 'true') {                
+                var titles = getSelectOptions('Title__c', 'Contact');
+                console.log('titles', titles);
+                var titleOptionsHTML = '';
+                for(var i = 0; i < titles.values.length; i++) {
+                    titleOptionsHTML += '<option value="'+titles.values[i]+'">'+titles.labels[i]+'</option>';
+                }
+                j$('#newContactTitleSelect').append(titleOptionsHTML)
+                                            .show();
+                j$('#newContactTitleText').hide();
+            } else {
+                j$('#newContactTitleSelect').hide();
+                j$('#newContactTitleText').show();
+            }
+
+            if (jumpToCamera && jumpToCamera == 'true') {
+                jumpToView = 'camera';
+                j$.each(promotionList, function(key, value) {
+                    if (value.id == uploadToPromotionId) {
+                        j$('#fuPromotionMenuText').attr('data-promo-id', uploadToPromotionId)
+                                                .attr('data-promo-name', value.linkName)
+                                                .attr('data-promo-channel', value.promoChannel)
+                                                .attr('data-promo-startdate', value.displayStartDate)
+                                                .attr('data-promo-enddate', value.displayEndDate)
+                                                .val(value.linkName);
+                        j$('#btnSelectOtherPromotion').attr('disabled', 'disabled');
+                        return false;
+                    }
+                });
+                
+                moveToUploadPage();
+                
+            j$('.fixed-bottom .camera').click();
+            }
+            
+
+        }
+        
+        function configureForLightning() {
+            if (isUsingLightningTheme == true) {
+                j$('#fileUploadInputGroupControls').addClass('display-inline');
+                j$('#fileUploadSpan').hide();
+                j$('#browseButton1Span').addClass('display-inline').show();
+            } else {
+                j$('#fileUploadInputGroupControls').removeClass('display-inline');
+                j$('#fileUploadSpan').show();
+                j$('#browseButton1Span').hide();                
+            }
+
+        }
+
+        /**
+         * End Page and Configuration functions
+         */
+
+        /**
+         * Begin Survey functions
+         */
+        function buildSurveyPage(){
+            buildAdHocSurveys();
+
+            if (account.Market__r.Name == 'Australia') {
+                if (account.Channel__c.substr(0,2).toLowerCase() == 'on') {
+                    j$('.onChannelLink').show();
+                } else if (account.Channel__c.substr(0,3).toLowerCase() == 'off') {
+                    j$('.offChannelLink').show();
+                } else {
+                    j$('.multiChannelLink').show();
+                }
+            } else {
+                if (hasAccessToAccountSurvey) {
+                    j$('.singleChannelLink').show();
+                }
+            }
+            
+            console.log('[buildSurveyPage] accountSurveys', accountSurveys);
+            for(var i = 0; i < accountSurveys.length; i++) {
+                survey = accountSurveys[i];
+                console.log('[buildSurveyPage] survey', survey);                
+                if (survey.Survey_Type__c != undefined){
+                    if (survey.Survey_Type__c.indexOf('Account') != -1){
+                        if (survey.Survey_Channel__c != undefined) {
+                            if (survey.Survey_Channel__c.toLowerCase().substr(0,2) == 'on') {
+                                j$('#existingOnAccountSurvey').css('display', 'inline');
+                                j$('.onchannelsurvey').attr('data-survey-id', survey.Id);
+                            } else {
+                                j$('#existingOffAccountSurvey').css('display', 'inline');
+                                j$('.offchannelsurvey').attr('data-survey-id', survey.Id);
+                            }
+                        } else {
+                            j$('#existingAccountSurvey').css('display', 'inline');
+                            j$('.singlechannelsurvey').attr('data-survey-id', survey.Id);
+
+                        }
+                    }
+                    if (survey.Survey_Type__c.indexOf('CPT') != -1){
+                        j$('#existingCPTSurvey').css('display', 'inline');
+                        j$('.cptsurvey').attr('data-survey-id', survey.Id);
+                    }
+                }
+            }
+
+            if ((account.Market__r.Country__c == 'USA' || account.Market__r.Country__c == 'United States') && (account.Channel__c == 'Off' || account.Channel__c == 'Off Premise')){
+                showCPT = true;
+                skipCallCard = true;
+                j$('.cptLink').css('display', 'inline');
+            }
+            
+            if (hasAccessToAccountSurvey) {
+                j$('#account_survey_link').show();
+            } else {
+                j$('#account_survey_link').hide();
+            }
+        }
+
+        function buildAdHocSurveys(){
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.Account_Visit_Controller.buildSurveys}',
+                account.Id,
+                function(result, event) {
+                    if (event.status) {
+                        console.log(result);
+                        parseAdHocSurveys(result);
+                    } else if (event.type === 'exception') {
+                        console.log(event);
+                    } else {
+                        console.log(event.message);
+                    }
+                },
+                {escape: false}
+            );
+        }
+
+        function parseAdHocSurveys(surveys) {
+            console.log('[parseSurveys] surveys', surveys);
+            showCompletedMessage = true;
+            j$(surveys).each(function() {
+                console.log(j$(this)[0].linkName);
+                var url = '';
+                if (urlPrefix != '') {
+                    var index = j$(this)[0].link.indexOf('.com');
+                    url = j$(this)[0].link.substring(index, j$(this)[0].link.length).replace('.com', urlPrefix);
+                }else{
+                    url = j$(this)[0].link;
+                }
+
+                // If repeatable add url arugument
+                if (j$(this)[0].repeatable) {
+                    url += '&asNewSurvey=true';
+                }
+                
+                var surveyRow = '<tr class="dataRow surveyRows">';
+                if (inSF1) {
+                    surveyRow += '<td class="dataCell" colspan="1" width="34%"><a href="javascript:sforce.one.navigateToURL(\'' + url + '\')">' + j$(this)[0].linkName + '</a></td>';
+                }else{
+                    surveyRow += '<td class="dataCell" colspan="1" width="34%"><a href="' + url + '" target="_self">' + j$(this)[0].linkName + '</a></td>';
+                }
+                surveyRow += '<td class="dataCell" colspan="1" width="16%">&nbsp;</td>';
+                surveyRow += '<td class="dataCell" colspan="1" width="25%">' + j$(this)[0].displayStartDate + '</td>';
+                surveyRow += '<td class="dataCell" colspan="1" width="25%">' + j$(this)[0].displayEndDate + '</td>';
+                surveyRow += '</tr>';
+                if (j$(this)[0].completed && !j$(this)[0].repeatable) {
+                    j$('#completedTable >tbody:last').append(surveyRow);
+                    showCompletedMessage = false;
+                } else {
+                    j$('#surveysTable >tbody:last').append(surveyRow);
+                }
+            });
+        }
+
+        function startNewAccountSurvey(surveyType, surveyChannel, el) {
+            let surveyId = j$(el).attr('data-survey-id');
+            console.log('surveyid', surveyId);
+            if (account.Market__r.Name == 'Australia') {
+                if (callCard == null || callCard.Id == null) {
+                    saveCallCard(false, function() { startNewAccountSurvey(surveyType, surveyChannel, surveyId); });
+                } else {
+                    newAccountSurvey(surveyType, surveyChannel, surveyId);
+                }                    
+            } else {
+                newAccountSurvey(surveyType, '', surveyId);
+            }
+        }
+
+        function newAccountSurvey(surveyType, channel, surveyId) {
+            j$('.loadingImage').toggle();
+            var callCardId = '';
+            if(callCard.Id != undefined){
+                callCardId = callCard.Id;
+            }
+            skipCallCard = true;
+            var returnUrl = urlPrefix + '/apex/Account_Visit';
+            if (surveyId == undefined) { surveyId = ''; }
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.Account_Visit_Controller.newAccountSurvey}',
+                surveyId, surveyType, skipCallCard, account.Name, account.Id, callCardId, urlPrefix, returnUrl, channel,
+                function(result, event) {
+                    if (event.status) {
+                        redirectURL = decodeURI(result);
+                        var newURL = redirectURL.replace(/&amp;/g, "&");
+                        try{
+                            if (sforce.one) {
+                                sforce.one.navigateToURL(newURL, true);
+                            } else {
+                                console.log('opening survey');
+                                window.open(newURL, "_self");
+                                j$('.loadingImage').toggle();
+                            }
+                        } catch(err) {
+                            if (newWindow) {
+                                window.open(newURL, "_self");
+                                j$('.loadingImage').toggle();
+                            } else {
+                                window.location.href = newURL;
+                            }
+                        }
+                        console.log(newURL);
+                    } else if (event.type === 'exception') {
+                        console.log(event);
+                        alert('exception url opening new survey. ' + event.message);
+                    } else {
+                        console.log(event.message);
+                        alert('exception opening new survey. ' + event.message);
+                    }
+                },
+                { escape: false }
+            );
+
+        }
+
+        /**
+         * End Survey functions
+         */
+
+        /**
+         * Begin Call Card functions
+         */ 
+        function buildCallCardPage() {
+            ccFields = [{!serializedCCFieldSet}][0];
+
+            j$('#newContactAccount').text(account.Name);
+            j$('#newContactDialogMessagesContainer').hide();
+            var rawValue = '';
+            var callCardHTML = '<div>';
+            var requiredHTML = '';
+            console.log('ccFields', ccFields);
+            j$.each(ccFields, function(key, value) {
+                requiredHTML = '';
+                if (value.required || value.dbRequired) {
+                    requiredHTML = ' requiredField';
+                    requiredFields.push(value);
+                }
+                var isReadOnly = false;
+                var pos = -1;
+                if (ccReadOnlyFields != null) {
+                    pos = ccReadOnlyFields.indexOf(value.fieldPath);            
+                }
+                if (pos >= 0) {
+                    isReadOnly = true;
+                }
+                
+                var value = callCard[ccFields[key].fieldPath] == null ? '' : callCard[ccFields[key].fieldPath];
+                switch(ccFields[key].type) {
+                    case 'textarea':
+                        callCardHTML += '<label for="' + ccFields[key].fieldPath + '" class="col-12 ' + requiredHTML + ' mt-4 mb-1">' + ccFields[key].label + '</label>';
+                        if(ccFields[key].fieldPath == 'Objectives_Long__c' && account.Objectives__c != undefined){
+                            value = account.Objectives__c;
+                        } else if (ccFields[key].fieldPath == 'Objectives__c' && account.Call_Card_Objectives__c != undefined){
+                            value = account.Call_Card_Objectives__c;
+                        } else if(callCard[ccFields[key].fieldPath] != undefined){
+                            value = callCard[ccFields[key].fieldPath];
+                        }
+                                                
+                        callCardHTML += '<textarea id="' + ccFields[key].fieldPath + '" rows="5" class="form-control col-12 ' + ccFields[key].type + '" placeholder="' + ccFields[key].label + '" ' + (isReadOnly ? 'disabled' : '') + '>' + value + '</textarea>';
+                        break;
+                    case 'reference':
+                        callCardHTML += '<label for="' + ccFields[key].fieldPath + '" class="col-12 ' + requiredHTML + ' mt-4 mb-1">' + ccFields[key].label;
+                        if(ccFields[key].fieldPath == 'Contact__c'){
+                            callCardHTML += '<button id="createNewContactButton" class="btn btn-primary btn-sm" style="margin-left: 10px;">'+createNewContactLabel+'</button>';
+                            callCardHTML += '</label>';
+                            var lbl = selectLabel.replace('%0%', contactLabel);
+                            callCardHTML += '<select id="' + ccFields[key].fieldPath + '" class="form-control col-12 col-md-6 ' + ccFields[key].type + '" ' + (isReadOnly ? 'disabled' : '') + '><option disabled selected label="'+lbl+'" value=""></option>';
+                            if(account.Contacts != undefined && account.Contacts.records.length > 0){
+                                for(var i=0; i < account.Contacts.records.length; i++){
+                                    if(callCard.Contact__c != undefined && callCard.Contact__c == account.Contacts.records[i].Id){
+                                        callCardHTML += '<option label="' + account.Contacts.records[i].Name + '" value="' + account.Contacts.records[i].Id + '" selected>'+account.Contacts.records[i].Name+'</option>';
+                                    }else{
+                                        callCardHTML += '<option label="' + account.Contacts.records[i].Name + '" value="' + account.Contacts.records[i].Id + '">'+account.Contacts.records[i].Name+'</option>';
+                                    }
+                                }
+                            }
+                            callCardHTML += '</select>';
+                        } else {
+                            callCardHTML += '</label>';
+                        }
+                        
+                        break;
+                    case 'picklist':
+                        callCardHTML += '<label for="' + ccFields[key].fieldPath + '" class="col-12 ' + requiredHTML + ' mt-4 mb-1">' + ccFields[key].label + '</label>';
+                        var lbl = selectLabel.replace('%0%', ccFields[key].fieldPath);
+                        callCardHTML += '<select id="' + ccFields[key].fieldPath+'" field="' + ccFields[key].fieldPath + '" class="form-control col-12 col-md-6 ' + ccFields[key].type + '" ' + (isReadOnly ? 'disabled' : '') + '><option disabled selected label="' + lbl + '" value=""></option>';
+                        var options = getSelectOptions(ccFields[key].fieldPath, 'CallCard__c');
+                        for(var i=0; i<options.values.length; i++) {
+                            if (value == options.values[i]) {
+                                callCardHTML += '<option value="' + options.values[i] + '" selected>' + options.labels[i] + '</option>';
+                            }else{
+                                callCardHTML += '<option value="' + options.values[i] + '">' + options.labels[i] + '</option>';
+                            }
+                        }
+                        callCardHTML += '</select>';
+                        break;                        
+                    case 'boolean':
+                        callCardHTML += '<div class="col-12 mt-4 mb-1"><dl>';
+                        callCardHTML += '<dt>' + ccFields[key].label + '</dt><dd>';
+                        if (isReadOnly == true) {
+                            callCardHTML += '<input id="' + ccFields[key].fieldPath + '" field="' + ccFields[key].fieldPath + '" type="checkbox" disabled="disabled" class="fieldInput cmn-toggle cmn-toggle-round-flat"/>';
+                            callCardHTML += '<label for="' + ccFields[key].fieldPath + '"></label>';
+                        } else {
+                            if (value == true) {
+                                callCardHTML += '<input id="' + ccFields[key].fieldPath + '" field="' + ccFields[key].fieldPath + '" type="checkbox" checked="checked" class="fieldInput cmn-toggle cmn-toggle-round-flat"/>';
+                            } else {
+                                callCardHTML += '<input id="' + ccFields[key].fieldPath + '" field="' + ccFields[key].fieldPath + '" type="checkbox" class="fieldInput btn cmn-toggle cmn-toggle-round-flat"/>';
+                            }
+                            callCardHTML += '<label for="' + ccFields[key].fieldPath + '"></label>';
+                        }                    
+                        callCardHTML += '</dd></div>';
+                        break;
+
+                    case 'datetime':
+                        timeValue = '';
+                        rawValue = '';
+                        if (callCard[ccFields[key].fieldPath] != undefined) {
+                            rawValue = callCard[ccFields[key].fieldPath];
+                            timeValue = new Date(rawValue).toLocaleTimeString();
+                        }
+                        callCardHTML += '<label for="' + ccFields[key].fieldPath + '" class="col-12 ' + requiredHTML + ' mt-4 mb-1">' + ccFields[key].label + '</label>';
+                        callCardHTML += '<input id="' + ccFields[key].fieldPath + '" class="form-control col-12 col-md-6 ' + ccFields[key].type + '" type="' + ccFields[key].type + '" disabled placeholder="' + ccFields[key].label + '" value="' + timeValue + '" data-time="'+rawValue+'"/>';
+                        break;
+                    default:
+                        callCardHTML += '<label for="' + ccFields[key].fieldPath + '" class="col-12 ' + requiredHTML + ' mt-4 mb-1">' + ccFields[key].label + '</label>';
+                        if (ccFields[key].fieldPath == 'Call_Card_Date__c') {
+                            var tzOffset = (new Date()).getTimezoneOffset() * 60000; // offset in milliseconds
+                            var today = (new Date(Date.now() - tzOffset)).toISOString().slice(0, 10);
+                            callCardHTML += '<input id="' + ccFields[key].fieldPath + '" class="form-control col-12 col-md-6 ' + ccFields[key].type + '" type="' + ccFields[key].type + '" ' + (isReadOnly ? 'disabled' : '') + ' placeholder="' + ccFields[key].label + '" value="' + today + '"/>';
+                        }else{
+                            callCardHTML += '<input id="' + ccFields[key].fieldPath + '" class="form-control col-12 ' + ccFields[key].type + '" type="' + ccFields[key].type + '" placeholder="' + ccFields[key].label + '" ' + (isReadOnly ? 'disabled' : '') + '"/>';
+                        }
+                }
+            });
+            callCardHTML += '</div>';
+            j$('#callCardContent').append(callCardHTML);
+        }
+
+        function checkIn(checkInDate, doSave) {
+            console.log("called checkIn");
+            j$('#checkInBtn .spinner-border').removeClass('hidden');
+            if (checkInDate == null) {
+                checkInDate = new Date();
+                callCard['Check_In__c'] = checkInDate;
+            }
+            if (doSave == undefined) { doSave = true; }
+            
+            j$('#Check_In__c').val(checkInDate.toLocaleTimeString())
+                            .attr('data-time', checkInDate);
+            
+            j$('#checkInBtnText').text(checkInDate.toLocaleTimeString());
+            j$('#checkInBtn').removeClass('btn-primary')
+                            .addClass('btn-success')
+                            .attr('date-time', checkInDate);
+
+            j$('#checkOutBtn').removeAttr('disabled')
+                            .removeClass('disabled');
+            
+            if (doSave == true) { saveCallCard(); }
+        }
+
+        function checkOut(checkOutDate, doSave) {
+            console.log("called checkOut");
+            j$('#checkInBtn .spinner-border').removeClass('hidden');
+            if (checkOutDate == null) {
+                checkOutDate = new Date();
+                //callCard['Check_Out__c'] = checkOutDate;
+            }
+            if (doSave == undefined) { doSave = true; }
+
+            j$('#Check_Out__c').val(checkOutDate.toLocaleTimeString())
+                            .attr('data-time', checkOutDate);
+            j$('#checkOutBtnText').text(checkOutDate.toLocaleTimeString());
+            j$('#checkOutBtn').removeClass('btn-primary')
+                            .addClass('btn-success')
+                            .attr('date-time', checkOutDate);
+            
+            if (doSave == true) { saveCallCard(); }
+        }
+
+        function saveCallCard(shouldSaveKeyTasks, callback) {
+            loading(true);
+            
+            // If geolocation save enabled
+            if (storeCallCardGeolocation && typeof callCard['Location__Longitude__s'] == 'undefined') {
+                var location = Cookies.get('locationData'); // Try to get stored location data
+                // If location data present, check it, otherwise get new data
+                if (location) {
+                    // Parse location data and check if it's < 10 min old
+                    location = JSON.parse(location);
+                    var now = new Date(); // For checking if stored location data is still valid
+                    var diffMin = (now.getTime() - location.timestamp)/1000/60;
+                    if (diffMin < 10) {
+                        // Save with call card data
+                        callCard['Location__Latitude__s'] = location.latitude;
+                        callCard['Location__Longitude__s'] = location.longitude;
+                        console.log("Saving call card with valid location data: " + JSON.stringify(location));
+                    } else {
+                        // Refresh location data and try save again
+                        console.log("stale location data, refreshing");
+                        return storeLocation( function() {
+                            saveCallCard(shouldSaveKeyTasks, callback);
+                        });
+                    }
+                } else {
+                    // Refresh location data and try save again
+                    console.log("missing location data, refreshing");
+                    return storeLocation( function() {
+                        saveCallCard(shouldSaveKeyTasks, callback);
+                    });
+                }
+            }
+            
+            //call card save
+            callCard['Account__c'] = account.Id;
+            callCard['RecordTypeId'] = ccRecordTypeId;
+            var okToSave = true;
+            j$('#callCardContainer').find('input, textarea, select').each(function() {
+                var el = j$(this);
+                var elId = el.attr('id');
+                console.log('el', el);
+                if(el.val() != ''){
+                    okToSave = true;
+                    if(el.hasClass('date')){
+                        var formattedDate = new Date(el.val()).getTime();
+                        callCard[elId] = formattedDate;
+                    } else if (el.hasClass('datetime')) {
+                        var time = el.attr('data-time');
+                        var formattedDate = new Date(time).getTime();
+                        //alert(j$(this).attr('id') + ': ' + time + ', ' + formattedDate);
+                        callCard[elId] = formattedDate;
+                    } else if (el.hasClass('cmn-toggle')) {
+                        var checked = el.is(':checked');
+                        console.log('checked: ' + checked);
+                        callCard[elId] = checked;
+                    }else{
+                        callCard[elId] = el.val();
+                    }
+                }
+                
+            });
+            if (enableCheckInService == 'true') {
+                var checkInTime = j$('#checkInBtn').attr('date-time');
+                var checkOutTime = j$('#checkOutBtn').attr('date-time');
+                console.log('checkInTime', checkInTime);
+                console.log('checkOutTime', checkOutTime);
+                if (checkInTime != null) { callCard['Check_In__c'] = new Date(checkInTime).getTime(); }
+                if (checkOutTime != null) { callCard['Check_Out__c'] = new Date(checkOutTime).getTime(); }
+            }
+            console.log('callcard: ' + callCard);
+            var msg = '';
+            var errormessage = '';
+            for(var i = 0; i < requiredFields.length; i++) {
+                console.log('callcard.' + requiredFields[i],callCard[requiredFields[i].fieldPath]);
+                if (callCard[requiredFields[i].fieldPath] == null || callCard[requiredFields[i].fieldPath] == '') {
+                    errormessage += requiredFields[i].label + ', ';
+                    okToSave = false;
+                }                                
+            }
+            if (errormessage.length > 0) {
+                j$('#btn-save .spinner-border').hide();
+
+                loading(false);
+                isSaving = false;
+                errormessage = errormessage.substr(0, errormessage.length - 2);
+                errormessage = '<p style="font-weight:normal;font-size:small;">'+requiredErrorMsg+' '+callCardLabel+'\n</p><p style="font-size:smaller;font-weight:bold;">' + errormessage+'</p>';
+                showMessage(errormessage);
+            } else {
+                j$('#pageMessages').empty();
+                if (okToSave) {              
+                    console.log('[save] callcard', callCard);
+                    Account_Visit_Controller.saveCallCard(callCard, CCDCallCardRecordType, function(result, event) {
+                        if (event.status) {
+                            callCard = result;
+                            console.log('[saveCallCard] callcard saved. callcard', callCard);
+                            if (shouldSaveKeyTasks == true) { saveKeyTasks(callCard.Id); }
+                            if (callback) { callback(); }
+                            if(!shouldSaveKeyTasks && !callback) { loading(false); isSaving = false;}
+                        } else {
+                            //handling errors.
+                            console.log(event.message);
+                            alert('error saving call card data. ' + event.message);
+                            loading(false);
+                        }
+                    });
+                } else {
+                    loading(false);
+                    isSaving = false;
+                }
+            }
+        }
+
+        // Get user lat/long and time of location grab, store in cookie client side
+        // For accessing when saving a Call Card
+        function storeLocation(callback) {
+            // JSON to store location data
+            var locationData = {
+                timestamp: new Date().getTime(),
+                latitude: 0,
+                longitude: 0
+            };
+            
+            //Try to get location and store locationData
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    console.log("Found location, storing in cookie");
+                    locationData.timestamp = position.timestamp;
+                    locationData.latitude = position.coords.latitude;
+                    locationData.longitude = position.coords.longitude;
+                    Cookies.set('locationData', JSON.stringify(locationData));
+                    callback();
+                }, function(error) {
+                    console.log("Geolocation request failed: " + error.code);
+                    Cookies.set('locationData', JSON.stringify(locationData));
+                    callback();
+                });
+            } else {
+                console.log("Geolocation is not supported by this browser.");
+                Cookies.set('locationData', JSON.stringify(locationData));
+                callback();
+            }
+            
+            return false;
+        }
+
+         /**
+         * Begin Call Card functions
+         */ 
+
+        /**
+         * Begin Key Task functions
+         */ 
+        function buildTasksPage(){
+            // Create Sales Materials section if market is enabled
+            if (showSalesMaterials == true) {
+                var materialsHTML = '<div class="card mb-3"><div class="card-header"><h3><a class="accordion-toggle collapsed" data-toggle="collapse" href="#collapseSalesMaterials" data-target="#collapseSalesMaterials">{!HTMLENCODE($ObjectType.Sales_Material__c.LabelPlural)}</a></h3></div><div class="card-body">';
+
+                // Build Sales Materials Header/Wrapper
+                if (allSalesMaterials.length > 0) {
+                materialsHTML += '<div id="collapseSalesMaterials" class="panel-collapse collapse"><ul class="list-group">';
+                j$.each(allSalesMaterials, function() {
+                    materialsHTML += '<li class="list-group-item text-center">';
+                    // If iOS, open in Google apps
+                    if (inSF1 && iOS) {
+                        materialsHTML += '<a href="javascript:sforce.one.navigateToURL(\'https://public.b-f.com/sfdc/iOSAppOpen/?link=' + encodeURIComponent(this.Sales_Material__r.Attachment_URL__c) + '\')">' +  this.Sales_Material_Description__c + '</a>';
+                    } else if (inSF1) {
+                        materialsHTML += '<a href="javascript:sforce.one.navigateToURL(\'' + this.Sales_Material__r.Attachment_URL__c + '\')">' +  this.Sales_Material_Description__c + '</a>';
+                    } else {
+                        materialsHTML += '<a href="' +  this.Sales_Material__r.Attachment_URL__c + '" target="_blank">' +  this.Sales_Material_Description__c + '</a>';
+                    }
+                    materialsHTML += '</li>';
+                });
+                materialsHTML += '</ul></div>';
+                } else {
+                    materialsHTML += '<div id="collapseSalesMaterials" class="panel-collapse collapse"><ul class="list-group"><li class="list-group-item text-center">{!$Label.No_Sales_Materials}</li></ul></div>';
+                }
+                materialsHTML += '</div></div>';
+
+                j$('#tasksContent').append(materialsHTML);
+                // Show panel if has content
+                if(allSalesMaterials.length > 0)
+                    j$('#collapseSalesMaterials').collapse('show');
+            }
+
+            // build keys tasks
+            allTasks = [{!serializedTasks}][0];
+            
+            var taskHTML = '<div class="card"><div class="card-header"><h3>{!$ObjectType.Key_Task__c.LabelPlural}</h3></div>';
+            if (allTasks.length > 0) {
+                console.log('allTasks', allTasks);
+                taskHTML += '<div class="card-body"><div class="list-group list-group-flush m-0 p-0">';
+                var mToday = moment();
+                console.log('saveAllKeyTasks', saveAllKeyTasks);
+                j$.each(allTasks, function(key, value) {
+                    
+                    var taskId = value.taskId;
+                    var taskDate = new Date(value.lastCompleted);
+                    //var todaysDate = new Date();
+                    var mTaskDate = moment({year:taskDate.getFullYear(),month:taskDate.getMonth(),day:taskDate.getDate()});
+                    var mDaysDiff = mToday.diff(mTaskDate, 'days');
+                    //var taskCompletedToday = (taskDate.toDateString() == todaysDate.toDateString())
+                    var taskCompletedToday = mDaysDiff == 0;
+                    console.log('value.name: ' + value.name + ', today: ' + mToday.toString() + ', taskDate: ' + mTaskDate.toString() + ', diff: ' + mDaysDiff);                    
+                    if (taskCompletedToday == false && saveAllKeyTasks == "true") {
+                        taskId = null;
+                    }
+                    //if (isToday) { taskId = value.taskId; }
+                    
+                    if (deviceType == 'phone') {
+                        taskHTML += '<div id="task_' + value.templateId + '" class="list-group-item task" data-task-id="' + taskId + '" data-template-id="' + value.templateId + '" data-task-name="' + value.name + '" data-complete="' + value.complete + '">';
+                        taskHTML += '<div class="card text-center"><div class="card-body">';
+                        if (value.complete && (saveAllKeyTasks == "false" || taskCompletedToday)) {
+                            //taskHTML += value.displayDate;
+                            taskHTML += '<p class="card-title">'+moment(taskDate).format('LLL') + '</p>';
+                        }
+                        taskHTML += '<h5 class="card-text">';
+                        if (value.description == null) {
+                            taskHTML += value.name;
+                        } else {
+                            taskHTML += value.description;
+                        }
+                        taskHTML += '</h5>'; // card-text
+                        taskHTML += '</div><div class="card-footer"><div class="taskData toggle float-right">';
+                        if (value.complete && (saveAllKeyTasks == "false" || taskCompletedToday)) {
+                            taskHTML += '<input type="checkbox" id="' + value.templateId + '" class="cmn-toggle cmn-toggle-round-flat" checked/>';
+                        }else{
+                            taskHTML += '<input type="checkbox" id="' + value.templateId + '" class="cmn-toggle cmn-toggle-round-flat"/>';
+                            //taskHTML += '<div class="custom-control custom-switch"><input type="checkbox" class="custom-control-input" /></div>';
+                        }
+                        taskHTML += '<label class="toggle" for="' + value.templateId + '"></label>';
+
+                        taskHTML += '</div></div></div></div>'; // toggle - card-footer - card - list-group-item
+                    } else {
+                        taskHTML += '<div id="task_' + value.templateId + '" class="list-group-item task m-0 p-0" data-task-id="' + taskId + '" data-template-id="' + value.templateId + '" data-task-name="' + value.name + '" data-complete="' + value.complete + '">';
+                        taskHTML += '<div class="container mt-2"><div class="row">';
+                        taskHTML += '<div class="col-6 taskData taskName">';
+                        if (value.description == null) {
+                            taskHTML += value.name;
+                        } else {
+                            taskHTML += value.description;
+                        }
+                        
+                        taskHTML += '</div><div class="col taskData lastCompletedDate">';
+                        if (value.complete && (saveAllKeyTasks == "false" || taskCompletedToday)) {
+                            //taskHTML += value.displayDate;
+                            taskHTML += moment(taskDate).format('LLL');
+                        }
+                        taskHTML += '</div><div class="col taskData toggle">';
+                            /*
+                        if (isUsingLightningTheme) {
+                            if (taskId == null) {
+                                //taskHTML += '</div><div class="col-xs-1 taskData"><a href="javascript:sforce.one.navigateToURL(\'/flow/JRFlowUploadTest?recordId='+value.templateId+'&objectName=keytasktemplate&accountId='+account.Id+'&callCardId='+(callCard.Id == undefined ? '' : callCard.Id)+'&retURL=/apex/account_visit?id='+account.Id+'\')"><i class="fa fa-upload fa-2x" /></a></div><div class="col-xs-2 taskData toggle">';
+                            } else {
+                                //taskHTML += '</div><div class="col-xs-1 taskData"><a href="javascript:sforce.one.navigateToURL(\'/flow/JRFlowUploadTest?recordId='+taskId+'&objectName=keytask&accountId='+account.Id+'&callCardId='+(callCard.Id == undefined ? '' : callCard.Id)+'&retURL=/apex/account_visit?id='+account.Id+'\')"><i class="fa fa-upload fa-2x" /></a></div><div class="col-xs-2 taskData toggle">';
+                            }
+                            taskHTML += '</div><div class="col-1 taskData"><a href="javascript:uploadFiles('+taskId+', '+value.templateId+')"><i class="fa fa-upload fa-2x" /></a></div><div class="col-2 taskData toggle">';
+                        }
+                        */
+                        if (value.complete && (saveAllKeyTasks == "false" || taskCompletedToday)) {
+                            taskHTML += '<input type="checkbox" id="' + value.templateId + '" class="cmn-toggle cmn-toggle-round-flat" checked/>';
+                        }else{
+                            taskHTML += '<input type="checkbox" id="' + value.templateId + '" class="cmn-toggle cmn-toggle-round-flat"/>';
+                            //taskHTML += '<div class="custom-control custom-switch"><input type="checkbox" class="custom-control-input" /></div>';
+                        }
+                        taskHTML += '<label class="toggle" for="' + value.templateId + '"></label>';
+                        taskHTML += '</div></div></div></div>'; // toggle - row - container - list-group-item
+                    }
+
+                });
+                taskHTML += '</div></div></div>'; // list-group - card-body - card
+            } else {
+                taskHTML +='<div id="noKeyTasksMessage" class="myMessage col-12 alert alert-warning">{!$Label.No_KeyTasks_Found}</div>';
+            }
+            
+            // Append the HTML
+            j$('#tasksContent').append(taskHTML);
+        }
+
+        function saveKeyTasks(callCardId) {
+            //task save
+            loading(true);
+            
+            console.log('[saveKeyTasks] saveAllKeyTasks', saveAllKeyTasks);
+            console.log('[saveKeyTasks] callcard', callCard);
+            if (callCardId == undefined && callCard.Id != undefined) { callCardId = callCard.Id; }
+            var tasksToSave = [];
+            j$('.task').find(':checkbox').each(function() {
+                var complete = j$(this).prop('checked');
+                console.log('[saveKeyTasks] data-task-id', j$(this).parents('.task').attr('data-task-id'));
+                console.log('[saveKeyTasks] complete', complete);
+                if (j$(this).parents('.task').attr('data-task-id') != 'null') {
+                    var task = {};
+                    task['Id'] = j$(this).parents('.task').attr('data-task-id');
+                    task['Key_Task_Template__c'] = j$(this).parents('.task').attr('data-template-id');
+                    task['Complete__c'] = complete;
+                    task['Call_Card__c'] = callCardId;                        
+                    tasksToSave.push(task);
+                } else {
+                    if (complete || saveAllKeyTasks == 'true') {
+                        var task = {};
+                        //console.log(j$(this).parents('.task').attr('data-template-id'));
+                        task['Key_Task_Template__c'] = j$(this).parents('.task').attr('data-template-id');
+                        task['Account__c'] = account.Id;
+                        task['Name'] = j$(this).parents('.task').attr('data-task-name');
+                        task['Description__c'] = j$(this).parents('.task').find('.taskName').html();
+                        task['Complete__c'] = complete;
+                        task['Call_Card__c'] = callCardId;
+                        tasksToSave.push(task);
+                    }
+                }
+            });
+            console.log(tasksToSave);
+            
+            if (tasksToSave.length > 0) {
+                Account_Visit_Controller.saveTasks(tasksToSave, function(result, event) {
+                    if (event.status) {
+                        j$.each(result, function(key,value){
+                            j$('#task_'+result[key].Key_Task_Template__c).attr('data-task-id', result[key].Id);
+                            j$('#task_'+result[key].Key_Task_Template__c).attr('data-complete', result[key].Complete__c);
+                        });
+                        loading(false);
+                    } else {
+                        //handling errors.
+                        alert(event.message);
+                    }
+                    isSaving = false;
+                });
+            } else {
+                loading(false);
+                isSaving = false;
+            }
+        }
+
+        /**
+         * End Key Task functions
+         */ 
+
+         /**
+         * Begin Order functions
+         */
+        function buildOrderPage() {
+            buildOrderRecordTypeSelection();
+            parseOrders();
+        }
+
+        function buildOrderRecordTypeSelection() {
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.Account_Visit_Controller.getAvailableRecordTypesForObject}','Order__c', 
+                function(result, event) {
+                    if (event.status) {
+                        var rtList = j$('#orderRecordTypesList');
+                        if (rtList) {
+                            rtList.empty();
+                            var htmlStr = rtList.html();  
+                            htmlStr += '<ul class="list-group">';                          
+                            j$(result).each(function() {
+                                console.log('[Account_Visit.order.recordtypes] name: ' + j$(this)[0].Name + ', developername: ' + j$(this)[0].DeveloperName);
+                                //htmlStr += '<button type="button" id="' + j$(this)[0].Id + '" value="' + j$(this)[0].Name + '" class="btn-default btn recordTypeButton orderRecordTypeBtn">' + j$(this)[0].Name + '</button><p />';                                
+                                htmlStr += '<li class="list-group-item list-group-item-action orderRecordTypeBtn" id="'+j$(this)[0].Id+'">' + j$(this)[0].Name + '</li>';
+                            });
+                            htmlStr += '</ul>';
+                            rtList.html(htmlStr);
+                            j$('.orderRecordTypeBtn').click(function() {
+                                j$('#orderRecordTypeDialog').modal("hide");
+                                newOrder(this.id,this.value);
+                            });
+                        }
+                    } else if (event.type === 'exception') {
+                        console.log('buildOrderRecordTypeSelection raised exception. ' + event);
+                    } else {
+                        console.log(event.message);
+                    }
+                },
+                { escape: false }
+            );
+        }
+
+        function parseOrders() {            
+            showCompletedMessage = false;
+            if (orderList.length > 0) { j$('#noOrdersMessage').hide(); } else { j$('#noOrdersMessage').show(); }
+            j$('#orderTableBody').empty();
+            j$('#orderContainer').empty();
+            console.log('orderList', orderList);
+            var orderPicklistValues = getSelectOptions("Status__c", "Order__c");
+            console.log('orderpicklistvalues', orderPicklistValues);
+            var statusText = '';
+
+            var orderHTML = '';
+            
+            if (deviceType == 'phone') {      
+                orderHTML = '<div class="list-group list-group-flush">';
+            } else {
+                      
+                orderHTML = '<table class="list ordersTable orders table table-striped" border="0" cellpadding="5px" cellspacing="0" id="ordersTable">';
+                orderHTML += '<thead class="rich-table-thead"><tr class="headerRow">';
+                orderHTML += '<th class="headerRow" scope="col" colspan="1"><div>&nbsp;</div></th>';
+                orderHTML += '<th class="headerRow" scope="col" colspan="1"><div>{!$ObjectType.Order__c.Label}</div></th>';
+                orderHTML += '<th class="headerRow" scope="col" colspan="1"><div>{!$Label.LABS_SF_RecordType}</div></th>';
+                orderHTML += '<th class="headerRow" scope="col" colspan="1"><div>{!$ObjectType.Wholesaler__c.Label}</div></th>';
+                orderHTML += '<th class="headerRow" scope="col" colspan="1"><div class="rightAlign">{!$ObjectType.Order__c.Fields.Order_Date__c.Label}</div></th>';
+                orderHTML += '<th class="headerRow" scope="col" colspan="1"><div class="rightAlign">{!$ObjectType.Order__c.Fields.Status__c.Label}</div></th>';
+                orderHTML += '</tr></thead><tbody id="orderTableBody">';
+                    
+            }
+
+            
+            j$(orderList).each(function() {
+                var url = '';
+                var wholesalerUrl = '';
+                var order = j$(this)[0];
+                console.log('order', order);
+                if (urlPrefix != '') {
+                    var index = j$(this)[0].link.indexOf('.com');
+                    url = j$(this)[0].link.substring(index, j$(this)[0].link.length).replace('.com', urlPrefix);
+                    var aindex = j$(this)[0].activityLink.indexOf('.com');
+                    wholesalerUrl = j$(this)[0].link.substring(aindex, j$(this)[0].link.length).replace('.com', urlPrefix);
+                } else {
+                    url = j$(this)[0].link;
+                    wholesalerUrl = j$(this)[0].activityLink;
+                }
+        
+                statusText = order.promoChannel;
+                if (orderPicklistValues != undefined) {
+                    lblIndex = orderPicklistValues.values.indexOf(statusText);
+                    if (lblIndex >= 0) {
+                        statusText = orderPicklistValues.labels[lblIndex];
+                    }
+                }                
+
+                if (deviceType == 'phone') {
+                    orderHTML += '<div class="list-group-item list-group-item-action orderRows"><div class="card" id="' + order.id + '">';
+                    orderHTML += '<div class="card-header">';
+                    if (canEditOrders) { 
+                        orderHTML += '<i id="' + j$(this)[0].id + '" class="fas fa-2x gray mr-2 order fa-edit" title="{!$Label.Edit}" object="order"></i>';
+                    }
+                    if (inSF1) {
+                        orderHTML += '<a href="javascript:sforce.one.navigateToURL(\'' + url + '\')">' + order.linkName + '</a>';
+                    } else {
+                        orderHTML += '<a href="' + url + '" target="_blank">' + order.linkName + '</a>';
+                    }
+                    orderHTML += ' - '+ order.recordTypeName+'</div>'; // End Card Header
+                    orderHTML += '<div class="card-body">';
+                    orderHTML += '<div class="text-left"><span class="col-12 font-weight-bold">{!$ObjectType.Wholesaler__c.Label}</span><span class="col-12">';
+                    if (inSF1) {
+                        orderHTML += '<a href="javascript:sforce.on.navigateToURL(\'' + wholesalerUrl + '\')">' + order.activityName + '</a>';
+                    } else {
+                        orderHTML += '<a href="' + wholesalerUrl + '" target="_blank">' + order.activityName + '</a>';
+                    }
+                    orderHTML += '</span></div>';
+                    orderHTML += '<div class="text-left"><span class="col-12 font-weight-bold">{!$Label.Date}</span><span class="col-12">'+order.displayStartDate+'</span></div>';
+                    orderHTML += '<div class="text-left"><span class="col-12 font-weight-bold">{!$ObjectType.Order__c.Fields.Status__c.Label}</span><span class="col-12">'+statusText+'</span></div>';
+                    orderHTML += '</div></div></div>';
+                    
+                } else {
+
+                    orderHTML += '<tr class="dataRow orderRows">';
+                    
+                    // Only show edit icon/link if can edit the object
+                    if (canEditOrders) {
+                        orderHTML += '<td class="dataCell" colspan="1" width="5%"><i id="' + j$(this)[0].id + '" class="fas fa-2x gray col-2 text-center tab order fa-edit" title="{!$Label.Edit}" object="order"></i>';
+                    } else {
+                        orderHTML += '<td class="dataCell" colspan="1" width="0%"></td>'
+                    }
+                    if (inSF1) {
+                        orderHTML += '<td class="dataCell" colspan="1" width="30%"><a href="javascript:sforce.one.navigateToURL(\'' + url + '\')">' + order.linkName + '</a></td>';
+                    } else {
+                        orderHTML += '<td class="dataCell" colspan="1" width="30%"><a href="' + url + '" target="_blank">' + order.linkName + '</a></td>';
+                    }
+                    orderHTML += '<td class="dataCell" colspan="1" width="20%">' + order.recordTypeName + '</td>';
+                    if (inSF1) {
+                        orderHTML += '<td class="dataCell" colspan="1" width="30%"><a href="javascript:sforce.on.navigateToURL(\'' + wholesalerUrl + '\')">' + order.activityName + '</a></td>';
+                    } else {
+                        orderHTML += '<td class="dataCell" colspan="1" width="30%"><a href="' + wholesalerUrl + '" target="_blank">' + order.activityName + '</a></td>';
+                    }
+                    orderHTML += '<td class="dataCell rightAlign" colspan="1" width="10%">' + order.displayStartDate + '</td>';
+                    statusText = order.promoChannel;
+                    if (orderPicklistValues != undefined) {
+                        lblIndex = orderPicklistValues.values.indexOf(statusText);
+                        if (lblIndex >= 0) {
+                            statusText = orderPicklistValues.labels[lblIndex];
+                        }
+                    }
+                    orderHTML += '<td class="dataCell rightAlign" colspan="1" width="30%">' + statusText + '</td>';
+                    orderHTML += '</tr>';
+                    
+                }
+
+                
+            });
+            
+            if (deviceType == 'desktop') {
+                orderHTML += '<tr class="dataRow orderRows"></tr></tbody></table>';
+            } else {
+                orderHTML += '</div>';
+            }
+            
+            j$('#orderContainer').append(orderHTML);
+
+            j$('.orderRows i').click(function() {
+                newOrder(null,null,this.id);
+            });
+            
+        }
+        
+        function newOrder(recordTypeId, recordTypeName, orderId) {
+            var returnUrl = window.location.href;
+            var callCardId = '';
+            if (callCard != null && callCard.Id != null) {
+                callCardId = callCard.Id;
+            }
+            var newURL = urlPrefix + '/apex/Order?';
+            if(orderId != undefined) {
+                newURL += 'id='+orderId + '&';
+            }
+            newURL += 'recordTypeId=' + recordTypeId + '&accountId=' + account.Id + '&callCardId=' + callCardId + '&returnToAccountVisit=true';
+            console.log('newUrl', newURL);
+            try{
+                if (inSF1) {
+                    sforce.one.navigateToURL(newURL);
+                } else {
+                    if (newWindow) {
+                        window.open(newURL);
+                    } else {
+                        window.location.href = newURL;
+                    }
+                }
+                    
+            } catch(err) {
+            }
+        }
+
+        /**
+         * End Order functions
+         */
+
+        /**
+         * Begin Promotion functions
+         */
+
+        function buildPromotionPage() { 
+            buildPromotionRecordTypeSelection();
+            parsePromotions();
+        }
+
+        /* Build promotion table for the Promotions tab as well as add list of promotions to the 
+        // promotions drop down in the file upload page
+        */
+        function parsePromotions(promotions) {
+            console.log('promotions', promotions);
+            showCompletedMessage = false;
+            if (promotionList.length > 0) { 
+                j$('#noPromotionsMessage').hide(); 
+                j$('.promotionTable').show();
+            } else { 
+                j$('#noPromotionsMessage').show();                 
+                j$('#promotionContainer').hide();
+                j$('#promotionCard .card-body').addClass('bg-warning');
+            }
+
+            j$('#promotionContainer').empty();
+
+            var lHTML = '';
+            
+            if (deviceType == 'phone') {      
+                lHTML = '<div class="list-group list-group-flush">';
+            } else {
+                      
+                lHTML = '<table class="list promotionTable promotions table table-striped" border="0" cellpadding="5px" cellspacing="0" id="promotionsTable">';
+                lHTML += '<thead class="rich-table-thead"><tr class="headerRow">';
+                lHTML += '<th class="headerRow" scope="col" colspan="1"><div>&nbsp;</div></th>';
+                lHTML += '<th class="headerRow" scope="col" colspan="1"><div>{!$ObjectType.Promotion__c.Label}</div></th>';
+                lHTML += '<th class="headerRow" scope="col" colspan="1"><div>{!$Label.LABS_SF_RecordType}</div></th>';
+                lHTML += '<th class="headerRow" scope="col" colspan="1"><div>{!$ObjectType.Promotion_Activity__c.Label}</div></th>';
+                lHTML += '<th class="headerRow" scope="col" colspan="1"><div class="rightAlign">{!$ObjectType.Promotion__c.Fields.Promotion_Start_Date__c.Label}</div></th>';
+                lHTML += '<th class="headerRow" scope="col" colspan="1"><div class="rightAlign">{!$ObjectType.Promotion__c.Fields.Promotion_End_Date__c.Label}</div></th>';
+                lHTML += '</tr></thead><tbody id="promotionTableBody">';
+                    
+            }
+
+            
+            j$(promotionList).each(function() {
+                var url = '';
+                var activityUrl = '';
+                var promo = j$(this)[0];
+                
+                if(urlPrefix != ''){
+                    var index = j$(this)[0].link.indexOf('.com');
+                    url = j$(this)[0].link.substring(index, j$(this)[0].link.length).replace('.com', urlPrefix);
+                    var aindex = j$(this)[0].activityLink.indexOf('.com');
+                    activityUrl = j$(this)[0].link.substring(aindex, j$(this)[0].link.length).replace('.com', urlPrefix);
+                }else{
+                    url = j$(this)[0].link;
+                    activityUrl = j$(this)[0].activityLink;
+                }
+
+
+                if (deviceType == 'phone') {
+                    lHTML += '<div class="list-group-item list-group-item-action promotionRows"><div class="card" id="' + promo.id + '">';
+                    lHTML += '<div class="card-header">';
+                    if (canEditOrders) { 
+                        lHTML += '<i id="' + promo.id + '" class="fas fa-2x gray mr-2 promotion fa-edit" title="{!$Label.Edit}" object="promotion"></i>';
+                    }
+                    if (inSF1) {
+                        lHTML += '<a href="javascript:sforce.one.navigateToURL(\'' + url + '\')">' + promo.linkName + '</a>';
+                    } else {
+                        lHTML += '<a href="' + url + '" target="_blank">' + promo.linkName + '</a>';
+                    }
+                    lHTML += ' - '+ promo.recordTypeName; // End Card Header
+                    // Add image_attached__c indicator paperclip
+                    lHTML += ' <i class="fa fa-paperclip';
+                    if(promo.imageAttached == false) {
+                        lHTML += ' hidden';
+                    }
+                    lHTML += '" data-promo-id="'+j$(this)[0].id+'"></i>';
+                    lHTML += '</div>';
+                    lHTML += '<div class="card-body">';
+                    lHTML += '<div class="text-left"><span class="col-12 text-truncate font-weight-bold">{!$ObjectType.Promotion_Activity__c.Label}</span><span class="col-12">';
+                    if (inSF1) {
+                        lHTML += '<a href="javascript:sforce.on.navigateToURL(\'' + activityUrl + '\')">' + promo.activityName + '</a>';
+                    } else {
+                        lHTML += '<a href="' + activityUrl + '" target="_blank">' + promo.activityName + '</a>';
+                    }
+                    lHTML += '</span></div>';
+                    lHTML += '<div class="text-left"><span class="col-12 text-truncate font-weight-bold">{!$ObjectType.Promotion__c.Fields.Promotion_End_Date__c.Label}</span><span class="col-12">'+promo.displayStartDate+'</span></div>';
+                    lHTML += '<div class="text-left"><span class="col-12 text-truncate font-weight-bold">{!$ObjectType.Promotion__c.Fields.Promotion_End_Date__c.Label}</span><span class="col-12">'+promo.displayEndDate+'</span></div>';
+                    lHTML += '</div></div></div>';
+                    
+                } else {
+                    lHTML += '<tr class="dataRow promotionRows">';
+                    lHTML += '<td class="dataCell" colspan="1" width="5%"><i id="' + j$(this)[0].id + '" class="fas fa-2x gray col-2 text-center tab promotion fa-edit" title="{!$Label.Edit}" object="promotion"></i></td>';
+                    if (inSF1) {
+                        lHTML += '<td class="dataCell" colspan="1" width="30%"><a href="javascript:sforce.one.navigateToURL(\'' + url + '\')">' + j$(this)[0].linkName + '</a>';
+                    } else {
+                        lHTML += '<td class="dataCell" colspan="1" width="30%"><a href="' + url + '" target="_blank">' + j$(this)[0].linkName + '</a>';
+                    }
+                    // Add image_attached__c indicator paperclip
+                    lHTML += ' <i class="fa fa-paperclip';
+                    if(j$(this)[0].imageAttached == false) {
+                        lHTML += ' hidden';
+                    }
+                    lHTML += '" data-promo-id="'+j$(this)[0].id+'"></i>';
+                    // close off promotion name column
+                    lHTML += '</td>';
+                    
+                    // Record type column
+                    lHTML += '<td class="dataCell" colspan="1" width="20%">' + j$(this)[0].recordTypeName + '</td>';
+                    if (inSF1) {
+                        lHTML += '<td class="dataCell" colspan="1" width="30%"><a href="javascript:sforce.on.navigateToURL(\'' + activityUrl + '\')">' + j$(this)[0].activityName + '</a></td>';
+                    } else {
+                        lHTML += '<td class="dataCell" colspan="1" width="30%"><a href="' + activityUrl + '" target="_blank">' + j$(this)[0].activityName + '</a></td>';
+                    }
+                    
+                    // Start & end date columns
+                    lHTML += '<td class="dataCell rightAlign" colspan="1" width="10%">' + j$(this)[0].displayStartDate + '</td>';
+                    lHTML += '<td class="dataCell rightAlign" colspan="1" width="10%">' + j$(this)[0].displayEndDate + '</td>';
+                    lHTML += '</tr>';
+                    
+                }
+
+                
+            });
+            
+            if (deviceType == 'desktop') {
+                lHTML += '<tr class="dataRow promotionRows"></tr></tbody></table>';
+            } else {
+                lHTML += '</div>';
+            }
+            
+            j$('#promotionContainer').append(lHTML);
+
+            j$('.promotionRows i').click(function() {
+                newPromotion(null,null,this.id);
+            });
+        }
+
+        function buildPromotionRecordTypeSelection() {
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.Account_Visit_Controller.getAvailablePromotionRecordTypes}',
+                function(result, event) {
+                    if (event.status) {
+                        var rtList = j$('#promotionRecordTypesList');
+                        if (rtList) {
+                            rtList.empty();
+                            var htmlStr = rtList.html();                            
+                            j$(result).each(function() {
+                                //htmlStr += '<button type="button" id="' + j$(this)[0].Id + '" value="' + j$(this)[0].Name + '" class="btn-default btn recordTypeButton promotionRecordTypeBtn">' + j$(this)[0].Name + '</button><p />';                                
+                                htmlStr += '<li class="list-group-item list-group-item-action promotionRecordTypeBtn" id="'+j$(this)[0].Id+'">' + j$(this)[0].Name + '</li>';
+                            });
+                            rtList.html(htmlStr);
+                            j$('.promotionRecordTypeBtn').click(function() {
+                                j$('#promoRecordTypeDialog').modal("hide");
+                                newPromotion(this.id,this.value);
+                            });
+                        }
+                    } else if (event.type === 'exception') {
+                        console.log('buildPromotionRecordTypeSelection raised exception. ' + event);
+                    } else {
+                        console.log(event.message);
+                    }
+                },
+                { escape: false }
+            );
+        }
+
+        function buildPromotions() {
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.Account_Visit_Controller.buildPromotions}',
+                account.Id, urlPrefix,
+                function(result, event){
+                    if (event.status) {
+                        parsePromotions(result);
+                    } else if (event.type === 'exception') {
+                        console.log('buildpromotions raised exception. ' + event.message);
+                    } else {
+                        console.log(event.message);
+                    }
+                },
+                { escape: false }
+            );
+        }
+
+        function returnToThePromotion() {
+            try{
+                var newURL = urlPrefix+'/apex/Promotion?id='+uploadToPromotionId+'&accountId='+account.Id;
+                if (inSF1) {
+                    sforce.one.navigateToURL(newURL);
+                } else {
+                    if (newWindow) {
+                        window.open(newURL);
+                    } else {
+                        window.location.href = newURL;
+                    }
+                }
+            } catch(err) {
+            }
+        }
+        
+        function newPromotion(recordTypeId,recordTypeName,promotionId) {
+            var returnUrl = window.location.href;
+            var callcardId = '';
+            if (callCard != null && callCard.Id != null) {
+                callcardId = callCard.Id;
+            }
+            var newURL = urlPrefix + '/apex/Promotion?';
+            if (promotionId != undefined) {
+                newURL += 'id=' + promotionId + '&';   
+            }
+            newURL += 'promotionType=' + recordTypeName + '&recordTypeId=' + recordTypeId + '&accountId=' + account.Id + '&callcardId=' + callcardId;
+            
+            try {
+                if (inSF1) {
+                    sforce.one.navigateToURL(newURL);
+                } else {
+                    if (newWindow) {
+                        window.open(newURL);
+                    } else {
+                        window.location.href = newURL;
+                    }
+                }
+                    
+            } catch(err) {
+            }
+            
+        }
+        /**
+         * End Promotion functions
+         */
+
+        /**
+         * Begin Camera page functions
+         */
+        function buildCameraPage() {
+            j$('#btnUploadAndAttach').hide()
+                                     .click(function() {
+                                         showBusyDialog(uploadAndAttachItems());
+                                     });
+            j$('#btnPostToChatter').click(function() {
+                showBusyDialog(postToChatter());
+            });
+            j$('.returnToPromotion').hide();
+			j$('#btnMoveToChatter').hide()
+            					   .click(moveToChatterPage);
+            j$('#fileUploadContainer').hide();
+            j$('#fuSelectedPromotion').hide();
+            j$('#busyDialog .modal-footer').hide();
+            j$('#ChatterContainer').hide();   
+            j$('#fuPromotionActivityPromotionsListPanel').hide();
+            j$('#busyDialog .modal-body .busyDialogMessage').hide();
+            j$('#uploadCompletedDiv').hide();
+            if (canUploadMultipleItems == "true") {
+                j$('.browseButton').attr('multiple', 'multiple');
+            } else {
+                j$('.browseButton').removeAttr('multiple');
+            }
+            if (returnToPromotion == "true") {
+                returnToRecordLabel = returnToRecordLabel.replace('{0}', promotionLabel);
+                j$('.returnToPromotion').text(returnToRecordLabel)
+            }
+            j$('#fuChatterGroupsDropDownButton').click(function(){
+                var pm = j$('#fuChatterGroupsDropDownButton');
+                var pmpos = pm.position();
+                var pmoffset = pm.offset();
+                var dd = j$('#fuChatterGroupsDropDown');
+                var offset = dd.offset();
+                var pos = dd.position();
+                if(pmoffset.left + dd.width() > window.innerWidth) {
+                    dd.addClass('pull-right');
+                }
+            });
+
+            var pHTML = '';
+            var pdcHTML = '';
+            var paHTML = '';
+            if (deviceType == 'desktop') {
+                pHTML = '<div class="table-responsive col-md-12"><table id="tUploadItems" class="uiTable table table-striped"><thead class="headers">';
+                pHTML += '<th class="headerRow" data-column-id="thumbnail" scope="col">&nbsp;</th>';
+                pHTML += '<th class="headerRow" data-column-id="uploadFilename" scope="col">{!$Label.UploadFilename}</th>';
+                pHTML += '<th class="headerRow" data-column-id="type" scope="col">{!$Label.Type}</th>';
+                pHTML += '<th class="headerRow" data-column-id="size" scope="col">{!$Label.Size} (kb)</th>';
+                pHTML += '<th class="headerRow" data-column-id="filename" scope="col">{!$Label.Filename}</th>';
+                pHTML += '<th class="headerRow" data-column-id="remove" scope="col">&nbsp;</th>';
+                pHTML += '</thead><tbody class="tableBody">';
+                pHTML += '</tbody></table></div>';
+                
+                paHTML = '<div class="table-responsive col-md-12"><table id="tfuPromotionsForActivityTable" class="tfuPromotionsForActivity table table-striped"><thead class="headers">';
+                paHTML += '<th class="headerRow" data-column-id="tfuPromotionSelected" scope="col">&nbsp;</th>';
+                paHTML += '<th class="headerRow" data-column-id="tfuPromotionId" scope="col">' + promotionLabel + '</th>';
+                paHTML += '<th class="headerRow" data-column-id="tfuChannel" scope="col">' + channelLabel + '</th>';
+                paHTML += '<th class="headerRow" data-column-id="tfuPromotionStartDate" scope="col">' + startDateLabel + '</th>';
+                paHTML += '<th class="headerRow" data-column-id="tfuPromotionEndDate" scope="col">' + endDateLabel + '</th>';
+                paHTML += '</thead><tbody id="tfuPromotionsForActivityBody" class="tableBody"></tbody></table></div>';
+                
+                pdcHTML = '<div class="table-responsive col-md-12"><table id="tfuSelectedPromotionTable" class="tfuSelectedPromotionTable table table-striped"><thead class="headers">';
+                pdcHTML += '<th class="headerRow" data-column-id="tfuPromotionId" scope="col">' + promotionLabel + '</th>';
+                pdcHTML += '<th class="headerRow" data-column-id="tfuChannel" scope="col">' + channelLabel + '</th>';
+                pdcHTML += '<th class="headerRow" data-column-id="tfuPromotionStartDate" scope="col">' + startDateLabel + '</th>';
+                pdcHTML += '<th class="headerRow" data-column-id="tfuPromotionEndDate" scope="col">' + endDateLabel + '</th>';
+                pdcHTML += '</thead><tbody id="tfuSelectedPromotionBody" class="tableBody"></tbody></table></div>';
+            }
+            
+            j$('#UploadItemsPanel').append(pHTML);
+            j$('#fuPromotionActivityPromotionList').append(paHTML);
+            j$('#fuSelectedPromotionContainer').append(pdcHTML);
+        }
+
+        function initialiseCameraPage(callback) {
+            clearSelectedPromotionDetails();
+            if (deviceType == 'desktop') {
+                j$('#tUploadItems .tableBody').empty();
+	            j$('#tfuPromotionActivitiesBody').empty();
+                j$('#tfuPromotionsForActivityBody').empty();
+            } else {
+                j$('#UploadItemsPanel').empty();
+                j$('#fuPromotionActivityPromotionList').empty();
+            }
+            
+            j$('#fuPromotionActivityContainer').attr('data-promotion-id', '');
+            j$('#btnUploadAndAttachBadge').text('0');
+            j$('#btnUploadAndAttach').hide();
+            j$('#btnMoveToChatter').hide();
+            j$('#fuPromotionActivityPromotionsListPanel').hide();
+            j$('#fuPromotionActivityPromotionListTitle').text('');
+            j$('#fuSelectedPromotion').hide();
+            j$('#btnSelectOtherPromotion').removeClass('disabled');
+            j$('#uploadCompletedDiv').fadeOut(500, function() {
+                j$('#fuPromotionActivityContainer').fadeIn();
+            });
+            
+            if (callback) { callback(); }
+        }
+        function buildPromotionActivityList() {
+            if (promotionActivitiesList.length > 0) { j$('#noPromotionActivitiesMessage').hide(); } else { j$('#noPromotionActivitiesMessage').show(); }
+            j$('#fuPromotionActivityList').empty();
+            j$.each(promotionActivitiesList, function(key, value) {
+                var channel = value.Channel__c == undefined ? '' : value.Channel__c;
+                var premise = value.Premise__c == undefined ? '' : value.Premise__c;
+                var startDate = value.Begin_Date__c == undefined ? '' : new Date(value.Begin_Date__c).toLocaleDateString();
+                var endDate = value.End_Date__c == undefined ? '' : new Date(value.End_Date__c).toLocaleDateString();
+                
+                var item = '<a id="' + value.Id + '" href="javascript:void(0);" class="list-group-item list-group-item-action" data-activity-id="' + value.Id + '" data-promoactivity-name="' + value.Name + '" data-startdate="' + startDate + '" data-enddate="' + endDate + '">'+value.Name+'</a>';
+                j$('#fuPromotionActivityList').append(item);
+            });
+            j$('#fuPromotionActivityList a').on('click', function(event) {
+                event.preventDefault();
+
+                var selActivity = j$(this);
+                var activityName = selActivity.attr('data-promoactivity-name');
+                var activityId = selActivity.attr('data-activity-id');
+                                
+                showPromotionsForActivity(activityId, activityName);
+
+            });
+            
+        }
+        function showPromotionsForActivity(activityId, activityName) {
+            //j$('#btnCreateNewPromotion').attr('data-activity-id', activityId);
+            //<button class="btn btn-primary btn-sm" style="margin: 10px 10px 0 25px;" type="button" id="btnCreateNewPromotion"><i class="fa fa-plus" aria-hidden="true"></i>&nbsp;&nbsp;{!$Label.Create_Promotion_From_Activity}</button>
+            var tHTML = '<div class="promotionListContent">';
+            var pHTML = '';
+
+            if (canAutoCreatePromotionFromActivity == "true") {
+                tHTML += '<button class="btn btn-primary btn-sm btn-create" style="margin: 10px 10px 0 25px;" type="button" id="btnCreateNewPromotion" data-activity-id="'+activityId+'"><i class="fa fa-plus" aria-hidden="true"></i>&nbsp;&nbsp;{!$Label.Create_Promotion_From_Activity}</button>';
+            }
+
+            var selector = '#fuPromotionActivityPromotionList';
+            if (deviceType != 'phone') {
+                selector = '#tfuPromotionsForActivityBody';
+                tHTML += '<div class="table-responsive col-md-12"><table id="tfuPromotionsForActivityTable" class="tfuPromotionsForActivity table table-striped"><thead class="headers">';
+                tHTML += '<th class="headerRow" data-column-id="tfuPromotionSelected" scope="col">&nbsp;</th>';
+                tHTML += '<th class="headerRow" data-column-id="tfuPromotionId" scope="col">' + promotionLabel + '</th>';
+                tHTML += '<th class="headerRow" data-column-id="tfuChannel" scope="col">' + channelLabel + '</th>';
+                tHTML += '<th class="headerRow" data-column-id="tfuPromotionStartDate" scope="col">' + startDateLabel + '</th>';
+                tHTML += '<th class="headerRow" data-column-id="tfuPromotionEndDate" scope="col">' + endDateLabel + '</th>';
+                tHTML += '</thead><tbody id="tfuPromotionsForActivityBody" class="tableBody">';
+            }
+            console.log('tHTML', tHTML);
+            j$(selector).empty();
+            j$('#fuPromotionActivityList .promotionListContent').remove();
+        
+            console.log('promotionList', promotionList);
+            j$.each(promotionList, function(key, value) {
+                if (value.activityId == activityId) {
+                    var chnl = (value.promoChannel == undefined ? '' : value.promoChannel);
+                    var sDate = (value.displayStartDate == undefined ? '' : value.displayStartDate);
+                    var eDate = (value.displayEndDate == undefined ? '' : value.displayEndDate);
+                    
+                    if (deviceType == 'phone') {
+                        pHTML += '<div class="row" id="' + value.id + '">';
+                        pHTML += '<div class="col-xs-12 col-sm-12 col-md-6"><span style="margin-bottom: 0.5rem;"><span data-promo-id="' + value.id + '" class="glyphicon glyphicon-ok tfuPAOK hidden"/>';
+                        pHTML += '<label for="' + value.id + '" class="fieldLabel" style="margin-right: 0.5em;">{!$ObjectType.Promotion__c.Fields.Name.Label}</label><span style="margin-bottom: 0.5rem;">' + value.linkName + '</span></div>';
+                        pHTML += '<div class="col-xs-12 col-sm-12 col-md-6"><label for="' + value.id + '" class="fieldLabel" style="margin-right: 0.5em;">{!$ObjectType.Promotion__c.Fields.Channel__c.Label}</label><span style="margin-bottom: 0.5rem;">' + chnl + '</span></div>';
+                        pHTML += '<div class="col-xs-12 col-sm-12 col-md-6"><label for="' + value.id + '" class="fieldLabel" style="margin-right: 0.5em;">{!$ObjectType.Promotion__c.Fields.Promotion_Start_Date__c.Label}</label><span style="margin-bottom: 0.5rem;">' + sDate + '</span></div>';
+                        pHTML += '<div class="col-xs-12 col-sm-12 col-md-6"><label for="' + value.id + '" class="fieldLabel" style="margin-right: 0.5em;">{!$ObjectType.Promotion__c.Fields.Promotion_End_Date__c.Label}</label><span style="margin-bottom: 0.5rem;">' + eDate + '</span></div>';
+                        pHTML += '<div class="col-xs-12 col-sm-12 col-md-6"><button type="button" class="btn btn-secondary btn-sml tfuPASelectButton" data-promo-id="' + value.id + '" data-promo-linkurl="' + value.link + '" data-promo-name="' + value.linkName + '" data-promo-channel="' + chnl + '" data-promo-startdate="' + sDate + '" data-promo-enddate="' + eDate + '" data-type="select">{!$Label.Select}</button></div>';
+                        pHTML += '</div>';
+                    } else {
+                        pHTML += '<tr id="' + value.id + '" data-promo-id="' + value.id + '">';
+                        pHTML += '<td><span data-promo-id="' + value.id + '" class="glyphicon glyphicon-ok tfuPAOK hidden"/></td>';
+                        pHTML += '<td><div class="text-left">' + value.linkName + '</div></td>';
+                        pHTML += '<td><div>' + chnl + '</div></td>';
+                        pHTML += '<td><div class="text-left">' + sDate + '</div></td>';
+                        pHTML += '<td><div class="text-left">' + eDate + '</div></td>';
+                        pHTML += '<td><button type="button" class="btn btn-secondary btn-sm tfuPASelectButton" data-promo-id="' + value.id + '" data-promo-linkurl="' + value.link + '" data-promo-name="' + value.linkName + '" data-promo-channel="' + chnl + '" data-promo-startdate="' + sDate + '" data-promo-enddate="' + eDate + '" data-type="select">{!$Label.Select}</button></td>';
+                        pHTML += '</tr>';
+                    }
+                }
+            });
+            tHTML += pHTML;
+
+            if (deviceType != 'desktop') {
+                tHTML += '</tbody></table></div>';
+            }
+            tHTML += '</div>';
+            console.log('tHTML', tHTML);
+            console.log('pHTML.length: ' + pHTML.length);
+            console.log('can auto create promo: ' + canAutoCreatePromotionFromActivity);
+            //j$('#noPromotionsForActivityMessage').hide();
+            if (pHTML.length == 0) {
+                //if (canAutoCreatePromotionFromActivity == "true") {
+                //	buildPromotionFromActivity(activityId);
+                //} else {
+                    //j$('#noPromotionsForActivityMessage').removeClass('hidden').show();
+                    //j$('#fuPromotionActivityPromotionsListPanel').hide();    
+                    j$('#fuPromotionActivityList a[data-activity-id="'+activityId+'"]').append('<div class="promotionListContent"><div class="card text-white bg-warning m-4"><div class="card-body">{!$Label.NoPromotionForActivityFound}</div></div></div>');
+                //}
+            } else {
+                j$('#fuPromotionActivityList a[data-activity-id="'+activityId+'"]').append(tHTML);                
+                /*                    
+                if (deviceType == 'desktop') {                
+                    j$('#tfuPromotionsForActivityBody').append(pHTML);
+                } else {
+                    j$('#fuPromotionActivityPromotionList').append(pHTML);
+                }
+                */
+            if (canAutoCreatePromotionFromActivity == 'true') {
+                j$('#fuPromotionActivityList .btn-create').on('click', function(event) {
+
+                    event.stopPropagation();
+                    event.preventDefault();
+                    let selActivity = j$(this);
+                    let activityId = selActivity.attr('data-activity-id');
+
+                    buildPromotionFromActivity(activityId);
+
+                });
+            }
+
+                j$('.tfuPASelectButton').on('click', function(event) {
+                    event.stopPropagation();
+                    event.preventDefault();
+
+                    j$('.tfuPAOK').addClass('hidden');
+                    if (this.getAttribute('data-type') == 'select') {                    
+                        j$('.tfuPASelectButton').text('{!$Label.Select}');
+                        j$(this).text('{!$Label.Clear}');
+                        this.setAttribute('data-type', 'clear');
+                        this.setAttribute('data-selected', 'yes');
+                        var promotionId = this.getAttribute('data-promo-id');                    
+                        var promotionName = this.getAttribute('data-promo-name');
+                        var promotionChannel = this.getAttribute('data-promo-channel');
+                        var promotionStartDate = this.getAttribute('data-promo-startdate');
+                        var promotionEndDate = this.getAttribute('data-promo-enddate');
+                        var promotionLinkUrl = this.getAttribute('data-promo-linkurl');
+                        var selector = '#fuPromotionActivityPromotionList';
+                        if (deviceType == 'desktop') {                        
+                            selector = '#tfuPromotionsForActivityBody';
+                        }
+                        j$(selector + ' span[data-promo-id*="' + promotionId + '"]').removeClass('hidden');
+                        promotion = {
+                            id: promotionId,
+                            name: promotionName,
+                            channel: promotionChannel,
+                            startDate: promotionStartDate,
+                            endDate: promotionEndDate,
+                            linkUrl: promotionLinkUrl
+                        };
+                        j$('#fuPromotionActivityContainer').attr('data-promotion-id', promotionId);
+                        moveToUploadPage();
+                    } else {
+                        j$(this).text('{!$Label.Select}');
+                        this.setAttribute('data-type', 'select');
+                        this.setAttribute('data-selected', 'no');
+                    }
+                });            
+                j$('#fuPromotionActivityPromotionsListPanel').show();
+            }
+        }        
+        function buildPromotionFromActivity(activityId) {
+            j$('#busyDialog .modal-header .close').hide();   
+            j$('#busyDialog').modal('show');
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.Account_Visit_Controller.newPromotionFromActivity}',
+                account.Id, activityId,
+                function(result, event) {
+                    j$('#busyDialog').modal('hide');
+                    if (event.status) {
+                        promotionList.push(result);
+                        var selector = '#fuPromotionActivityPromotionList'; 
+                        if (deviceType == 'desktop') {                        
+                            selector = '#tfuPromotionsForActivityBody';
+                        }
+                        j$(selector + ' span[data-promo-id*="' + activityId + '"]').removeClass('hidden');
+                        j$('#fuPromotionMenuText').val(result.linkName)
+                                                  .attr('data-promo-id', result.id)
+                                                  .attr('data-promo-name', result.linkName)
+                                                  .attr('data-promo-channel', result.promoChannel)
+                                                  .attr('data-promo-startdate', result.displayStartDate)
+                                                  .attr('data-promo-enddate', result.displayEndDate);
+
+                        showPromotionsForActivity(result.activityId, result.activityName);
+                        j$('.tfuPAOK').removeClass('hidden');
+                        j$('.tfuPASelectButton').text('{!$Label.Clear}')
+                        						.attr('data-type', 'clear')
+                        						.attr('data-selected', 'yes');
+						moveToUploadPage();                        
+                    } else if (event.type === 'exception') {
+                        console.log('buildpromotionfromactivity raised exception. ' + event.message);
+                        alert(event.message);
+                    } else {
+                        console.log(event.message);
+                    }
+                },
+                { escape: false }
+            );
+        }
+        function clearSelectedPromotionDetails() {
+            promotion = {};
+
+            var selector = '#fuSelectedPromotionContainer';
+            if (deviceType == 'desktop') {
+                selector = '#tfuSelectedPromotionBody';
+            }
+            j$(selector).empty();
+            j$('#fuPromotionActivityContainer').attr('data-promotion-id', '');
+
+        }
+        function goBackAndSelectOtherPromotion() {
+            j$('#fuSelectedPromotion').fadeOut(500);
+            j$('#fileUploadContainer').fadeOut(500, function() {
+				clearSelectedPromotionDetails();
+                j$('#fuPromotionActivityContainer').fadeIn();
+            });
+        }
+        function confirmSelectOtherPromotion() {
+            j$('#btnConfirmDialogYes').one('click', function() { goBackAndSelectOtherPromotion(); });
+            j$('#confirmDialogMessage').text(selectOtherConfirmMessage.replace('%0',promotionLabel));
+            j$('#confirmDialog').modal('show');
+        }
+
+    
+        /** Begin Chatter functions */
+        function buildChatterPanel() {
+            var cHTML = '';
+            j$('#fuChatterGroupsDropDown').empty();
+            j$.each(chatterGroups, function(key, value) {
+                cHTML += '<li><a id="' + value.Id + '" href="javascript:void(0);" data-group-id="' + value.Id + '">' + value.Name + '</a></li>';
+            });
+            j$('#fuChatterGroupsDropDown').append(cHTML);
+            j$('#fuChatterGroupsDropDown li a').click(function() {
+				var selGroup = j$(this);
+                var groupName = selGroup.text();
+                var groupId = selGroup.attr('data-group-id');
+                
+                j$('#chatterGroupText').val(groupName)
+                					   .attr('data-group-id', groupId);
+               
+                j$('#ChatterPostDetailsPanel').removeClass('hidden');
+                var container = j$('#ChatterContainer');
+                var newWidth = container.width() - j$('#sHashtagAccount').offset().left;
+	            j$('#sHashtagAccountLabel').css('display:block; width:' + newWidth + ';');
+            });
+            
+        }
+        function postToChatter() {
+            var chatterText = j$('#taChatterPost').val();
+            var mentionManager = j$('#cbMentionManager').prop('checked');
+            var promoId = j$('#fuPromotionMenuText').attr('data-promo-id');
+            var promoName = j$('#fuPromotionMenuText').val();
+            var chatterGroupId = j$('#chatterGroupText').attr('data-group-id');
+            var chatterGroupName = j$('#chatterGroupText').val();
+            if (chatterGroupId == null) { chatterGroupId = ''; chatterGroupName = ''; }
+            if (chatterGroupName == null) { chatterGroupName = ''; }
+            
+            var fileIds = [];
+            var linkUrl = urlPrefix + '/' + uploadedFileIds[0];
+            var managerId = myManagersId;
+            if (mentionManager == false) { managerId = ''; }
+
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.Account_Visit_Controller.postToChatter}',
+                chatterGroupId, chatterGroupName, account.Name, promoId, promoName, managerId, linkUrl, chatterText, urlPrefix, feedItemId,
+                function(result, event) {
+                    j$('#busyDialog').modal('hide');
+                    console.log('[posttochatter1] status: ' + event.status + ', message: ' + event.message);
+                    if (event.status) {
+                        j$('#ChatterContainer').fadeOut(500, function() {
+                            j$('#uploadCompletedDiv').fadeIn();
+                        });
+                    } else if (event.type === 'exception') {
+                        console.log('posttochatter1 raised exception. ' + event.message);
+                        alert(event.message);
+                    } else {
+                        console.log(event.message);
+                    }
+                    
+                },
+                { escape:false }
+            );
+        }        
+        function goToChatterPost() {
+            var postId = j$('#btnGoToChatterPost').attr('data-post-id');
+            if (inSF1) {
+	            initialiseCameraPage(function() { sforce.one.navigateToFeedItemDetail(postId); });
+                
+            } else {
+    	        var postUrl = urlPrefix + '/' + postId;
+        	    window.open(postUrl, '_blank');
+	            initialiseCameraPage();
+            }
+        }
+        function moveToChatterPage() {
+            var promoName = j$('#fuPromotionMenuText').val();
+            j$('#sHashtagPromotion').text('#' + promoName);
+            j$('#taChatterPost').val('');
+            j$('#cbMentionManager').prop('checked', true);
+            j$('#chatterGroupText').val('')
+            					   .attr('data-group-id', '');
+            j$('#ChatterPostDetailsPanel').addClass('hidden');
+            
+            j$('#btnMoveToChatter').hide();
+            j$('#fuSelectedPromotion').fadeOut(500);
+            j$('#fileUploadContainer').fadeOut(500, function() {
+                j$('#ChatterContainer').fadeIn();
+            });
+        }
+
+        /** End Chatter functions */
+
+        /** Begin File Upload and Attach functions */
+        function moveToUploadPage() {
+            //j$('#fuPromotionActivityContainer').fadeOut("slow");
+
+            /*
+            var selectedPromo = j$('#fuPromotionMenuText');
+            var promoId = selectedPromo.attr('data-promo-id');
+            var promoName = selectedPromo.attr('data-promo-name');
+            var promoChannel = selectedPromo.attr('data-promo-channel');
+            var promoStartDate = selectedPromo.attr('data-promo-startdate');
+            var promoEndDate = selectedPromo.attr('data-promo-enddate');
+            */
+            var selector = '#fuSelectedPromotionContainer';
+            var paHTML = '';
+            if (deviceType == 'desktop') {
+                selector = '#tfuSelectedPromotionBody';
+                paHTML += '<tr id="' + promotion.id + '" data-promo-id="' + promotion.id + '">';
+                paHTML += '<td><div class="text-left">' + promotion.name + '</div></td>';
+                paHTML += '<td><div>' + promotion.channel + '</div></td>';
+                paHTML += '<td><div class="text-left">' + promotion.startDate + '</div></td>';
+                paHTML += '<td><div class="text-left">' + promotion.endDate + '</div></td>';
+                paHTML += '</tr>';
+            } else {
+                paHTML += '<div id="' + promotion.id + '" data-item-id="' + promotion.id + '">';
+                paHTML += '<div class="col-xs-12 col-sm-6"><label for="' + promotion.id + '" class="fieldLabel" style="margin-right: 0.5em;">{!$ObjectType.Promotion__c.Fields.Name.Label}</label><span style="margin-bottom: 0.5rem;">' + promotion.name + '</span></div>';
+                paHTML += '<div class="col-xs-12 col-sm-6"><label for="' + promotion.id + '" class="fieldLabel" style="margin-right: 0.5em;">{!$ObjectType.Promotion__c.Fields.Channel__c.Label}</label><span style="margin-bottom: 0.5rem;">' + promotion.channel + '</span></div>';
+                paHTML += '<div class="col-xs-12 col-sm-6"><label for="' + promotion.id + '" class="fieldLabel" style="margin-right: 0.5em;">{!$ObjectType.Promotion__c.Fields.Promotion_Start_Date__c.Label}</label><span style="margin-bottom: 0.5rem;">' + promotion.startDate + '</span></div>';
+                paHTML += '<div class="col-xs-12 col-sm-6"><label for="' + promotion.id + '" class="fieldLabel" style="margin-right: 0.5em;">{!$ObjectType.Promotion__c.Fields.Promotion_End_Date__c.Label}</label><span style="margin-bottom: 0.5rem;">' + promotion.endDate + '</span></div>';
+                paHTML += '</div>';                                
+            }
+            
+            j$(selector).empty()
+            			.append(paHTML);
+
+            j$('#fileUploadText').val('');
+            j$('#btnUploadAndAttachBadge').text('0');
+            j$('#btnUploadAndAttach').hide();
+            j$('#fileUploadInputGroup').show();
+            
+            if (deviceType == 'desktop') {
+                j$('#tUploadItems .tableBody').empty();
+            } else {
+                j$('#UploadItemsPanel').empty();
+            }
+
+            j$('#fuPromotionActivityContainer').fadeOut(500, function() {
+                j$('#fuSelectedPromotion').fadeIn("slow");
+	            j$('#fileUploadContainer').fadeIn("slow");
+            });
+        }
+        function uploadItems(files) {
+            var selector = '#UploadItemsPanel div';
+            if (deviceType == 'desktop') {
+                selector = '#tUploadItems tr';
+            }
+
+            var resizer = new ImageResizer({scaleRatio: imageResizeRatio, keepExif: true});
+            // If scale ratio out of bounds or no scale, replace scaleImage function with one that does nothing.
+            if(imageResizeRatio <= 0 || imageResizeRatio >= 1) {
+                resizer.scaleImage = function(img, completionCallback) {
+                    completionCallback(img);
+                }
+            }
+            
+            j$.each(files, function(key, value) {
+                var reader = new FileReader();
+                reader.readAsDataURL(value);
+                reader.onloadend = function() {
+                    j$(selector + ' object[data-item-id*="' + value.name + '"]').attr('data', reader.result);                    
+                    j$(selector + '[data-item-id*="' + value.name + '"] .progress').remove();
+                    var filetypes = value.type.split('/');
+                    if (filetypes[0] == 'image') {
+                        var img = new Image()
+                        // On image load, show busy dialog and resize it
+                        img.onload = showBusyDialog(function() {
+                            resizer.scaleImage(img, function(resizedImg) {
+                                // Image scaled, load back into DOM
+                                j$(selector + ' object[data-item-id*="' + value.name + '"]').attr('data', resizedImg.src);
+                                j$(selector + '[data-item-id*="' + value.name + '"] .progress').remove();
+                                j$(selector + ' img[data-item-id*="' + value.name + '"]').attr('src', resizedImg.src)
+                                														 .removeClass('hidden');
+
+                                // Calculate file size
+                                var head = resizedImg.src.split(',');
+                                if (head && head.length > 0) {
+                                    head = head[0];
+                                }
+								var resizedImgFileSize = Math.round((resizedImg.src.length - head.length) * 3 / 4) / 1024;
+                                
+                                // Update size label
+                                if (deviceType == 'desktop') {
+                                    j$(j$(selector + '[data-item-id="' + value.name + '"] td div')[3]).text(resizedImgFileSize.toFixed(2));
+                                } else {
+                                    j$(j$(selector + '[data-item-id="' + value.name + '"] div span')[2]).text(resizedImgFileSize.toFixed(2))
+                                }
+                                
+                                // Hide busy dialog
+                                j$('#busyDialog').modal('hide');
+                            });
+                        });
+                        img.src = reader.result;
+                    } else {
+                        j$(selector + ' img[data-item-id*="' + value.name + '"]').remove();  
+                        if (filetypes[0] == 'application') {
+                            j$(selector + '[data-item-id*="' + value.name + '"] .fuImageContainer').html('<i class="fa fa-file-' + filetypes[1] + '-o fa-5x text-center"></i>');
+                        } else {
+                            j$(selector + '[data-item-id*="' + value.name + '"] .fuImageContainer').html('<i class="fa fa-file-' + filetypes[0] + '-o fa-5x text-center"></i>');
+                        }
+                    }
+                }
+            });
+        }
+        function uploadAndAttachItems(event) {
+            j$('#btnSelectOtherPromotion').addClass('disabled');
+            
+            var selector = '#UploadItemsPanel div';
+            if (deviceType == 'desktop') {
+                selector = '#tUploadItems tr';
+            }
+
+            //var promotionId = j$('#fuPromotionMenuText').attr('data-promo-id');
+            //var promoName = j$('#fuPromotionMenuText').attr('data-promo-name');
+            //var linkUrl = j$('#fuPromotionMenuText').attr('data-promo-linkurl');
+            var items = j$(selector + ' object');
+            var attachments = [];
+            var fileName, fileType, fileExtension, fileBodym, oldExt, newExt;
+            attachmentBody = '';
+            j$.each(items, function(key, value) {
+                if (value.hasAttribute('data-item-id') && value.getAttribute('data-item-uploaded') == '0') {
+                    fileName = value.getAttribute('data-item-id');  
+                    fileType = value.getAttribute('data-item-type');
+                    fileExtension = value.getAttribute('data-item-extension');
+                    fileBody = value.getAttribute('data');
+                    userFileName = j$(selector + ' input[data-item-id*="' + fileName + '"]').val();
+                    if (userFileName != null) {
+                        userFileName = userFileName.trim();
+                        var pos = fileName.lastIndexOf('.');
+                        console.log('pos', pos);
+                        if (pos < 0) { pos = fileName.length - 3; }
+                        var size = (fileName.length - pos - 1) * -1;
+                        console.log('length', fileName.length);
+                        console.log('size', size);
+                        newExt = userFileName.substr(size);
+                        console.log('fileName', fileName);
+						oldExt = fileName.substr(size);
+                        fileName = userFileName;
+                        console.log('newExt', newExt);
+                        console.log('oldExt', oldExt);
+                        console.log('fileExtension', fileExtension);
+                        if (oldExt != newExt) { fileName += '.' + oldExt; }
+                        console.log('userFilename', userFileName);
+                        console.log('filename', fileName);
+                        console.log('newExt', newExt);
+                    }
+                    
+                    fileContent = getFileContent(fileBody);
+                    //if (showProofOfConcept) {
+                    attachments.push(createContentDocument(fileName, fileType, fileContent, promotion.id, promotion.name, promotion.linkUrl));
+                    //} else {
+                    //	attachments.push(createFeedItem(fileName, fileType, fileContent, promotionId, promoName, linkUrl));
+                    //}
+                    
+                    value.setAttribute('data-item-uploaded', '1');
+                                        
+                }
+            });
+            
+            if (attachments.length > 0) {
+                console.log(attachments);
+                try {
+                sforce.connection.create(attachments, {onSuccess: attachmentSuccess, onFailure: attachmentFailed});
+                } catch(ex) {
+                    console.log('exception trying to create attachments', ex);
+                }
+            } else {
+            }
+			           
+                
+        }
+        function validateFilenameExtension(itemId) {
+            console.log('itemid', itemId);
+            var el = j$("input[data-item-id='"+itemId+"']");
+            console.log('el', el);
+            if (el) {
+                let newVal = el.val();
+                let newExt = newVal[-4];
+                let oldExt = itemId[-4];
+                console.log('oldext', oldExt);
+                console.log('newExt', newExt);
+                if (oldExt !== newExt) {
+                    el.val(newValue + oldExt);
+                }
+            }
+        }        
+        function addItemsToUploadList(event) {
+            j$('#fileUploadInputGroup').hide();
+            var obj = event.target;
+            if (obj.files == undefined || obj.files.length == 0) {
+                console.log('no items selected.');
+            } else {
+                var pHTML = '';
+                var itemCnt = 0;
+                j$.each(obj.files, function(key, value) {
+                    var selector = 'div';
+                    if (deviceType == 'desktop') { selector = 'tr'; }
+                    if (j$(selector + '[data-item-id*="' + value.name + '"]').length == 0) {
+                        itemCnt++;
+                        var size = value.size == 0 ? 0 : (value.size / 1024);
+                        
+                        if (deviceType == 'desktop') {
+                            pHTML += '<tr id="' + value.name + '" data-item-id="' + value.name + '" data-item-extension="'+value.name.substr(-3)+'" data-item-type="' + value.type + '" data-item-uploaded="0">';
+                            pHTML += '<td><object data-item-id="' + value.name + '" data-item-type="' + value.type + '" data-item-uploaded="0" class="hidden" data=""></object><div data-item-id="' + value.name + '" class="fuImageContainer center-block"><div data-item-id="' + value.name + '" class="progress"><div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%"><div class="sr-only"></div></div></div><img class="img-thumbnail hidden" data-item-id="' + value.name + '" src="" alt="' + value.name + '" width="100" height="100" /></div></td>';
+                            pHTML += '<td><div class="text-left">' + value.name + '</div></td>';
+                            pHTML += '<td><div>' + value.type + '</div></td>';
+                            pHTML += '<td><div class="text-right">' + size.toFixed(2) + '<div></td>';
+                            pHTML += '<td><input type="text" data-item-id="' + value.name + '" class="fuInputFilename" style="width:500px;" value="' + value.name + '"/></td>';
+                            pHTML += '<td><button type="button" class="btn btn-default btn-sm removeButton" data-item-id="' + value.name + '" data-attached-text="{!$Label.Attached}"><span class="glyphicon glyphicon-trash"/>&nbsp;' + removeLabel + '</button></td>';
+                            pHTML += '</tr>';
+                        } else {
+                            pHTML += '<div class="row" id="' + value.name + '" data-item-id="' + value.name + '" data-item-extension="'+value.name.substr(-3)+'" data-item-type="' + value.type + '" data-item-uploaded="0">';
+                            pHTML += '<div class="col-xs-12 col-sm-6"><object data-item-id="' + value.name + '" data-item-type="' + value.type + '" data-item-uploaded="0" class="hidden" data=""></object><div data-item-id="' + value.name + '" class="fuImageContainer center-block"><div data-item-id="' + value.name + '" class="progress"><div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%"><div class="sr-only"></div></div></div><img class="img-thumbnail hidden" data-item-id="' + value.name + '" src="" alt="' + value.name + '" width="100" height="100" /></div></div>';
+                            pHTML += '<div class="col-xs-12 col-sm-6"><label for="' + value.name + '" class="fieldLabel" style="margin-right: 0.5em;">{!$Label.UploadFilename}</label><span style="margin-bottom: 0.5rem;">' + value.name + '</span></div>';
+                            pHTML += '<div class="col-xs-12 col-sm-6"><label for="' + value.name + '" class="fieldLabel" style="margin-right: 0.5em;">{!$Label.Type}</label><span style="margin-bottom: 0.5rem;">' + value.type + '</span></div>';
+                            pHTML += '<div class="col-xs-12 col-sm-6"><label for="' + value.name + '" class="fieldLabel" style="margin-right: 0.5em;">{!$Label.Size}</label><span style="margin-bottom: 0.5rem;">' + size.toFixed(2) + '</span></div>';
+                            pHTML += '<div class="col-xs-12 col-sm-6"><label for="' + value.name + '" class="fieldLabel" style="margin-right: 0.5em;">{!$Label.Filename}</label><input type="text" data-item-id="' + value.name + '" class="fuInputFilename" style="width: 250px;" value="' + value.name + '" /></div>';
+                            pHTML += '<div class="col-xs-12 col-sm-6"><button type="button" class="btn btn-default btn-sml removeButton" data-item-id="' + value.name + '" data-attached-text="{!$Label.Attached}"><span class="glyphicon glyphicon-trash" data-item-id="' + value.name + '">&nbsp;' + removeLabel + '</button></div>';
+                            pHTML += '</div>';
+                        }
+                    } else {
+                        alert('You have already added ' + value.name + ' to the upload list.');
+                    }
+                });
+                
+                if (deviceType == 'desktop') {
+                    j$('#tUploadItems').append(pHTML);
+                } else {
+                    j$('#UploadItemsPanel').append(pHTML);
+                }
+                j$('.removeButton').click(function() {
+                    j$('#fileUploadInputGroup').show();
+                    var selector = 'div';
+                    if (deviceType == 'desktop') { selector = 'tr'; }
+                    j$(selector + '[data-item-id*="' + this.getAttribute('data-item-id') + '"]').remove();
+                    var cnt = j$('#btnUploadAndAttachBadge').text();
+                    cnt--;
+                    j$('#btnUploadAndAttachBadge').text(cnt);
+                    if (cnt == 0) {
+                        j$('#btnUploadAndAttach').hide();
+                        j$('#fileUploadText').val("");
+                        j$('#ChatterContainer').fadeOut(500);
+                    } else {
+                        j$('#fileUploadText').val(cnt + " {!$Label.Items_Selected}");
+                    }
+                });
+                var cnt = parseInt(j$('#btnUploadAndAttachBadge').text());
+                cnt += itemCnt;
+                j$('#fileUploadText').val(cnt + " {!$Label.Items_Selected}");
+                j$('#btnUploadAndAttachBadge').text(cnt).show();
+                j$('#btnUploadAndAttach').show();
+                uploadItems(obj.files);
+                obj.value = "";
+            }
+        }
+        function getFileContent(fileData) {
+            var fileContent = String(fileData);
+            return fileContent.substr(fileContent.indexOf(',') + 1);
+        }
+        function createContentDocument(fileName, fileType, fileBody, promoId, promoName, linkUrl) {
+            var cv = new sforce.SObject('ContentVersion');
+            cv.Title = fileName;
+            cv.PathOnClient = fileName;
+            cv.VersionData = fileBody;
+            cv.FirstPublishLocationId = promoId;
+            return cv;
+        }
+        function createFeedItem(fileName, fileType, fileBody, promoId, promoName, linkUrl) {
+            console.log('parentid: ' + promoId);
+            var feedItem = new sforce.SObject('FeedItem');
+            feedItem.Title = fileName;
+            feedItem.ContentData = fileBody;
+            feedItem.ContentFileName = fileName;
+            feedItem.Type = 'ContentPost';
+            feedItem.ParentId = promoId;
+            feedItem.Visibility = 'AllUsers';            
+            
+            return feedItem;
+        }
+        function attachmentSuccess(result) {
+            console.log('[AttachmentSuccess] result', result);
+            feedItemId = '';
+            j$('#busyDialog').modal('hide');
+            if (result[0].getBoolean('success') == true) {                
+                console.log('[attachmentsuccess] result:', result); 
+                var promoId = j$('#fuPromotionActivityContainer').attr('data-promo-id');
+                
+                var tempResult = result;
+                delete tempResult[0].success;
+                //callEinstein(result);
+                feedItemId = result[0].id;
+                j$('#btnGoToChatterPost').attr('data-post-id', feedItemId);
+                var selector = '#UploadItemsPanel div';
+                if (deviceType == 'desktop') {
+                    selector = '#tUploadItems tr';
+                }
+                
+                if (promoId && promoId != '') {
+                    var paperClip = j$('.promotionRows i[data-promo-id*="'+promoId+'"]');
+                    if (paperClip) {
+                        paperClip.removeClass('hidden');
+                    }
+                }
+                
+                j$(selector + ' .removeButton').text('{!$Label.Attached}')
+                                               .prop('disabled','disabled')
+                                               .children().hide();
+                j$(selector + ' .fuInputFilename').prop('disabled', 'disabled');
+                            
+                j$('#btnUploadAndAttach').hide();
+                j$('#btnUploadAndAttachBadge').text('0').hide();
+                j$('#btnMoveToChatter').show();
+                if (returnToPromotion == 'true') {
+                    j$('.returnToPromotion').show();
+                }
+            } else {
+	            j$('#btnSelectOtherPromotion').removeClass('disabled');
+
+                alert(uploadAttachmentError + '\n' + result[0].errors.message);
+            }
+        }
+        function attachmentFailed(error) {  
+            console.log('[attachmentFailed] error', error);
+            var dlgTitle = j$('#busyDialogLabel');
+            dlgTitle.text(dlgTitle.attr('data-error-title'));
+            j$('#busyDialog .modal-footer').show();
+            j$('#busyDialog .modal-body .progress').hide();
+            j$('#busyDialogMessage').text(error);
+            j$('#busyDialog .modal-body .busyDialogMessage').show();
+        }
+
+        function uploadFiles(taskId, templateId) {
+            /*
+                        if (taskId == null) {
+                            taskHTML += '</div><div class="col-xs-1 taskData"><a href="javascript:sforce.one.navigateToURL(\'/flow/JRFlowUploadTest?recordId='+value.templateId+'&objectName=keytasktemplate&accountId='+account.Id+'&callCardId='+(callCard.Id == undefined ? '' : callCard.Id)+'&retURL=/apex/account_visit?id='+account.Id+'\')"><i class="fa fa-upload fa-2x" /></a></div><div class="col-xs-2 taskData toggle">';
+                        } else {
+                            taskHTML += '</div><div class="col-xs-1 taskData"><a href="javascript:sforce.one.navigateToURL(\'/flow/JRFlowUploadTest?recordId='+taskId+'&objectName=keytask&accountId='+account.Id+'&callCardId='+(callCard.Id == undefined ? '' : callCard.Id)+'&retURL=/apex/account_visit?id='+account.Id+'\')"><i class="fa fa-upload fa-2x" /></a></div><div class="col-xs-2 taskData toggle">';
+                        }
+                        */
+            /*flowTaskId = taskId;
+            flowObject = 'keytask';
+            if (taskId == null) {
+                flowTaskId = templateId;
+                flowObject = 'keytasktemplate';
+            }
+            j$('#flowDialog').modal('show'); 
+            */            
+        }
+        /** End File Upload and Attach functions */
+
+        /**
+         * End Camera page functions
+         */
+
+        /**
+         * Begin Einstein functions
+         */
+/*
+        function callEinstein(items) {
+            console.log('[callEinstein] items', items);
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.Account_Visit_Controller.callEinstein}',
+                items,
+                function(result, event) {
+                    console.log('[callEinstein] status: ' + event.status + ', message: ' + event.message);
+                    if (event.status) {
+                        storeShelfScannerImages(result);
+                    } else if (event.type === 'exception') {
+                        console.log('callEinstein raised exception. ' + event.message);
+                        alert(event.message);
+                    } else {
+                        console.log(event.message);
+                    }
+                    
+                },
+                { escape:false }
+            );
+        }
+        function storeShelfScannerImages(items) {
+            console.log('[storeShelfScannerImages] items', items);
+            
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.Account_Visit_Controller.storeShelfScannerImages}',
+                items,
+                function(result, event) {
+                    console.log('[storeShelfScannerImages] status: ' + event.status + ', message: ' + event.message);
+                    if (event.status) {
+                    } else if (event.type === 'exception') {
+                        console.log('posttochatter1 raised exception. ' + event.message);
+                        alert(event.message);
+                    } else {
+                        console.log(event.message);
+                    }
+                    
+                },
+                { escape:false }
+            );
+        }
+        */        
+         
+        /**
+         * End Einstein functions
+         */
+
+         /**
+         * Begin RecordType functions
+         */
+        function getPicklistValuesForRecordTypes(objectList) {
+            console.log('objectList', objectList);
+            for(var rt = 0; rt < objectList.length; rt++) {
+                getPicklistValuesForRecordType(objectList[rt].objectName, objectList[rt].recordTypeName);
+            }
+            console.log('picklistValuesMap', picklistValuesMap);
+        }
+
+        //get all picklist values for this market's recordtype
+        function getPicklistValuesForRecordType (objectName, recordTypeName) {
+            var bigString = [];
+            //var recordTypeName = '{!ccRecordTypeName}';
+
+            //var objectDescribe = sforce.connection.describeSObject(objectName);        
+            //console.log('objectDescribe', objectDescribe);
+            //recordTypesForObject[objectName] = objectDescribe.recordTypeInfos;
+            
+            var vl = {};
+            var recordTypeMappings = sforce.connection.describeLayout(objectName).recordTypeMappings;
+            console.log('recordtypes for ' + objectName, recordTypeMappings);
+            if (recordTypeMappings.length == undefined) {
+                for(var x = 0; x < recordTypeMappings.picklistsForRecordType.length; x++){
+                    vl = returnPickListValue(recordTypeMappings.picklistsForRecordType[x]);
+                    var field = {
+                        name: recordTypeMappings.picklistsForRecordType[x].picklistName,
+                        values: vl.values,
+                        labels: vl.labels
+                    };                           
+                    bigString.push(field);
+                }
+            } else {
+                for (var i = 0; i < recordTypeMappings.length; i++) {
+                    var addPicklistItems = true;
+                    if (recordTypeName != '') {
+                        if (recordTypeMappings[i].name == recordTypeName) { addPicklistItems = true; } else { addPicklistItems = false; }
+                    }
+                    if (addPicklistItems == true && recordTypeMappings[i].picklistsForRecordType) {
+                        if (recordTypeMappings[i].picklistsForRecordType.length == undefined) {
+                            vl = returnPickListValue(recordTypeMappings[i].picklistsForRecordType);
+                            var field = {
+                                name: recordTypeMappings[i].picklistsForRecordType.picklistName,
+                                values: vl.values,
+                                labels: vl.labels
+                            };                          
+                            bigString.push(field);
+                        } else {
+                            for(var x = 0; x < recordTypeMappings[i].picklistsForRecordType.length; x++){
+                                vl = returnPickListValue(recordTypeMappings[i].picklistsForRecordType[x]);
+                                var field = {
+                                    name: recordTypeMappings[i].picklistsForRecordType[x].picklistName,
+                                    values: vl.values,
+                                    labels: vl.labels
+                                };                          
+                                bigString.push(field);
+                            }
+                        }
+                    }
+                }
+            }
+            picklistValuesMap[objectName] = bigString;
+        }
+
+        //get the individual values
+        function returnPickListValue (obj) {
+            var values = [];
+            var labels = [];
+            if (obj.picklistValues.label == undefined) {
+                for (var y = 0; y < obj.picklistValues.length; y++) {
+                    values.push(obj.picklistValues[y].value);
+                    labels.push(obj.picklistValues[y].label);
+                }
+            } else {
+                values.push(obj.picklistValues.value);
+                labels.push(obj.picklistValues.label);
+            }
+            return { values: values, labels: labels };
+        }
+
+        //find the picklist values for this field
+        function getSelectOptions(fieldName, objectName){
+            console.log('[getselectoptions] fieldname: ' + fieldName + ', objectName: ' + objectName);
+            for(var i = 0; i < picklistValuesMap[objectName].length; i++) {
+                if (picklistValuesMap[objectName][i].name == fieldName) {
+                    return picklistValuesMap[objectName][i];
+                }
+            }
+            return { values: [], labels: [] };
+        }
+        /**
+         * End RecordType functions
+         */
+        
+        /**
+         * Begin Overflow Menu functions
+         */
+        // Close (Overflow/More) Options menu when not clicked on                              
+        window.onclick = function(event) {
+        	if (!event.target.matches('.optionMenuButton')) {
+                var dropdowns = document.getElementsByClassName("options-dropdown-content");
+                var i;
+                for (i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
+
+        // (Overflow/More) Options menu (top right corner)
+        function showOptionsDropdown() {
+           document.getElementById("optionsMenuDropdown").classList.toggle("options-show");
+        }
+
+        // Generate (Overflow/More) Options menu based on JSON
+        function generateOptionsMenu() {
+            // Menu definition from Market Object
+            var menu = {!serializedMenuJSON}
+
+            // Show menu if menu definition has > 0 elements
+            if(menu.length > 0)
+                j$('#overflowmenu').show();
+            
+            // Add links to menu
+            var menuDiv = j$("#optionsMenuDropdown");
+            menu.forEach(function(element) {
+                // Create base link element
+                var a = document.createElement('a');
+                var linkText = document.createTextNode(element.label);
+                a.appendChild(linkText);
+                // Add link if present (not advanced button) -- process link for sf1 detection and urlprefix
+                if(element.link) {
+                    // If link starts with http, paste straight in (external link), otherwise is Salesforce link and process
+                    if(element.link.startsWith("http")) {
+                        // Detect if in Salesforce1 or not
+                        if(inSF1) {
+                            a.href = 'javascript:sforce.one.navigateToURL("' + urlPrefix + element.link + '", ' + element.SF1isRedirect +')';
+                        } else {
+                            a.href = element.link;
+                            a.setAttribute("target", element.target);
+                        }
+                    } else {
+                        // Detect if in Salesforce1 or not
+                        if(inSF1) {
+                            a.href = 'javascript:sforce.one.navigateToURL("' + urlPrefix + element.link + '", ' + element.SF1isRedirect +')';
+                        } else {
+                            a.href = urlPrefix + element.link;
+                            a.setAttribute("target", element.target);
+                        }
+                    }
+                } else {
+                    // Advaned button, define button behavior based on name
+                    
+                    // Accounts Nearby (This Account)
+                    if(element.name == "Accounts_Nearby_This_Account") {
+                        // Detect if in Salesforce1 or not
+                        if(inSF1) {
+                            a.href = 'javascript:sforce.one.navigateToURL("' + urlPrefix + '/apex/AccountsNearby?id=' + account.Id + '", ' + element.SF1isRedirect +')';
+                        } else {
+                            a.href = urlPrefix + '/apex/AccountsNearby?id=' + account.Id;
+                            a.setAttribute("target", element.target);
+                        }
+                    }
+                }
+                
+                // Add to menu
+                menuDiv.append(a);
+            });
+        }
+        /**
+         * End Overflow Menu functions
+         */
+        
+        /**
+         * Begin Popup Dialog functions
+         */
+        function showBusyDialog(callback, onHideCallBack) {
+            j$('#busyDialog .modal-footer').hide();
+            var dlgTitle = j$('#busyDialogLabel');
+            dlgTitle.text(dlgTitle.attr('data-default-title'));
+
+            j$('#busyDialog').one('shown.bs.modal', function() { if (callback) { callback(); }})
+                            .modal('show');
+        }
+
+        function showConfirmMessageDialog(message, callback, onHideCallBack) {
+            j$('#confirmDialogMessage').text(message);
+            j$('#btnConfirmDialogYes').addClass('hidden');
+            j$('#btnConfirmDialogOK').removeClass('hidden');
+            j$('#confirmDialog').one('shown.bs.modal', function() { 
+                if (callback) { callback(); }
+            }).one('hidden.bs.modal', function() {
+                j$('#btnConfirmDialogYes').removeClass('hidden');
+                j$('#btnConfirmDialogOK').addClass('hidden');
+            }).modal('show');
+        }
+
+        function showMessage(msg) {
+            j$('#pageMessages').empty()
+                            .append('<p>'+msg+'</p>');
+        }
+
+        /**
+         * End Popup Dialog functions
+         */
+        
+
+    </script>
+    <div class="bootstrap">    
+        <div class="modal fade" id="confirmDialog" tabindex="-1" role="dialog" aria-labelledby="confirmDialogLabel" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="confirmDialogLabel" >{!$Label.Confirmation_Required}</h4>
+                    </div>
+                    <div class="modal-body">
+                        <span id="confirmDialogMessage"></span>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{!$Label.Cancel}</button>
+                        <a id="btnConfirmDialogYes" class="btn btn-warning btn-ok" data-dismiss="modal">{!$Label.Yes_ImSure}</a>
+                        <a id="btnConfirmDialogOK" class="btn btn-warning btn-ok hidden" data-dismiss="modal">{!$Label.OK}</a>
+                    </div>                        
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="busyDialog" tabindex="-1" role="dialog" aria-labelledby="busyDialogLabel" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="busyDialogLabel" data-default-title="{!$Label.Working_PleaseWait}" data-error-title="{!$Label.Error}">{!$Label.Working_PleaseWait}</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+                                <div class="sr-only"></div>
+                            </div>                                                        
+                        </div>
+                        <div class="busyDialogMessage">
+                            <span id="busyDialogMessage"></span>
+                        </div>
+                    </div>                        
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal" >{!$Label.Close}</button>
+                    </div>                        
+                </div>
+            </div>
+        </div>
+    
+        <div class="modal fade" id="newContactDialog" tabindex="-1" role="dialog" aria-labelledby="newContactModalLabel" style="overflow-y: scroll;">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div id="newContactDialogMessagesContainer" class="alert alert-danger hidden">
+                            <span id="newContactDialogMessages"></span>                              
+                        </div>                            
+                        <h4 class="modal-title" id="newContactModalLabel">{!$Label.CreateNewContact}</h4>
+                        <span class="requiredField" style="margin-top: 5px;"></span><span style="font-size: x-small;font-weight:bold;">{!$Label.AsteriskDenotesRequireField}</span>
+                    </div>
+                    <div class="modal-body">
+                        <div id="newContactForm">
+                            <div class="form-group">
+                                <span id="newContactAccount" ></span>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="newContactFirstName">{!$ObjectType.Contact.Fields.FirstName.Label} <span class="text-danger">*</span></label>
+                                <input id="newContactFirstName" type="text" class="form-control" maxLength="40" />
+                            </div>
+                            <div class="form-group">
+                                <label for="newContactLastName">{!$ObjectType.Contact.Fields.LastName.Label} <span class="text-danger">*</span></label>
+                                <input id="newContactLastName" type="text" class="form-control" maxLength="80" />
+                            </div>
+                            <div class="form-group">
+                                <label for="newContactPhone">{!$ObjectType.Contact.Fields.Phone.Label}</label>
+                                <input id="newContactPhone" type="text" class="form-control"/>
+                            </div>
+                            <div class="form-group">
+                                <label for="newContactMobile">{!$ObjectType.Contact.Fields.MobilePhone.Label}</label>
+                                <input id="newContactMobile" type="text" class="form-control"/>
+                            </div>
+                            <div class="form-group">
+                                <label for="newContactEmail">{!$ObjectType.Contact.Fields.Email.Label}</label>
+                                <input id="newContactEmail" type="text" class="form-control"/>
+                            </div>
+                            <div class="form-group">
+                                <label for="newContactTitleSelect">{!$ObjectType.Contact.Fields.Title.Label}</label>
+                                <select id="newContactTitleSelect" class="form-control">
+                                </select>
+                                <input id="newContactTitleText" type="Text" class="form-control" />                                    
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" style="float: left;" data-dismiss="modal">Cancel</button>
+                        <button id="newContactSaveButton" type="button" class="btn btn-primary" style="float: right;">
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none;"/>
+                            {!$Label.CreateNewContact}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="orderRecordTypeDialog" tabindex="-1" role="dialog" aria-labelledby="orderRTModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="orderRTModalLabel">{!$Label.Select_a_Record_Type}</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div id="orderRecordTypesList">
+                            
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{!$Label.Close}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="modal fade" id="promoRecordTypeDialog" tabindex="-1" role="dialog" aria-labelledby="promoRTModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="promoRTModalLabel">{!$Label.Select_a_Record_Type}</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div id="promotionRecordTypesList">
+                            
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{!$Label.Close}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        <div class="container-fluid theme-showcase " role="main"> 
+			<nav class="navbar navbar-light bg-light fixed-top" id="top-panel">
+                <div class="navbar-brand justify-content-start">
+                    <a id="sectionTitleAccountName" class="">{!a.Name}</a> - <span id="sectionTitle">{!$Label.Surveys}</span>
+                </div>
+                <div>
+                    <button id="saveBtn" class="btn-sm btn-flat btn-primary saveBtn actionButton bfOnly">
+                        <span class="spinner-border spinner-border-sm hidden" role="status" aria-hidden='true'></span>
+                        <span class="sr-only">Saving...</span>
+                        <i class="fas fa-save white faButton" title="Save"></i>
+                    </button>
+                    <button id="checkInBtn" class="btn-sm btn-flat btn-primary bfOnly checkIn actionButton hide" onclick="checkIn()">
+                        <i class="fas white fa-sign-in-alt faButton" title="{!$ObjectType.CallCard__c.Fields.Check_In__c.Label}"></i>
+                        <span id="checkInBtnText" class="checkInText"></span>
+                    </button>
+                    <button id="checkOutBtn" class="btn-sm btn-flat btn-primary bfOnly checkIn actionButton hide disabled" disabled="disabled" onclick="checkOut()">
+                        <i class="fas white fa-sign-out-alt faButton" title="{!$ObjectType.CallCard__c.Fields.Check_Out__c.Label}"></i>
+                        <span id="checkOutBtnText" class="checkInText"></span>
+                    </button>
+                    <div class="options-dropdown" id='overflowmenu'>
+                        <button id="optionMenuButton" type="button" class="btn-sm btn-flat btn-info optionMenuButton" onclick="showOptionsDropdown()">&#x22EE;</button>
+                        <div id="optionsMenuDropdown" class="options-dropdown-content"></div>
+                    </div>
+            
+                </div>
+            </nav>
+
+            <div class="main container-fluid" style="height: 500px !important;">                
+                <div class="">
+                    <div id="messagesContainer" class="card col-12 bfOnly hidden"  style="background-color: #f8edef;">
+                        <div class="card-body">
+                            <h3 class="card-title"><i class="fas fa-frown" aria-hidden="true"></i>&nbsp;&nbsp;{!$Label.Insufficient_Privileges_Error_Header}</h3>
+                            <h4 class="card-subtitle mb-2 mt-4">{!$Label.HowToGetAccess}</h4>
+                            <ul style="list-style-type: disc;">
+                                <li><h5 class="card-text">{!$Label.Insufficient_Privileges_Error_Message}</h5></li>
+                            </ul>                            
+                        </div>
+                    </div>
+                    <div id="pageMessages" style="text-align:center;color:red;font-weight:bold;">                    
+                    </div>
+            
+                    <div id="callCardContainer" class="content object-content_container object-content_hidden callcard col-12 bfOnly" object="callcard">
+                        <div style="float:left;">
+                            <span class="requiredField" style="margin-left: 20px; margin-right: 10px;"></span><span style="font-size: x-small;font-weight:bold;">{!$Label.AsteriskDenotesRequireField}</span>
+                        </div><br />
+            
+                        <div id="callCardContent" class="object-content"></div>
+                    </div>
+                    
+                    <div id="tasksContainer" class="content object-content_container object-content_hidden tasks col-12 bfOnly" object="Tasks">
+                        <div id="tasksContent" class="object-content"></div>
+                    </div>
+
+                    <div id="surveysContainer" class="content object-content_container object-content_hidden surveys col-12 " object="Surveys">
+                        <div id="surveyContent" class="object-content">
+                            <div class="btn-group btn-group-lg mb-3" role="group">
+                                <button class="btn btn-primary surveyBtn surveys" type="button" tbl="surveysTable">{!$Label.LABS_SF_Open_Surveys}</button>                                    
+                                <button class="btn btn-light surveyBtn completed" type="button" tbl="completedTable" >{!$Label.LABS_SF_Completed_Surveys}</button>                                    
+                            </div>
+            
+                            <apex:pageMessages />
+
+                            <div id="noSurveysMessage" class="card text-white bg-warning m-3">
+                                <div class="card-body">
+                                    <h3>{!$Label.LABS_SF_noSurveysFound}</h3>
+                                </div>
+                            </div>
+                            <div id="surveyContainer" class="container col-12">
+                                <!-- Create and define table, with th, then repeat over  allSurveys-->
+                                <table class="list surveyTable surveys table table-striped" border="0" cellpadding="5px" cellspacing="0" id="surveysTable">
+                                    <colgroup span="3"></colgroup>
+                                    <thead class="rich-table-thead">
+                                        <tr class="headerRow">
+                                            <th class="headerRow" scope="col" colspan="1"><div>{!$Label.LABS_SF_SurveyURLLink}</div></th>
+                                            <th class="headerRow" scope="col" colspan="1"><div>{!$Label.Channel}</div></th>
+                                            <th class="headerRow" scope="col" colspan="1"><div>{!$Label.Factsheet_Startdate}</div></th>
+                                            <th class="headerRow" scope="col" colspan="1"><div>{!$Label.Factsheet_Enddate}</div></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="dataRow surveyRows singleChannelLink" >
+                                            <td class="dataCell" colspan="1" width="34%">
+                                                <!--<a href="#" onclick="newAccountSurvey('Account')">{!$Label.Account_Survey}</a>-->
+                                                <a href="javascript:void(0);" class="singlechannelsurvey" onclick="startNewAccountSurvey('Account', '', this)">{!$Label.Account_Survey}</a>
+                                                <div id="existingAccountSurvey" class="existingSurvey "><i class="fas green fa-check-circle" ></i></div>
+                                            </td>
+                                            <td class="dataCell" colspan="1" width="16%">&nbsp;</td>
+                                            <td class="dataCell" colspan="1" width="33%">{!$Label.LABS_SF_ongoing}</td>
+                                            <td class="dataCell" colspan="1" width="33%">{!$Label.LABS_SF_ongoing}</td>
+                                        </tr>
+                                        <tr class="dataRow surveyRows cptLink">
+                                            <td class="dataCell" colspan="1" width="34%">
+                                                <a href="javascript:void(0);" class="cptsurvey" onclick="startNewAccountSurvey('CPT', '', this)">{!$Label.CPT}</a>
+                                                <div id="existingCPTSurvey" class="existingSurvey"><i class="fas green fa-check-circle" ></i></div>
+                                            </td>
+                                            <td class="dataCell" colspan="1" width="16%">&nbsp;</td>
+                                            <td class="dataCell" colspan="1" width="33%">{!$Label.LABS_SF_ongoing}</td>
+                                            <td class="dataCell" colspan="1" width="33%">{!$Label.LABS_SF_ongoing}</td>
+                                        </tr>
+                                        <tr class="dataRow surveyRows multiChannelLink onChannelLink" >
+                                            <td class="dataCell" colspan="1" width="34%">
+                                                <a href="javascript:void(0);" class="onchannelsurvey" onclick="startNewAccountSurvey('Account', 'On Premise', this)">{!$Label.Account_Survey}</a>
+                                                <div id="existingOnAccountSurvey" class="existingSurvey "><i class="fas green fa-check-circle" ></i></div>
+                                            </td>
+                                            <td class="dataCell" colspan="1" width="16%">{!$Label.On}</td>
+                                            <td class="dataCell" colspan="1" width="33%">{!$Label.LABS_SF_ongoing}</td>
+                                            <td class="dataCell" colspan="1" width="33%">{!$Label.LABS_SF_ongoing}</td>
+                                        </tr>
+                                        <tr class="dataRow surveyRows multiChannelLink offChannelLink" >
+                                            <td class="dataCell" colspan="1" width="34%">
+                                                <a href="javascript:void(0);" class="offchannelsurvey" onclick="startNewAccountSurvey('Account', 'Off Premise', this)">{!$Label.Account_Survey}</a>
+                                                <div id="existingOffAccountSurvey" class="existingSurvey "><i class="fas green fa-check-circle" ></i></div>
+                                            </td>
+                                            <td class="dataCell" colspan="1" width="16%">{!$Label.Off}</td>
+                                            <td class="dataCell" colspan="1" width="33%">{!$Label.LABS_SF_ongoing}</td>
+                                            <td class="dataCell" colspan="1" width="33%">{!$Label.LABS_SF_ongoing}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <table class="list surveyTable surveys completed completedTable table table-striped" border="0" cellpadding="5px" cellspacing="0" id="completedTable">
+                                    <colgroup span="3"></colgroup>
+                                    <thead class="rich-table-thead">
+                                        <tr class="headerRow">
+                                            <th class="headerRow" scope="col" colspan="1" ><div>{!$Label.LABS_SF_SurveyURLLink}</div></th>
+                                            <th class="headerRow" scope="col" colspan="1"><div>{!$Label.Factsheet_Startdate}</div></th>
+                                            <th class="headerRow" scope="col" colspan="1"><div>{!$Label.Factsheet_Enddate}</div></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="ordersContainer" class="content object-content_container object-content_hidden orders mx-sm-0 mx-md-auto px-sm-0 px-md-auto bfOnly" object="Orders">
+                        <div id="orderContent" class="object-content">
+                            <div class="btn-group btn-group-lg mb-3 mt-md-3 mt-lg-0">
+                                <button class="btn btn-primary" type="button" id="newOrderBtn" style="color: white;">{!$Label.LABS_SF_New_Order}</button>                                    
+                            </div>
+                            
+                            <apex:pageMessages />
+
+                            <div id="noOrdersMessage" class="card text-white bg-warning m-3">
+                                <div class="card-body">
+                                    <h3>{!$Label.LABS_SF_noOrdersFound}</h3>
+                                </div>
+                            </div>
+    
+                            <div id="orderContainer" class="container mx-sm-0 mx-md-auto px-sm-0 mx-md-auto">                            
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="cameraContainer" class="content object-content_container object-content_hidden camera mx-sm-0 mx-md-auto px-sm-0 px-md-auto bfOnly" object="Camera">
+                        <div id="cameraContent" class="object-content">
+                            <div id="fuPromotionActivityContainer" class="card mx-3 mx-sm-0 px-sm-0">
+                                <div class="card-header">
+                                    <h3>{!$ObjectType.Promotion_Activity__c.LabelPlural}</h3>
+                                </div>
+            
+                                <div id="noPromotionActivitiesMessage" class="card bg-warning m-3">
+                                    <div class="card-body">
+                                        {!$Label.NoPromotionActivitiesFound}
+                                    </div>
+                                </div>
+                                
+                                <div id="fuPromotionActivityDetailsContainer" class="card-body">
+                                    <div id="fuPromotionActivityList" class="list-group list-group-flush"></div>
+                                </div>
+                            </div>
+                
+                            <div id="fuSelectedPromotion" class="card m-3">
+                                <div class="card-body">
+                                    <div id="fuSelectedPromotionContainer">
+                                    </div>
+                                    <div>
+                                        <button id="btnSelectOtherPromotion" type="button" class="btn btn-primary btn-lg center-block" onclick="confirmSelectOtherPromotion()"><i class="fas fa-chevron-left" />&nbsp;{!$Label.Go_Back_Select_Other_Promotion}</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="fileUploadContainer" class="card m-3">
+                                <div class="card-header">
+                                    <h3>{!$Label.Select_Items_To_Attach_Upload}</h3>
+                                </div>
+                                
+                                <div id="fileUploadItemsContainer" class="card-body">
+                                    <div id="fileUploadInputGroup" class="col-12 col-sm-6 col-lg-6 ml-3" style="display:inline-block;">
+                                        <div id="fileUploadInputGroupControls" class="input-group">
+                                            <input id="fileUploadText" type="text" class="form-control" readonly="true" />
+                                            <div class="input-group-append">
+                                                <span id="fileUploadSpan" class="input-group-btn">
+                                                    <span class="btn btn-primary btn-file">
+                                                        {!$Label.Browse_Ellipses} <input id="browseButton" type="file" class="browseButton" onchange="addItemsToUploadList(event)" />
+                                                    </span>
+                                                </span>
+                                                <span id="browseButton1Span" class="btn btn-primary btn-file">
+                                                    {!$Label.Browse_Ellipses} <input id="browseButton1" type="file" class="browseButton" onchange="addItemsToUploadList(event)" />
+                                                </span>                                    
+                                            </div>
+                                        </div>             
+                                    </div>
+                                        
+                        
+                                    <div id="UploadItemsPanel" class="col-12 mt-5">
+                                    </div>
+                                </div>
+                                
+                                <div id="fileUploadActionsContainer">
+                                    <button id="btnUploadAndAttach" type="button" class="btn btn-primary btn-lg center-block">
+                                        <span class="glyphicon glyphicon-upload" aria-hidden="true"></span>&nbsp;&nbsp;{!$Label.Upload_and_Post}&nbsp;&nbsp;<span id="btnUploadAndAttachBadge" class="badge">0</span>
+                                    </button>
+                                    <div class="center-block">
+                                        
+                                    <button id="btnMoveToChatter" type="button" class="btn btn-primary btn-lg" >
+                                        {!$Label.Post_to_Chatter}&nbsp;&nbsp;<i class="fas fa-long-arrow-right"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-primary btn-lg returnToPromotion" onclick="returnToThePromotion()">
+                                        {!$Label.Return_To_Record}
+                                    </button>
+                                    </div>
+                                </div>
+                            </div>    
+                            <div id="ChatterContainer" class="card m-3">
+                                <div class="card-header">
+                                    <h3>{!$Label.LABS_SF_Chatter}</h3>
+                                </div>
+                                
+                                <div id="ChatterDetailsContainer" class="card-body">
+                                
+                                    <div class="col-12 col-sm-12 col-lg-6 ml-3">
+                                        <div class="input-group">
+                                            <input id="chatterGroupText" type="text" class="form-control" readonly="true" />
+                                            <div class="input-group-append">
+                                                <button class="btn btn-primary dropdown-toggle" type="button" id="fuChatterGroupsDropDownButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                    {!$Label.Chatter_Groups}
+                                                    <!--<span class="caret"></span>-->
+                                                </button>
+                                                <div id="fuChatterGroupsDropDown" class="dropdown-menu" aria-labelledby="fuChatterGroupsDropDownButton">
+                                                </div>
+                                            </div>
+                                            
+                                        </div>             
+                                    </div>                               
+                        
+                                    <div id="ChatterPostDetailsPanel" class="col-12 m-3 hidden">
+                                        <div id="ChatterPostContainer" class="col-12 col-sm-12 col-md-6 form-group">
+                                            <div>
+                                                <label for="taChatterPost" style="margin-bottom: 0.5rem;">{!$Label.Post_Something}</label>                                        
+                                            </div>
+                                            <div>
+                                                <div class="checkbox">
+                                                    <label><input id="cbMentionManager" type="checkbox" value="" checked="checked" data-manager-id="{!myManagersId}" /><span class="label label-warning">{!$Label.At_Mention}&nbsp;{!myManagersName}</span></label>
+                                                </div>
+                                                <!--
+                                                <div class="checkbox">
+                                                    <span>{!$Label.Hashtag_Something}</span><label>&nbsp;&nbsp;<input id="cbHashtagAccount" type="checkbox" value="" checked="checked" /><span class="label label-warning">{!$ObjectType.Account.Label}</span></label>&nbsp;&nbsp;<label><input id="cbHashtagPromotion" type="checkbox" value="" checked="checked" /><span class="label label-warning">{!$ObjectType.Promotion__c.Label}</span></label>
+                                                </div>
+                                                -->
+                                                <div>
+                                                    <span>[{!$Label.Topics}]</span><label id="sHastagAccountLabel" class="col-xs-12 col-sm-12" style="word-wrap: break-word;">&nbsp;&nbsp;<span id="sHashtagAccount" style="word-wrap:break-word;white-space:normal;" class="label label-warning">#{!account.Name}</span></label>&nbsp;&nbsp;<label><span id="sHashtagPromotion" class="label label-warning" style="word-wrap:break-word;"></span></label>                                            
+                                                </div>
+                                            </div>
+                                            <textarea class="form-control" rows="10" id="taChatterPost"></textarea>
+                                            <div>
+                                                <button id="btnPostToChatter" type="button" class="btn btn-default pull-right" style="margin-left: 5px; margin-right: 10px;">{!$Label.Post}</button>                                        
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="uploadCompletedDiv" class="card m-3">   
+                                <div class="card-header">
+                                    <h3>{!$Label.What_Would_You_Like_To_Do_Now}</h3>
+                                </div>
+                                
+                                <div class="card-body text-center">
+                                    <div class="center-block">
+                                        <i class="fas fa-2x gray col-lg-2 col-md-2 text-center tab" title="spacer"></i>
+                                        <button id="btnRestartUploadProcess" type="button" class="btn btn-default btn-lg col-lg-4 col-md-4 col-sm-12 col-xs-12" style="margin: 10px;" onclick="initialiseCameraPage()">
+                                            {!$Label.Restart}
+                                        </button>
+                                        <button id="btnGoToChatterPost" type="button" class="btn btn-primary btn-lg col-lg-4 col-md-4 col-sm-12 col-xs-12" style="margin: 10px;" onclick="goToChatterPost()">
+                                            {!$Label.View_Chatter_Post}
+                                        </button>
+                                        <button type="button" class="btn btn-primary btn-lg col-lg-4 col-md-4 col-sm-12 col-xs-12 returnToPromotion" style="margin: 10px;" onclick="returnToThePromotion()">
+                                            {!$Label.Return_To_Record}
+                                        </button>
+                                        <i class="fa fa-2x gray col-lg-2 col-md-2 text-center tab" title="spacer"></i>                                
+                                    </div>
+                                </div>                        
+                            </div>
+                                        
+                        </div>
+                    </div>
+
+                    <div id="promotionsContainer" class="content object-content_container object-content_hidden promotions mx-sm-0 mx-md-auto px-sm-0 mx-md-autobfOnly" object="Promotions">
+                        <div id="promotionContent" class="object-content">
+                            <div class="btn-group btn-group-lg mb-3 mt-md-3 mt-lg-0" role="group">
+                                <button class="btn btn-primary" type="button" id="newPromoBtn" style="color: white;">{!$Label.LABS_SF_New_Promotion}</button>                                    
+                            </div>                        
+
+                            <apex:pageMessages />
+                            
+                            <div id="noPromotionsMessage" class="card text-white bg-warning m-3">
+                                <div class="card-body">
+                                    <h3>{!$Label.LABS_SF_noPromotionsFound}</h3>
+                                </div>
+                            </div>
+    
+                            <div id="promotionContainer" class="container mx-sm-0 mx-md-auto px-sm-0 mx-md-auto">
+                            </div>                        
+                        </div>
+            
+                    </div>
+                </div>                
+            </div>
+            <nav class="navbar navbar-light bg-light fixed-bottom" id="bottom-panel">
+                <div id="navCallCard" class="nav-item pl-2 pl-md-5">
+                    <i id="tabCallCard" class="fas fa-2x fa-comments gray tab callcard" title="{!$ObjectType.CallCard__c.LabelPlural}" object="callcard"></i>
+                </div>
+                <div id="navKeyTasks"  class="nav-item mx-sm-2">
+                    <i id="tabKeyTask" class="fas fa-2x fa-tasks gray tab tasks" title="{!$ObjectType.Key_Task__c.LabelPlural}" object="tasks"></i>
+                </div>
+                <div id="navSurveys" class="nav-item mx-sm-2 highlighted">
+                    <i id="tabSurvey" class="fas fa-2x fa-pencil-alt gray tab surveys highlighted" title="{!$Label.Surveys}" object="surveys"></i>                    
+                </div>
+                <div id="navOrders" class="nav-item mx-sm-2">
+                    <i id="tabOrder" class="fas fa-2x fa-list-alt gray tab orders" title="{!$ObjectType.Order__c.LabelPlural}" object="orders"></i>                    
+                </div>
+                <div id="navCamera" class="nav-item mx-sm-2">
+                    <i id="tabCamera" class="fas fa-2x fa-camera gray tab camera" title="{!$Label.Camera}" object="camera"></i>                
+                </div>
+                <div id="navPromotions" class="nav-item pr-2 pr-md-5">
+                    <i id="tabPromotion" class="fas fa-2x fa-ticket-alt gray tab promotions" title="{!$ObjectType.Promotion__c.LabelPlural}" object="promotions"></i>            
+                </div>
+            </nav>
+        </div>
+    </div>    
+</apex:page>    

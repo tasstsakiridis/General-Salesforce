@@ -1,0 +1,1721 @@
+<apex:page title="Order Items" standardController="Order__c" extensions="OrderItemsHTML_Controller" tabStyle="Order_Item__c" sidebar="false" docType="html-5.0" standardStylesheets="false" showHeader="false">
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="" />
+        <meta name="author" content="" />
+        
+        <script src='https://ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js'></script>        
+        
+        <script src="https://www.b-fonline.com/salesforceresources/numeral-js/min/numeral.min.js"></script>
+		<script src="https://www.b-fonline.com/salesforceresources/SFA/js/fastclick/lib/fastclick.js"></script>
+		<script src="https://www.b-fonline.com/salesforceresources/select2-4.0.3/dist/js/select2.min.js"></script>
+		<script src="https://www.b-fonline.com/salesforceresources/Bootgrid/js/jquery.bootgrid.js"></script>
+		<script src="https://www.b-fonline.com/salesforceresources/Bootgrid/js/jquery.bootgrid.fa.min.js"></script>        
+        
+        
+	    <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SFA/css/font-awesome.min.css" />
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SFA/css/accountSurvey.css" />
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/select2-4.0.3/dist/css/select2.min.css" />
+		<link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/BootstrapModernPages/css/bootstrap.min.css" />
+		<link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/BootstrapModernPages/css/bootstrap-theme.min.css" />
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SLDS091/assets/styles/salesforce-lightning-design-system-ltng.min.css" />
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/Bootgrid/css/jquery.bootgrid.min.css" />
+        
+        <!--<apex:includeScript value="{!URLFOR($Resource.SFA, '/js/fastclick/lib/fastclick.js')}" />-->
+        <!--<script src="{!URLFOR($Resource.SFA, '/lib/tokenize/Tokenize-2.4/jquery.tokenize.js')}"></script>-->
+        <!--<script src="{!URLFOR($Resource.Bootgrid, '/jquery.bootgrid.js')}"></script>-->
+        <!--<script src="{!URLFOR($Resource.Bootgrid, '/jquery.bootgrid.fa.min.js')}"></script>-->
+        <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/numeral.js//1.4.5/numeral.min.js"></script>-->
+        
+        <!--<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css"/>-->
+        <!--<apex:stylesheet value="{!URLFOR($Resource.SFA, '/css/accountSurvey.css')}" />-->
+        <!--<apex:stylesheet value="{!URLFOR($Resource.SFA, '/lib/tokenize/Tokenize-2.4/jquery.tokenize.css')}" />-->
+        <!--<apex:stylesheet value="{!URLFOR($Resource.bootstrapmodernp, '/startbootstrap-modern-business-gh-pages/css/bootstrap.min.css')}" />-->
+        <!--<apex:stylesheet value="{!URLFOR($Resource.bootstrapmodernp, '/startbootstrap-modern-business-gh-pages/css/bootstrap-theme.min.css')}"/>-->
+        <!--<apex:stylesheet value="{!URLFOR($Resource.SLDS091, '/assets/styles/salesforce-lightning-design-system-ltng.min.css')}" />-->
+        <!--<apex:stylesheet value="{!URLFOR($Resource.Bootgrid, '/jquery.bootgrid.min.css')}"/>-->
+    </head>
+    <style>
+        input.slds-input-clone {
+            background-color: white;
+            color: #16325c;
+            border: 1px solid #d8dde6;
+            border-radius: 0.25rem;
+            -webkit-transition: border 0.1s linear, background-color 0.1s linear;
+            transition: border 0.1s linear, background-color 0.1s linear;
+            display: inline-block;
+            padding: 0 1rem 0 0.75rem;
+            line-height: 2.125rem;
+            min-height: calc(2.125rem + 2px); 
+            margin-bottom: 0.5rem;
+        }
+        .productName {
+            min-width: 25%;
+        }
+        .sf-font {
+            font: 100%/1.5 "Salesforce Sans", Arial, sans-serif;
+        }
+        .jplist-pagination-info{
+            margin: 15px 15px 0 40px;
+        }
+        
+        .jplist-items-per-page{
+            margin: 15px 10px 0 0;
+        }
+        
+        .jplist-pagination{
+            margin: 10px 10px 0 30px;
+        }
+        .jplist-panel {
+            border-style: none;
+        }
+        .jplist-checkbox-dropdown {
+            width: 180px;
+            margin: 20px 0 0 10px;
+        }
+        .jplist-checkbox-dropdown ul {
+            width: 400px;
+        }
+        i.fa-plus:hover {
+            cursor: pointer;
+        }
+        .disabled {
+            cursor: not-allowed;
+            pointer-events: none;
+            disabled: true;
+            background-color: 'transparent';
+            box-shadow: none;
+            -webkit-box-shadow: none;
+        }
+        .requiredField:before {
+            content: '*';
+            color: #c23934;  
+            margin-right: 5px;
+            display: inline;
+        }
+        td.currency, td.double, td.percent {
+            text-align: right;
+        }
+        .bg_hd_productName {
+        	width: 40%;
+        }
+        .bg_hd_brand {
+        	width: 20%;
+        }
+        .bg_hd_spiritType {
+        	width: 20%;
+        }
+        .bg_hd_unitSize {
+        	width: 10%
+        }
+        .bg_hd_supplier {
+        	width: 10%;
+        }
+        
+    </style>            
+    <script src="{!urlPrefix}/soap/ajax/35.0/connection.js" type="text/javascript"></script>    
+    <script>
+        var j$ = jQuery.noConflict();
+
+        //Initialize sforce Connection for MetaDataApi calls
+        sforce.connection.sessionId = '{!$Api.Session_ID}';
+        var urlPrefix = '{!urlPrefix}';
+        if(urlPrefix == '/sales'){
+            UserContext.siteUrlPrefix = urlPrefix;
+            sforce.connection.serverUrl = urlPrefix + sforce.connection.serverUrl;
+        }
+
+        var filterRowsPerPage = 10;
+        var today = new Date();
+        var thisOrder = {!serializedOrder};
+        var orderItemList = {!serializedOrderItemList};        
+        var productList = {!serializedProductList};
+        var orderItemFS = {!serializedOrderItemFS};
+        var readOnlyFields = [{!serializedReadOnlyFieldList}][0];
+        var toleranceList = [{!serializedToleranceList}][0];
+        var dealList = [{!serializedDealList}][0];
+    console.log('productList', productList);
+    console.log('toleranceList', toleranceList);
+    console.log('dealList', dealList);
+    console.log('orderItemFS', orderItemFS);
+    console.log('orderitemlist', orderItemList);
+        var orderType;
+        var itemRecordTypeId = '{!itemRecordTypeId}';
+        var marketName = '{!marketName}';
+        var channel;
+        var returnURL = '{!$CurrentPage.Parameters.retUrl}';
+        var returnToAccountVisit = '{!$CurrentPage.Parameters.returnToAccountVisit}';
+        var deviceType;
+        var redirect = false;
+        var inSF1 = false;
+        var isDesktop = true;
+        var lockOrder = {!lockOrder};
+        var labelEmpty = '{!$Label.All}';
+        var requiredFieldsMessage = '{!$Label.RequiredFieldsMessage}';
+        var dealSingleProductAboveToleranceMessage = '{!$Label.Deal_Products_Above_Tolerance_Message_Single}';
+        var dealMultipleProductsAboveToleranceMessage = '{!$Label.Deal_Products_Above_Tolerance_Message_Multiple}';
+    	var noItemsErrorMessage = '{!$Label.NoLineItemsErrorMessage}';
+        var confirmBonusStockMessage = '{!$Label.ConfirmBonusStockMessage}';
+        var discountWithNoQtyErrorMessage = '{!$Label.DiscountWithNoOrderQtyError}';
+        var warningHeader = '{!$Label.Warning_Title}';
+        var noQtyErrorMessage = '{!$Label.NoQtyErrorMessage}';
+    	var addSelectedProductsLabel = '{!$Label.Add_Selected_Products}';
+        
+        //arrays for each of the filters to build out select options
+        var brandSearch = [];
+        var spiritTypesSearch = [];
+        var sizeSearch = [];
+        var supplierSearch = [];
+        var usedForSearch = [];
+        var statusSearch = [];
+        var relationships = [];
+        var itemsToDelete = [];
+        var productsSelected = [];
+
+        var picklistValuesMap = {};
+    	var requiredFields = [];
+        
+        if (readOnlyFields == null) { readOnlyFields = []; }
+        
+        //map to create corresponding HTML input type for Salesforce field type
+        var inputTypeMap = {
+            'boolean':  'checkbox',
+            'double':   'number',
+            'currency': 'number',
+            'picklist': 'select',
+            'reference':'link',
+            'date':     'date',
+            'percent':  'number',
+            'textarea': 'text',
+            'string':   'text'
+        }
+    	var customFieldLabels = [
+            { objectName: 'Order_Item__c', market: 'Australia', fieldName: 'Max_PA_Per_Case__c', customLabel: '{!$Label.Tolerance}' }
+        ];
+
+
+        j$(document).ready(function() {
+            j$(function() {
+                FastClick.attach(document.body);
+            });
+            
+            if( (typeof sforce != 'undefined') && (sforce.one != null) ) {
+                inSF1 = true;
+            }else{
+                inSF1 = false;
+            }
+                        
+            //get window width to determine whether or not to use tokenize, 768 = tablet
+            //sniff user agent to figure out if it's an iPad because screen resolution varies
+            var IS_IPAD = navigator.userAgent.match(/iPad/i) != null;
+            if(j$(window).width() >= 992 && !IS_IPAD){
+                deviceType = 'desktop';
+            }else{
+                j$('#expandButton').show();             //for cards layout
+                if(j$(window).width() >= 768){
+                    deviceType = 'tablet';
+                }else{
+                    deviceType = 'phone';
+                }
+            }
+            isDesktop = deviceType == 'desktop';
+            
+            /*
+            j$('#bootgrid').bootgrid({
+                selection: true,
+                multiSelect: true,
+                keepSelection: true,
+                caseSensitive: false,
+                rowSelect: true,
+                formatters: {
+                    "product": function(col, row) {
+                        var v = "";
+                        if (row.added == true) {
+                            v = "<i class=\"fa fa-check-square-o\"></i>" + row.product;
+                        } else {
+                            v = row.product;
+                        }
+                        return v;
+                    }
+                },
+				labels: {
+                    all: "{!$Label.All}",
+                    infos: "{!$Label.BootgridInfos}",
+                    loading: "{!$Label.Loading}",
+                    noResults: "{!$Label.NoResults}",
+                    refresh: "{!$Label.Refresh}",
+                    search: "{!$Label.Search}"
+                }                
+            }).on("selected.rs.jquery.bootgrid", function(e, rows) {
+                var rowIds = [];
+                for (var i = 0; i < rows.length; i++)
+                {
+                    rowIds.push(rows[i].product + '[' + rows[i].id + '], added: ' + rows[i].added);
+                    rows[i].added = true;
+                    productsSelected.push({id:rows[i].id,name:rows[i].product});
+                }
+                console.log('[selected] rows', rows);
+                console.log('[selected] productsselected', productsSelected);
+            }).on("deselected.rs.jquery.bootgrid", function(e, rows) {
+                console.log('[deselected] rows', rows);
+                console.log('[deselected] productsselected', productsSelected);
+                for(var i = 0; i < rows.length; i++) {
+                    for(var j = 0; j < productsSelected.length; j++) {
+                        if (productsSelected[j].id == rows[i].id) {
+                            productsSelected.splice(j, 1);
+                            break;
+                        }
+                    }
+                }
+            });
+            
+            var v = "<button class='btn btn-default bg-primary add-products-button' type='button' style='float:left; margin-right:10px; z-index: 99;'>"+addSelectedProductsLabel+"</button>";
+            j$('.actionBar').prepend(v);
+            j$('.bootgrid-footer > div.row > div:first-child').prepend(v);
+            j$('.bootgrid-footer > div.row > div:first-child').removeClass('col-sm-6');
+            j$('.bootgrid-footer > div.row > div:first-child').addClass('col-sm-9');
+            j$('.bootgrid-footer > div.row > div.infoBar').removeClass('col-sm-6');            
+            j$('.bootgrid-footer > div.row > div.infoBar').addClass('col-sm-3');
+            if (deviceType == 'phone') {
+	            j$.each(j$('.dropdown-item-checkbox'), function() {
+    	            if (this.name !== "product") { j$(this).trigger('click'); }
+        	    });
+            }
+            j$('.add-products-button').click(function() {
+                var selectedRows = j$('#bootgrid').bootgrid("getSelectedRows");
+                j$.each(productsSelected, function() {
+                    addProductToOrderItemList(this.id, this.name, true);
+                });
+                
+                j$('#bootgrid').bootgrid('deselect');
+                productsSelected = [];
+            });
+            */
+            if ((marketName == 'Australia' || marketName == 'Czech Republic') && orderItemList.length > 0) {
+                j$('.processOrder').removeAttr('disabled')
+                				   .removeClass('hidden')
+                				   .show();
+            } else {
+                j$('.processOrder').hide();
+            }
+            
+            buildRequiredFieldsList();
+            buildHeaderSection();
+            buildOrderItemTableHeader();
+            buildFilterSection(isDesktop);
+            
+            j$.when(getPicklistValuesForRecordType('Order_Item__c')).then(buildProductItems());            
+            //filterProducts();
+            checkApprovalStatus();
+            
+            bindEvents(isDesktop);
+            if (lockOrder == true) {
+                j$('.save').hide();
+                j$('.saveAndClose').hide();
+                j$('.processOrder').hide();
+            }
+        });
+        
+        function buildRequiredFieldsList() {
+            requiredFields = [];
+            j$.each(orderItemFS, function(key, value) {
+                if (value.required || value.dbRequired) {
+                    requiredFields.push(value.fieldPath);
+                }                
+            });
+        };
+        
+        function buildFilterSection(buildTokenize) {            
+            var spiritOptionsHtml = '';
+            var brandOptionsHtml = '';
+            var sizeOptionsHtml = '';
+            var supplierOptionsHtml = '';
+            var usedForOptionsHtml = '';
+            var spiritType = '';
+            var brandName = '';
+            var unitSize = '';
+            var supplierName = '';
+            var usedFor = '';
+            j$.each(productList, function(key, value) {
+                spiritType = value.Brand__r == null || value.Brand__r.Spirit_Type__c == null ? '' : value.Brand__r.Spirit_Type__c;
+                if (spiritType != '' && j$.inArray(spiritType, spiritTypesSearch) < 0) {
+                    spiritTypesSearch.push(spiritType);
+                }
+                brandName = value.Brand__r == null ? '' : value.Brand__r.Name;
+                if (brandName != '' && j$.inArray(brandName, brandSearch) < 0) {
+                    brandSearch.push(brandName);
+                }
+                
+                supplierName = value.Supplier__c;
+                if (supplierName != '' && j$.inArray(supplierName, supplierSearch) < 0) {
+                    supplierSearch.push(supplierName);
+                }
+                unitSize = value.Unit_Size__c;
+                if (unitSize != undefined) {
+                    if (unitSize != '' && j$.inArray(unitSize, sizeSearch) < 0) {
+                        sizeSearch.push(unitSize);
+                    }
+                }
+            });
+
+            spiritTypesSearch.sort();
+            brandSearch.sort();
+            sizeSearch.sort();
+            supplierSearch.sort();
+            filterHTML = '';
+            var tempHTML = '';
+            var dropDownHtml = '<li><input data-path=".group1" id="group1" type="checkbox"/><label for="group1">Group 1</label>';
+            for(var i = 0; i < spiritTypesSearch.length; i++){
+                tempHTML += '<option value="'+spiritTypesSearch[i]+'">'+spiritTypesSearch[i]+'</option>';
+                dropDownHtml += '<li><input data-path=".'+spiritTypesSearch[i].replace(/ /g,'_')+'" id="'+spiritTypesSearch[i].replace(/ /g, '_')+'" type="checkbox" />';
+                dropDownHtml += '<label for="'+spiritTypesSearch[i].replace(/ /g,'_')+'">'+spiritTypesSearch[i]+'</label></li>';
+            }
+            if(tempHTML != ''){
+                filterHTML+= '<div class="selectDiv col-xs-12 col-sm-12 col-md-3 col-lg-3"><span class="selectLabel label col-xs-4" col-md-12 col-lg-12>{!$ObjectType.Brand__c.fields.Spirit_Type__c.label}</span><select id="spiritTypeSearch" multiple="multiple" class="spiritTypeSearch select2Search col-xs-8 col-md-12 col-lg-12" data-role="none">'
+                filterHTML+= tempHTML + '</select></div>';
+            }
+            j$('#cbSpiritTypeDropDown ul').html(dropDownHtml);
+            
+            tempHTML = '';
+            for(var b = 0; b < brandSearch.length; b++){
+                tempHTML += '<option value="' + brandSearch[b] + '">' + brandSearch[b] + '</option>';
+            }
+            if(tempHTML != ''){
+                filterHTML+= '<div class="selectDiv col-xs-12 col-sm-12 col-md-3 col-lg-3"><span class="selectLabel label col-xs-4" col-md-12 col-lg-12>{!$ObjectType.Brand__c.label}</span><select id="brandSearch" multiple="multiple" class="brandSearch select2Search col-xs-8 col-md-12 col-lg-12" data-role="none">';
+                filterHTML+= tempHTML + '</select></div>';
+            }
+            
+            tempHTML = '';
+            for(var s = 0; s < sizeSearch.length; s++){
+                tempHTML += '<option value="' + sizeSearch[s] + '">' + sizeSearch[s] + '</option>';
+            }
+            if(tempHTML != ''){
+                filterHTML += '<div class="selectDiv col-xs-12 col-sm-12 col-md-3 col-lg-3"><span class="selectLabel label col-xs-4" col-md-12 col-lg-12>{!$ObjectType.Product__c.fields.Unit_Size__c.label}</span><select id="sizeSearch" multiple="multiple" class="sizeSearch select2Search col-xs-8 col-md-12 col-lg-12" data-role="none">';
+                filterHTML += tempHTML + '</select></div>';
+            }
+            tempHTML = '';
+            for(var x = 0; x < supplierSearch.length; x++){
+                tempHTML += '<option value="' + supplierSearch[x] + '">' + supplierSearch[x] + '</option>';
+            }
+            if(tempHTML != ''){
+                filterHTML += '<div class="selectDiv col-xs-12 col-sm-12 col-md-3 col-lg-3"><span class="selectLabel label col-xs-4 col-md-12 col-lg-12">{!$ObjectType.Supplier__c.label}</span><select id="supplierSearch" multiple="multiple" class="supplierSearch select2Search col-xs-8 col-md-12 col-lg-12" data-role="none">';
+                filterHTML += tempHTML + '</select></div>';
+            }
+                        
+            j$('#filterContent').append(filterHTML);
+            if(buildTokenize){
+                //call tokenize for filters, pass in which filter they used (e.select[0].id) 
+                j$('.spiritTypeSearch').select2();
+                j$('.brandSearch').select2();
+                j$('.sizeSearch').select2();
+                j$('.supplierSearch').select2();
+                j$('.select2Search').on("change", function(evt) {
+                    filterProducts();
+                });
+                /*
+                j$('.tokenize').tokenize({
+                    onAddToken: function(value, text, e){filterProducts()}, 
+                    onRemoveToken: function(value, e){filterProducts()},
+                    displayDropdownOnFocus: true
+                });
+                */
+            }else{
+                //j$('select.tokenize').show().change(function(){filterProducts();});
+                j$('select.select2Search').show().change(function(){filterProducts();});
+            }            
+        }
+
+        function bindEvents(buildTokenize){            
+            j$('.save').click(function(){
+                //redirect to returnURL on click of save and close
+                if(j$(this).hasClass('saveAndClose')){
+                    redirect = true;
+                }
+                //check for connection, if offline display modal warning
+                //alert(navigator.onLine);
+                //if(navigator.onLine){
+                    j$('.save').button('loading');
+                    buildItemsToSave();
+                //}else{
+                //    j$('#offlineModal').modal();
+                //}           
+            });
+            //redirect to returnURL
+            j$('.cancel').click(function(){
+                if(inSF1) {
+                    sforce.one.navigateToURL('/apex/Order?id='+thisOrder.Id+'&returnToAccountVisit='+returnToAccountVisit, true);
+                }else{
+                    var rUrl = urlPrefix + '/apex/Order?id=' + thisOrder.Id + '&recordTypeId='+thisOrder.RecordTypeId+'&accountId='+thisOrder.Account__c+'&callcardId='+thisOrder.CallCard__c+'&returnToAccountVisit='+returnToAccountVisit;
+                    if (returnURL == undefined || returnURL == "") {
+                        rUrl = '{!URLFOR($Action.Order__c.view, thisOrder.Id)}'; 
+                    }
+                    window.location.href = rUrl;
+                }
+            });
+            j$('.submitapproval').click(function() {
+                //if(navigator.onLine){
+                    j$('.submitapproval').button('loading');
+                    submitForApproval();
+                //}else{
+                //    j$('#offlineModal').modal();
+                //}           
+            });
+            j$('.processOrder').click(function() {
+                //if(navigator.onLine){
+                    j$('.actionButton').button('loading');
+                    processOrder();
+                //}else{
+                //    j$('#offlineModal').modal();
+                //}           
+            });
+            
+            //clear all filter options
+            j$('#clearFilter').click(function(){
+                j$('select.select2Search').val(null).trigger("change");
+            });
+            //either expand or collapse all cards
+            j$('#expandButton').click(function(){
+                if(j$(this).hasClass('expandBtn')){
+                    j$('.fields').addClass('expanded fieldsShadow').slideDown();
+                    j$('div.rowHeader').addClass('headerShadow');
+                    j$(this).toggleClass('expandBtn collapseBtn').html('{!$Label.Collapse_All}');
+                }else{
+                    j$('.fields').removeClass('expanded fieldsShadow').slideUp();
+                    j$('div.rowHeader').removeClass('headerShadow');
+                    j$(this).toggleClass('expandBtn collapseBtn').html('{!$Label.Expand_All}');
+                }
+                j$('.bg-success').removeClass('bg-success');
+            });
+            //expand or collapse section
+            j$('div.header').click(function(){
+                j$(this).siblings().slideToggle();
+            });
+            //product distribution button group - only allow one to be selected
+            j$('.btn-group').children().click(function(){
+                j$(this).siblings().removeClass('btn-primary').addClass('btn-default');
+                j$(this).toggleClass('btn-primary btn-default');
+            });
+        }
+        
+        function buildHeaderSection(){
+            //build header info 
+            //always add account link
+            var accountNavUrl = urlPrefix + '\\' + thisOrder.Account__c;
+            var orderNavUrl = urlPrefix + '\\' + thisOrder.Id;
+            
+            headerHTML = thisOrder.Account_Name__c + ' - ' + thisOrder.Name + ' (' + thisOrder.RecordType.Name + ')';
+            j$('#orderHeader').html(headerHTML);            
+
+        }
+        function buildOrderItemTableHeader() {
+            if (deviceType == 'desktop') {
+                var headerHTML = '<div class="table-responsive col-md-12"><table id="oiTable" class="oiTable table table-striped"><thead class="headers">';
+                headerHTML += '<th class="headerRow" data-column-id="selected" scope="col" colspan="1"><div>&nbsp;</div></th>';
+                headerHTML += '<th class="headerRow" data-column-id="product" scope="col" colspan="2"><div class="text-left">{!$ObjectType.Product__c.Label}</div></th>';
+                var requiredHTML = '';
+                var fieldLabel = '';
+                j$.each(orderItemFS, function(key, value) {
+                    fieldLabel = value.label;
+                    requiredHTML = '';
+                    if (value.required || value.dbRequired) {
+                        requiredHTML = ' requiredField';
+                    }
+                    for(var i = 0; i < customFieldLabels.length; i++) {
+                        if (customFieldLabels[i].fieldName == value.fieldPath && customFieldLabels[i].market == marketName) {
+                            fieldLabel = customFieldLabels[i].customLabel;
+                            break;
+                        }
+                    }
+                    
+                    headerHTML += '<th class="headerRow ' + requiredHTML + '" data-column-id="' + value.fieldPath + '" scope="col" colspan="1"><div>' + fieldLabel + '</div></th>';
+                });
+            
+                headerHTML += '</thead><tbody class="tableBody"></tbody></table></div>';
+                j$('div#content').append(headerHTML);
+            }
+        }                    
+        
+        function filterProducts() {     
+            var filterSelector = '';
+            console.log('filterSelector', filterSelector);
+            var brandName = '';
+            var spiritType = '';
+            var unitSize = '';
+            var supplierName = '';
+            var spiritTypes = [];
+            var brands = [];
+            var unitSizes = [];
+            var suppliers = [];
+            j$('select.select2Search').each(function(key, value){                
+                var searchType = j$(this)[0].id;
+                //if there is a value for this filter select input
+                if(j$(this).val() != null){
+                    //loop through array of selected values and add to a jQuery selector (escaping single quotes)
+                    j$.each(j$(this).val(), function(key, value){
+                        if(searchType == 'spiritTypeSearch') {
+                            spiritTypes.push(value);
+                            filterSelector += '[data-spirit-type="'+value+'"]';
+                        } else if (searchType == 'brandSearch') {
+                            brands.push(value);
+                            filterSelector += '[data-brand-name="'+value+'"]';
+                        } else if (searchType == 'sizeSearch') {
+                            unitSizes.push(value);
+                            filterSelector += '[data-unit-size="'+value+'"]';
+                        } else if (searchType == 'supplierSearch') {
+                            suppliers.push(value);
+                            filterSelector += '[data-supplier-name="'+value+'"]';
+                        }
+                        /*
+                        if(searchType == 'statusSearch'){
+                            filterSelector += '['+searchType+'*="'+value.replace(/'/g,"\\'")+'"],';
+                        }else{
+                            filterSelector += '['+searchType+'="'+value.replace(/'/g,"\\'")+'"],';
+                        }
+                        */
+                    }); 
+                    filterSelector = filterSelector.replace(/'/g,"\\'");
+                    //trimming last comma and adding to a jQuery filter function
+                    //filterSelector = filterSelector.substring(0,filterSelector.length -1);
+                    //selector += '.filter(\''+filterSelector+'\')';
+                }   
+            });
+            console.log('unitSizes', unitSizes);
+            selector = 'div';
+			if (deviceType == 'desktop') {
+                selector = 'tr';
+            }
+            var filteredList = j$(selector+filterSelector);            
+            console.log('filteredList', filteredList);
+            selector = 'div#content .row';
+            if (deviceType == 'desktop') { selector = '#oiTable tbody tr'; }
+            var items = j$(selector);
+            console.log('items', items);
+            var showItem = true;
+            j$.each(items, function(key, value) {
+                if (spiritTypes.length > 0) {
+                    if (spiritTypes.indexOf(value.getAttribute('data-spirit-type')) < 0) {
+                        j$(this).hide(); return true;
+                    }
+                }
+                    
+                if (brands.length > 0) {
+                    if (brands.indexOf(value.getAttribute('data-brand-name')) < 0) {
+                        j$(this).hide(); return true;
+                    }
+                }
+                
+                if (unitSizes.length > 0) {
+                    if (unitSizes.indexOf(value.getAttribute('data-unit-size')) < 0) {
+                        j$(this).hide(); return true;
+                    }
+                }
+                
+                if (suppliers.length > 0) {
+                    if (suppliers.indexOf(value.gteAttribute('data-supplier-name')) < 0) {
+                        j$(this).hide(); return true;
+                    }
+                }
+                
+                j$(this).show();
+            });
+            /*
+            j$('#bootgrid').bootgrid("clear");
+            
+            var filterRowHTML = '';
+            var brandName = '';
+            var spiritType = '';
+            var unitSize = '';
+            var supplierName = '';
+            var selector='';
+            var spiritTypes = [];
+            var brands = [];
+            var unitSizes = [];
+            var suppliers = [];
+            //loop through each filter select input
+            j$('select.select2Search').each(function(key, value){                
+                var searchType = j$(this)[0].id;
+                //if there is a value for this filter select input
+                if(j$(this).val() != null){
+                    var filterSelector = '';
+                    //loop through array of selected values and add to a jQuery selector (escaping single quotes)
+                    j$.each(j$(this).val(), function(key, value){
+                        if(searchType == 'spiritTypeSearch') {
+                            spiritTypes.push(value);
+                        } else if (searchType == 'brandSearch') {
+                            brands.push(value);
+                        } else if (searchType == 'sizeSearch') {
+                            unitSizes.push(parseInt(value));
+                        } else if (searchType == 'supplierSearch') {
+                            suppliers.push(value);
+                        }
+                        if(searchType == 'statusSearch'){
+                            filterSelector += '['+searchType+'*="'+value.replace(/'/g,"\\'")+'"],';
+                        }else{
+                            filterSelector += '['+searchType+'="'+value.replace(/'/g,"\\'")+'"],';
+                        }
+                    }); 
+                    //trimming last comma and adding to a jQuery filter function
+                    filterSelector = filterSelector.substring(0,filterSelector.length -1);
+                    selector += '.filter(\''+filterSelector+'\')';
+                }   
+            });
+
+            var includeProduct = true;
+            var filteredList = [];
+            var groupName = '';
+            var classHidden = 'hidden';
+            var rows = [];
+            var isAdded = false;
+            j$.each(productList, function(key, value) {
+                var r = {};
+                includeProduct = true;
+                spiritType = value.Brand__r == null || value.Brand__r.Spirit_Type__c == null ? '' : value.Brand__r.Spirit_Type__c;
+                brandName = value.Brand__r == null ? '' : value.Brand__r.Name;
+                supplierName = value.Supplier__c == null ? '' : value.Supplier__c;
+                unitSize = value.Unit_Size__c == undefined || value.Unit_Size__c == null ? '' : value.Unit_Size__c;
+                if (spiritTypes.length > 0 && j$.inArray(spiritType, spiritTypes) < 0) { includeProduct = false; }
+                if (brands.length > 0 && j$.inArray(brandName, brands) < 0) { includeProduct = false; }
+                if (unitSizes.length > 0 && j$.inArray(unitSize, unitSizes) < 0) { includeProduct = false; }
+                if (suppliers.length > 0 && j$.inArray(supplierName, suppliers) < 0) { includeProduct = false; }
+                
+                groupName = '';
+                isAdded = false;
+                if (includeProduct == true) {
+                    
+                    //classHidden = 'hidden';
+                    j$(orderItemList).each(function() {
+                        if (this.Product__c == value.Id) {
+                            isAdded = true;
+                            return false;
+                        }
+                    });
+                    
+                    filterRowHTML = '<tr data-product-id="'+value.Id+'" class="list-item">';
+                    filterRowHTML += '<td data-column-id="addproduct"><i class="fa fa-plus" id="' + value.Id + '" data-name="' + value.Name + '" data-rmg-id="'+value.Reference_Material_Group__c+'"></i></td>';
+                    filterRowHTML += '<td data-column-id="checkmark"><i class="fa fa-check-square-o ' + classHidden + '" data-id="' + value.Id + '"></i></td>';
+                    filterRowHTML += '<td data-column-id="product" class="text-left ' + groupName + ' ' + spiritType.replace(/ /g,'_') +'">' + value.Name + '</td>';
+                    filterRowHTML += '<td data-column-id="brand" class="text-left ' + brandName.replace(/ /g,'_') + '">' + brandName + '</td>';
+                    filterRowHTML += '<td data-column-id="spirittype" class="text-left">' + spiritType + '</td>';
+                    filterRowHTML += '<td data-column-id="unitsize" class="text-right unitSize' + unitSize + '">' + unitSize + '</td>';
+                    filterRowHTML += '<td data-column-id="supplier" class="text-left ' + supplierName + '">' + supplierName + '</td>';
+                    filterRowHTML += '</tr>';
+                    
+                    r.id = value.Id;
+                    r.added = isAdded;
+                    r.product = value.Name;
+                    r.brand = brandName;
+                    r.spirittype = spiritType;
+                    r.unitsize = unitSize;
+                    r.supplier = supplierName;
+                    filteredList.push(value);
+                    rows.push(r);
+                }
+            });
+            j$('#bootgrid').bootgrid("append", rows);
+            j$('#bootgridTableBody i').click(function() {
+                j$('#bootgridTableBody tr[data-product-id="'+this.id+'"]').hide();
+                //j$('i[data-id="' + this.id + '"]').removeClass('hidden');
+                //addProductToOrderItemList(this.id, this.getAttribute('data-name'), true);
+            });
+            */
+        }
+        function addProductToOrderItemList(productId, productName, isNewRow) {
+            console.log('[addproduct] productid', productId);
+            console.log('[addproduct] productName', productName);
+            console.log('[addproduct] isNewRow', isNewRow);
+            
+            j$.each(productList, function(key, value) {
+                if (value.Id == productId) {
+                    // add item to order item list and exit loop
+                    var row = buildItemRow(null, value, isNewRow);
+                    if (row != null) {
+                        appendToOrderItemTable(row);
+                    }
+                    
+                    return false;
+                }
+            });
+        }
+        function appendToOrderItemTable(linesToAppend) {
+            console.log('[append] linestoappend', linesToAppend);
+            var selector = 'div#content';
+            if (deviceType == 'desktop') { selector = '#oiTable tbody'; }
+            j$(selector).append(linesToAppend);
+            j$(selector + ' i').click(function() {
+                removeFromOrderItemTable(this.getAttribute('data-product-id'), this.getAttribute('data-oi-id'));
+            });
+            //on click of card header, toggle display
+            j$('div.rowHeader').off("click");
+            j$('div.rowHeader').click(function(){
+                if(j$(this).siblings('.fields').hasClass('expanded')){
+                    j$(this).removeClass('headerShadow').siblings('.fields').removeClass('expanded fieldsShadow').slideUp();
+                }else{
+                    j$(this).addClass('headerShadow').siblings('.fields').addClass('expanded fieldsShadow').slideDown();
+                }
+            });
+            j$(selector + ' div:last-of-type > div.rowHeader').click();
+            if (marketName == 'Poland') {
+                j$("input[field='Unit__c']").off('change')
+                						    .change(function() {
+                    var totalFldId = '#Total_Cases__c' + j$(this).attr('data-product-id');
+                    var packQty = j$(this).attr('data-pack-qty');
+                    var thisVal = j$(this).val();
+                    var totalQty = 0;
+                    if (thisVal != null && thisVal != 0 && packQty != null && packQty > 0) {
+                        totalQty = thisVal / packQty;
+                    }
+                    j$(totalFldId).text(totalQty.toFixed(2));
+                });
+            }
+            if (marketName == 'Australia') {
+            	j$("input[field='Discount__c']").off('change')
+                							    .change(function() {
+                    var loadedDiscount = parseFloat(j$(this).attr('data-loaded-discount'));
+                    var thisVal = parseFloat(j$(this).val());
+                    if (thisVal > 0 && loadedDiscount > 0 && thisVal <= loadedDiscount) {
+                        showWarning('Discount Override ($'+thisVal+') cannot less than or the same as the loaded discount ($'+loadedDiscount+')');
+                        j$(this).val("");
+                    }
+                });
+                j$("input[field='Unit__c']").off('change')
+                							.change(function() {
+                    var caseFldId = '#Carton__c' + j$(this).attr('data-product-id');
+                    var cases = parseInt(j$(caseFldId).val());
+                    if (isNaN(cases)) { cases = 0; }
+                    var packQty = j$(this).attr('data-pack-qty');
+                    var thisVal = j$(this).val();
+                    var totalCase = 0;
+                    if (thisVal != null && thisVal != 0 && packQty != null && packQty > 0) {
+                        totalCase = cases + Math.floor(thisVal / packQty);      
+                        j$(this).val(thisVal % packQty);
+                        j$(caseFldId).val(totalCase);
+                    }
+                        
+                });
+            }
+        }
+        function buildItemRow(orderItem, product, isNewRow) {
+            if (product == undefined && orderItem == undefined) { return null; }
+            console.log('[buildItemRow] orderItem', orderItem);            
+            console.log('[buildItemRow] product', product);
+            //console.log('[buildItemRow] isNewRow', isNewRow);
+            var orderItemId = '';
+            var productId = '';
+            var productName = '';
+            var productCode = '';
+            var brandName = '';
+            var spiritType = '';
+            var unitSize = '';
+            var supplierName = '';
+            var rmgId = '';
+            var totalQty = 0;
+            var totalBonus = 0;
+            if (orderItem == null) {
+                productId = product.Id;
+                productName = product.Name;
+                productCode = product.ProductCode__c;
+                brandName = product.Brand_Name__c;
+                if (product.Brand__r && product.Brand__r.Spirit_Type__c) {
+                	spiritType = product.Brand__r.Spirit_Type__c;
+                }
+                unitSize = product.Unit_Size__c;
+                supplierName = product.Supplier__c;
+                rmgId = product.Price_Material_Group__c;
+            } else {
+                orderItemId = orderItem.Id;
+                productId = orderItem.Product__c;
+                if (orderItem.Product__r == null) {
+                    j$.each(productList, function(key, value) {
+                        if (value.Id == orderItem.Product__c) {
+                            orderItem.Product__r = value;
+                            product = value;
+                            productName = value.Name;
+                            productCode = value.ProductCode__c;
+                            brandName = product.Brand_Name__c;
+                            if (product.Brand__r && product.Brand__r.Spirit_Type__c) {
+                                spiritType = product.Brand__r.Spirit_Type__c;
+                            }
+                            unitSize = product.Unit_Size__c;
+                            supplierName = product.Supplier__c;
+                            rmgId = value.Price_Material_Group__c;
+                            return false;
+                        }
+                    });
+                } else {
+                    productName = orderItem.Product__r.Name;
+                    productCode = orderItem.Product__r.ProductCode__c;
+                    brandName = orderItem.Product__r.Brand_Name__c;
+                    if (orderItem.Product__r.Brand__r && orderItem.Product__r.Brand__r.Spirit_Type__c) {
+                        spiritType = orderItem.Product__r.Brand__r.Spirit_Type__c;
+                    }
+                    unitSize = orderItem.Product__r.Unit_Size__c;
+                    supplierName = orderItem.Product__r.Supplier__c;
+                    rmgId = orderItem.Product__r.Price_Material_Group__c;
+                }
+            }
+            
+            var tolerance = 0;
+            if (marketName == 'Australia') {
+                j$.each(toleranceList, function(key, value) {
+                    if (value.Reference_Material_Group__c == rmgId) {
+                        tolerance = value.Budgeted_PA_Per_Case__c;
+                        if (value.Price_Tolerance_Groups__r && value.Price_Tolerance_Groups__r.records.length > 0) {
+                            for(var ptg = 0; ptg < value.Price_Tolerance_Groups__r.records.length; ptg++) {
+                                if (value.Price_Tolerance_Groups__r.records[ptg].Banner_Group__c == thisOrder.National_Management_Group__c) {
+                                    tolerance = value.Price_Tolerance_Groups__r.records[ptg].Budgeted_PA_Per_Case__c;
+                                }
+                            }
+                        }
+                        return false;
+                    }
+                });
+    
+                var loadedDiscount = 0;
+                var deal = null;
+                //console.log('[builditemrow] thisorder', thisOrder);
+                j$.each(dealList, function(key, value) {
+                    //console.log('[builditemrow] deal.# of related to:', value.Deal_Related_To__r);
+                    if (value.Deal_Related_To__r && value.Deal_Related_To__r.records) {
+                        for(var drt = 0; drt < value.Deal_Related_To__r.records.length; drt++) {
+                            //console.log('[builditemrow] deal.relatedto', value.Deal_Related_To__r[drt]);
+                            if (value.RecordTypeName__c == 'Outlet Deal') {
+                                //console.log('[builditemrow] order.wholesaler: ' + thisOrder.Wholesalers__c + ', outlet deal: account-wholesaler:' + value.Deal_Related_To__r.records[drt].Account_Wholesaler__c);
+                                if (value.Deal_Related_To__r.records[drt].Account_Wholesaler__c && value.Deal_Related_To__r.records[drt].Account_Wholesaler__c.substr(0, thisOrder.Wholesalers__c.length) == thisOrder.Wholesalers__c) {
+                                    deal = value;
+                                }
+                            } else if (value.RecordTypeName__c == 'Group Deal') {                        
+                                //console.log('[builditemrow] group deal. customerlevel: ' + value.Customer_Level__c + ', bannergroup: ' + value.Deal_Related_To__r.records[drt].Banner_Group__c + ', order.banner: ' + thisOrder.Banner_Partner__c);
+                                if (value.Customer_Level__c == 'Management Group' && thisOrder.State_Management_Group__c) {
+                                    if (value.Deal_Related_To__r.records[drt].Banner_Group__c.substr(0, thisOrder.State_Management_Group__c.length) == thisOrder.State_Management_Group__c) {
+                                        deal = value;
+                                    }
+                                } else if (value.Customer_Level__c == 'State Banner' && thisOrder.Banner_Partner__c) {
+                                    if (value.Deal_Related_To__r.records[drt].Banner_Group__c.substr(0, thisOrder.Banner_Partner__c.length) == thisOrder.Banner_Partner__c) {
+                                        deal = value;
+                                    }
+                                } else if (value.Customer_Level__c == 'Sub Banner' && thisOrder.Banner_Partner__c) {
+                                    if (value.Deal_Related_To__r.records[drt].Banner_Group__c.substr(0, thisOrder.Banner_Partner__c.length) == thisOrder.Banner_Partner__c) {
+                                        deal = value;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (deal != null) {
+                        var gpi, gpiStartDate, gpiEndDate;
+                        for (var i = 0; i < deal.Group_Promotion_Items__r.records.length; i++) {
+                            gpi = deal.Group_Promotion_Items__r.records[i];
+                            if (gpi.Reference_Material_Group__c == rmgId) {
+                                gpiStartDate = new Date(gpi.Start_Date__c);
+                                gpiEndDate = new Date(gpi.End_Date__c);
+                                if (gpiStartDate <= today && gpiEndDate >= today) {
+                                    if (gpi.Discount_Amount__c > loadedDiscount) { loadedDiscount = gpi.Discount_Amount__c; }
+                                    if (gpi.Ongoing__c != null && gpi.Ongoing__c > loadedDiscount) { loadedDiscount = gpi.Ongoing__c; }
+                                }
+                            }
+                        }
+                    }
+                });
+			}
+            
+            //console.log('[buildItemRow] orderItemId', orderItemId);
+            //console.log('[buildItemRow] productId', productId);
+            var selector = 'div';
+            if (deviceType == 'desktop') {
+                selector = 'oiTable tr';
+            }
+            var cnt = j$(selector + '[data-product-id*="'+productId+'"]').length + 1;
+            var oiHTML = '';
+                console.log('[buildItemRow] orderItemId', orderItemId);
+            if (deviceType == 'desktop') {
+                oiHTML = '<tr id="'+orderItemId+'" data-oi-id="' + orderItemId + '" data-product-id="' + productId + '" data-product-name="' + productName + '" data-tolerance="'+tolerance+'" data-loaded-discount="' + loadedDiscount + '" data-brand-name="'+brandName+'" data-spirit-type="'+spiritType+'" data-unit-size="'+unitSize+'" data-supplier-name="'+supplierName+'">';
+                oiHTML += '<td><i class="fa fa-remove" data-oi-id="' + orderItemId + '" data-product-id="' + productId + '"></i></td>';
+                oiHTML += '<td class="productName" colspan="2"><span class="text-left">' + productName + '</span></td>';
+            } else {
+                oiHTML += '<div class="row" id="'+orderItemId+'" data-oi-id="' + orderItemId + '" data-product-id="' + productId + '" data-product-name="' + productName + '" data-tolerance="'+tolerance+'" data-loaded-discount="' + loadedDiscount + '" data-brand-name="'+brandName+'" data-spirit-type="'+spiritType+'" data-unit-size="'+unitSize+'" data-supplier-name="'+supplierName+'">';
+                oiHTML += '<div class="rowHeader headerShadow"><i style="font-size:130%; padding: 5px;" class="fa fa-remove" data-oi-id="' + orderItemId + '" data-product-id="' + productId + '"></i><span class="productName lead">' + productName + '</span>';
+                oiHTML += '</div><div class="fields mandatory fieldsShadow">';
+                
+            }
+            var elementTag = 'div';
+            var section = 'cards';
+            var cssClass = ' col-xs-12 col-sm-6';
+            if (deviceType == 'desktop') { 
+                elementTag = 'td'; 
+                cssClass = '';
+                section = 'table';
+            }
+            j$.each(orderItemFS, function(key, value) {
+                oiHTML += '<' + elementTag + ' class="' + value.type + cssClass + '">' + buildInput(value, isNewRow, productId, orderItem, product, section, tolerance, loadedDiscount) + '</' + elementTag + '>';
+            });
+            if (deviceType == 'desktop') {
+                oiHTML += '</tr>';
+            } else {
+                oiHTML += '</div></div>';
+            }
+            return oiHTML;
+        }
+        function removeFromOrderItemTable(id, orderItemId) {
+            console.log('[removeFromOrderItemTable] id', id, orderItemId);
+            if (id == undefined) { return; }
+            var parts = id.split('.');
+            
+            var selector = 'div';
+            if (deviceType == 'desktop') {
+                selector = '#oiTable tr';
+            }
+
+            var attribSelector = '[data-product-id="'+id+'"]';
+            if (orderItemId != undefined && orderItemId != '') {
+                var orderItem = {};
+                orderItem['Id'] = orderItemId;
+                itemsToDelete.push(orderItem);
+                id = orderItemId;
+                attribSelector = '[data-oi-id="'+orderItemId+'"]';
+            }
+
+            var rows = j$(selector + attribSelector);
+            j$.each(rows, function(key, value) {
+                j$(this).attr('data-oi-id', '');
+                j$(this).find('input,select,textarea').each(function() {
+                    j$(this).attr('data-oi-id', '')
+                    		.val('');                      
+                });
+            });
+            j$(selector+'[data-oi-id=""]').hide();
+            //j$(selector + '[data-product-id="'+id+'"]').remove();
+            //j$('bootgridTableBody tr[data-product-id="'+id+'"]').show();
+        }
+    	function buildOrderItems() {
+            var selector = 'div#content .row';
+            if (deviceType == 'desktop') {
+                selector = '#oiTable tbody tr';
+            }
+            console.log('[buildOrderItems] orderItemList', orderItemList);
+            for(var i = 0; i < orderItemList.length; i++) {
+                var row = j$(selector+'[data-product-id="'+orderItemList[i].Product__c+'"]');
+                row.attr('data-oi-id', orderItemList[i].Id);                
+            }
+            j$(selector+'[data-oi-id=""]').hide();
+            j$(selector+' :not([data-oi-id=""])').show();
+            
+        }
+        function buildProductItems() {
+            var selector = 'div#content';
+            if (deviceType == 'desktop') { selector = '#oiTable tbody'; }
+			j$(selector).empty();
+            itemsToDelete = [];
+            
+            var lines = '';
+            var row;
+            console.log('[buildProductItems] orderItemList', orderItemList);
+            var orderItem;
+            
+            j$.each(productList, function(key, value) {
+                for(var i = 0; i < orderItemList.length; i++) {
+                    orderItem = null;
+                    if (orderItemList[i].Product__c == value.Id) {
+                        orderItem = orderItemList[i];
+                        
+                        console.log('[buildProductItems] value', value);
+                        row = buildItemRow(orderItem, value, false);
+                        if (row != null) { lines += row; }                
+                    }
+                }
+
+                if (orderItem == null) {
+                    row = buildItemRow(orderItem, value, false);
+                    if (row != null) { lines += row; }                
+                }
+            });
+            
+            
+            /*
+            j$.each(orderItemList, function(key, value) {
+                row = buildItemRow(value, null, false);
+                if (row != null) { lines += row; }
+            });
+            */
+            if (lines.length > 0) {
+                appendToOrderItemTable(lines);
+                j$("input[field='Unit__c']").trigger("change");
+            }
+            if (orderItemList.length > 0) {
+                var selector = 'div#content .row';
+                if (deviceType == 'desktop') {
+                    selector = '#oiTable tbody tr';
+                }
+                j$(selector+'[data-oi-id=""]').hide();
+                j$(selector+' :not([data-oi-id=""])').show();
+                //buildOrderItems();
+            }
+        }
+        
+        //build out the actual input tags for each type
+        function buildInput(obj, isNewRow, prodId, orderItem, product, section, tolerance, loadedDiscount){
+            var html = '';
+            var value = '';
+            if (orderItem != null) {
+                value = orderItem[obj.fieldPath];
+	            if (product == null) { product = orderItem.Product__r; }        
+                if (value == null) { 
+                    value = product[obj.fieldPath];
+                }
+            } else {
+                orderItem = {};
+                value = product[obj.fieldPath];
+                if (obj.fieldPath == 'Max_PA_Per_Case__c') {
+                    value = numeral(tolerance).format('0,0.00');
+                }
+            }
+            
+            var objectName = 'Order_Item__c';
+
+            if(value == undefined){
+                value = '';
+            }
+            if (section == 'cards') {
+                html += '<label for="' + product.Id + '" class="fieldLabel">' + obj.label + '</label>';
+            }
+            var isReadOnly = false;
+            var pos = readOnlyFields.indexOf(obj.fieldPath);            
+            if (pos >= 0) {
+                isReadOnly = true;
+            }
+            
+            //build the correct HTML input type, read only in Account Info section if not required on field set
+            switch(inputTypeMap[obj.type]){                             
+                case 'number':
+                    if (isReadOnly == true || lockOrder == true) {
+                        html += '<span id="'+obj.fieldPath+product.Id+'" field="'+obj.fieldPath+'" style="margin-bottom: 0.5rem; float: right; text-align: right;">'+value+'</span>';
+                    } else {
+                        var placeholderText = '';
+                        if (obj.fieldPath == 'Discount__c') {
+                            placeholderText = numeral(loadedDiscount).format('0,0.00');
+                        }
+                        html += '<input id="'+obj.fieldPath+product.Id+'" field="'+obj.fieldPath+'" data-oi-id="' + orderItem.Id + '" data-product-id="'+product.Id+'" data-product-name="'+product.Name+'" data-pack-qty="'+product.Pack_Quantity__c+'" data-tolerance="' + tolerance + '" data-loaded-discount="'+loadedDiscount+'" type="'+inputTypeMap[obj.type]+'" step="any" value="'+value+'" placeholder="'+placeholderText+'" class="fieldInput slds-input" ' + (isReadOnly ? 'disabled' : '') + ' />';
+                    }
+                    break;
+                case 'select':
+                    if(isReadOnly == true || lockOrder == true){
+                        html += '<span id="'+obj.fieldPath+product.Id+'" field="'+obj.fieldPath+'" data-oi-id="' + orderItem.Id + '" data-product-id="' + product.Id+'" data-product-name="'+product.Name+'" style="margin-bottom: 0.5rem;">'+value+'</span>';
+                    }else{
+                        html += '<select id="'+obj.fieldPath+'-'+product.Id+'" data-oi-id="' + orderItem.Id + '" field="'+obj.fieldPath+'" class="fieldInput slds-select  "><option value=""></option>';
+                        var options = getSelectOptions(obj.fieldPath, objectName);
+                        if (options != null) {
+                            for(var i=0;i<options.values.length;i++){
+                                if(value == options.values[i]){
+                                    html+= '<option value="'+options.values[i]+'" selected>'+options.labels[i]+'</option>';
+                                }else{
+                                    html+= '<option value="'+options.values[i]+'">'+options.labels[i]+'</option>';
+                                }
+                            }
+                        }
+                        html += '</select>';
+                    }
+                    break;
+                case 'checkbox':
+                    if(isReadOnly == true || lockOrder == true){
+                        html += '<input id="'+obj.fieldPath+product.Id +'" field="'+obj.fieldPath+'" data-oi-id="' + orderItem.Id + '" data-product-id="' + product.Id + '" data-product-name="'+product.Name+'" type="'+inputTypeMap[obj.type]+'" disabled="disabled" class="fieldInput cmn-toggle cmn-toggle-round-flat"/>';
+                        html += '<label for="'+obj.fieldPath+product.Id +'" class="'+section+'Checkbox"></label>';
+                    }else{
+                        if(value == true){
+                            html += '<input id="'+obj.fieldPath+product.Id+'" field="'+obj.fieldPath+'" data-oi-id="' + orderItem.Id + '" data-product-id="' + product.Id + '" data-product-name="'+product.Name+'" type="'+inputTypeMap[obj.type]+'" checked="checked" class="fieldInput cmn-toggle cmn-toggle-round-flat"/>';
+                        }else{
+                            html += '<input id="'+obj.fieldPath+product.Id+'" field="'+obj.fieldPath+'" data-oi-id="' + orderItem.Id + '" data-product-id="' + product.Id + '" data-product-name="'+product.Name+'" type="'+inputTypeMap[obj.type]+'" class="fieldInput btn cmn-toggle cmn-toggle-round-flat"/>';
+                        }
+                        html += '<label for="'+obj.fieldPath+product.Id+'" class="'+section+'Checkbox"></label>';
+                    }                    
+                    break;
+                case 'link':
+                    
+                    var relationshipName = obj.fieldPath.replace('__c', '__r');
+                    var infoField = eval("orderItemList." + relationshipName);
+                    var relatedValue = '';
+                    if (infoField != null && infoField != undefined) {
+                        relatedValue = infoField.Name;
+                    }
+                    var lookupField;
+                    for(var i = 0; i < relationships.length; i++) {
+                        if (relationships[i].name == obj.fieldPath) {
+                            lookupField = relationships[i];
+                            break;
+                        }
+                    }
+                                        
+                    if (lookupField) {                            
+                        html += '<div id="' + obj.fieldPath+product.Id + '" data-oi-id="' + orderItem.Id + '" data-product-id="' + product.Id + '" data-product-name="'+product.Name+'">';
+
+                        $Lightning.use("c:CustomLookup", function() {
+                            $Lightning.createComponent(
+                                "c:lookupComponent",
+                                { searchString: relatedValue, recordId: value, label:obj.fieldPath, pluralLabel: '', sObjectAPIName: lookupField.objectName, filterClause: lookupField.filter, listIconSVGPath:"https:/www.b-fonline.com/salesforceresources/SLDS091/assets/icons/standard-sprite/svg/symbols.svg#account", listIconClass:"slds-icon-standard-account"},
+                                obj.fieldPath,
+                                function(cmp) {
+                                }
+                            );
+                        });
+                    }
+                    break;
+                case 'date':
+                    html += '<input id="'+obj.fieldPath+product.Id+'" field="'+obj.fieldPath+'" data-oi-id="' + orderItem.Id + '" data-product-id="' + product.Id + '" data-product-name="'+product.Name+'" class="'+inputTypeMap[obj.type]+'Input slds-input-clone" type="'+inputTypeMap[obj.type]+'" value="'+value+'" ' + (isReadOnly == true || lockOrder == true ? 'disabled' : '') + ' />';
+                    break;
+                default:
+                    if(isReadOnly == true || lockOrder == true){
+                        html += '<span id="'+obj.fieldPath+product.Id+'" field="'+obj.fieldPath+'" data-oi-id="' + orderItem.Id + '" data-product-id="' + product.Id + '" data-product-name="'+product.Name+'" style="margin-bottom: 0.5rem;">'+value+'</span>';
+                    }else{                    
+                        if (obj.type == 'textarea') {
+                            html += '<textarea id="'+obj.fieldPath+product.Id+'" field="'+obj.fieldPath+'" data-oi-id="' + orderItem.Id + '" data-product-id="' + product.Id + '" data-product-name="'+product.Name+'" type="'+inputTypeMap[obj.type]+'" value="'+value+'" class="fieldInput slds-textarea" row="4" ' + (isReadOnly == true || lockOrder == true ? 'disabled' : '') + '/>';
+                        } else {
+                            html += '<input id="'+obj.fieldPath+product.Id+'" field="'+obj.fieldPath+'" data-oi-id="' + orderItem.Id + '" data-product-id="' + product.Id + '" data-product-name="'+product.Name+'" type="'+inputTypeMap[obj.type]+'" value="'+value+'" class="fieldInput slds-input" ' + (isReadOnly == true || lockOrder == true ? 'disabled' : '') + '/>';
+                        }
+                    }
+            } 
+            return html;               
+        }
+    
+        //get url param
+        function getQueryVariable(variable) {
+           var query = window.location.search.substring(1);
+           var vars = query.split("&");
+           for (var i=0;i<vars.length;i++) {
+               var pair = vars[i].split("=");
+               if(pair[0] == variable){return pair[1];}
+           }
+           return(false);
+        }
+        
+        //get all picklist values for this market's recordtype
+        function getPicklistValuesForRecordType (objectName) {
+            var bigString = [];
+            var masterBigString = [];
+            var recordTypeName = thisOrder.RecordType.Name;
+
+            var vl = {};
+            var recordTypeMappings = sforce.connection.describeLayout(objectName).recordTypeMappings;
+            console.log('recordtypemappings', recordTypeMappings);
+            console.log('recordtypemappings.length', recordTypeMappings.length);
+            if(recordTypeMappings.length == undefined){
+                for(var x=0; x<recordTypeMappings.picklistsForRecordType.length; x++){
+                    vl = returnPickListValue(recordTypeMappings.picklistsForRecordType[x]);
+                   var field = {
+                       name: recordTypeMappings.picklistsForRecordType[x].picklistName,
+                       values: vl.values,
+                       labels: vl.labels
+                   };                           
+                   bigString.push(field);
+               }
+            }else{
+                for (var i=0; i <recordTypeMappings.length; i++) {
+                    console.log('recordtypemappings.name', recordTypeMappings[i].name);
+                    console.log('recordtypemappings[i]', recordTypeMappings[i]);
+                    if (recordTypeMappings[i].name == recordTypeName){
+                        if (recordTypeMappings[i].picklistsForRecordType != null) {
+                            for(var x=0; x<recordTypeMappings[i].picklistsForRecordType.length; x++){
+                                vl = returnPickListValue(recordTypeMappings[i].picklistsForRecordType[x]);
+                                var field = {
+                                    name: recordTypeMappings[i].picklistsForRecordType[x].picklistName,
+                                    values: vl.values,
+                                    labels: vl.labels
+                                };                          
+                                bigString.push(field);
+                            }
+                        }
+                    } else if (recordTypeMappings[i].name == 'Master') {
+                        if (recordTypeMappings[i].picklistsForRecordType != undefined) {
+                            for(var x=0; x<recordTypeMappings[i].picklistsForRecordType.length; x++){
+                                vl = returnPickListValue(recordTypeMappings[i].picklistsForRecordType[x]);
+                                var field = {
+                                    name: recordTypeMappings[i].picklistsForRecordType[x].picklistName,
+                                    values: vl.values,
+                                    labels: vl.labels
+                                };                          
+                                masterBigString.push(field);
+                            }
+                        }
+                    }
+                }
+            }
+            if (bigString.length == 0) {
+                picklistValuesMap[objectName] = masterBigString;
+            } else {
+                picklistValuesMap[objectName] = bigString;
+            }
+        }
+    
+        //get the individual values
+        function returnPickListValue (obj) {
+            var values = [];
+            var labels = [];
+            if (obj.picklistValues) {
+                if (obj.picklistValues.label == undefined) {
+                    for (var y=0; y <obj.picklistValues.length; y++) {
+                        values.push(obj.picklistValues[y].value);
+                        labels.push(obj.picklistValues[y].label);
+                    }
+                } else {
+                    values.push(obj.picklistValues.value);
+                    labels.push(obj.picklistValues.label);
+                }
+            }
+            return { values: values, labels: labels };
+        }
+    
+        //find the picklist values for this field
+        function getSelectOptions(fieldName, objectName){
+            for(var i=0;i<picklistValuesMap[objectName].length;i++){
+                if(picklistValuesMap[objectName][i].name == fieldName){
+                    return picklistValuesMap[objectName][i];
+                }
+            }
+            
+            return { values: [], labels: [] };
+        }
+    
+        //toggle loading gif and saved message
+        function loading(val, visible, delay) {
+        if (val == 'load') {
+            if (visible) {
+                j$("#loadingMessage").fadeIn(100).css("display","inline").css("visibility","visible");
+            } else {
+                j$("#loadingMessage").fadeOut();
+            }
+        } else if (val == 'save') {
+            if (visible) {
+                j$(".savedMessage").fadeIn(100).css("display","inline").css('visibility','visible');
+            }
+            else {
+                j$(".savedMessage").fadeIn(100).css("display","inline").delay(3000).fadeOut();    
+            }
+        }
+        }
+        
+        function clearForm(){
+            j$('#content input,select').val('');
+            j$('#content .btn-group').find('button').addClass('btn-default').removeClass('btn-primary');
+            j$('#content input:checkbox').prop('checked',false);
+        }
+
+        function checkApprovalStatus(){
+            if(lockOrder){
+                j$('.oiTable :input').addClass('disabled');
+                j$('#oiTable i').hide();
+                j$('.save').hide();
+                j$('.clearForm').hide();
+                j$('#filterSection').hide();
+            }
+        }
+        
+    	function processOrder() {
+            var requiresApproval = false;
+            if (marketName == 'Australia') {
+                var bonusCarton = 0;
+                var bonusUnit = 0;
+                var bonusQty = 0;
+                for(var i = 0; i < orderItemList.length; i++) {
+                    /*
+                    var selector = 'div';
+                    if (deviceType == 'desktop') {
+                        selector = 'tr';
+                    }
+                    var tr = j$(selector + '[data-product-id*="'+orderItemList[i].Product__r.Id+'"]');
+                    if (tr != null) {
+                        var tolerance = parseFloat(tr.getAttribute('data-tolerance'));
+                        if (orderItemList[i].Discount__c > tolerance) {
+                            requiresApproval = true;
+                            break;
+                        }
+                    }
+                    */
+                    bonusCarton = orderItemList[i].Carton_Bonus__c == null || orderItemList[i].Carton_Bonus__c == '' ? 0 : orderItemList[i].Carton_Bonus__c;
+                    bonusUnit = orderItemList[i].Unit_Bonus__c == null || orderItemList[i].Unit_Bonus__c == '' ? 0 : orderItemList[i].Unit_Bonus__c;
+                    bonusQty = parseFloat(bonusCarton) + parseFloat(bonusUnit);
+                    console.log('bonusqty: ', bonusQty);
+                    discount = orderItemList[i].Discount__c == null || orderItemList[i].Discount__c == '' ? 0 : orderItemList[i].Discount__c
+                    discount = parseFloat(discount);
+                    if (discount > orderItemList[i].Max_PA_Per_Case__c || bonusQty > 0) {
+                        requiresApproval = true;
+                        break;
+                    }
+                }
+            }
+            console.log('requiresApproval', requiresApproval);
+            OrderItemsHTML_Controller.processOrder(thisOrder.Id, requiresApproval, function(result, event) {
+                if (event.status) {
+                    itemsToDelete = [];
+                    j$('.actionButton').button('reset');
+                    loading(false);
+                    
+                    if (inSF1) {
+                    	if (returnToAccountVisit) {
+                            sforce.one.navigateToURL('/apex/Order?id='+thisOrder.Id+'&returnToAccountVisit='+returnToAccountVisit, true);
+                    	} else {
+                        	sforce.one.navigateToSObject(thisOrder.Id, 'detail');
+                        }
+                    } else {
+                        var rUrl = '{!URLFOR($Action.Order__c.view, thisOrder.Id)}';
+                        if (returnToAccountVisit == true) {
+							rUrl = urlPrefix + '/apex/Order?id=' + thisOrder.Id + '&recordTypeId='+thisOrder.RecordTypeId+'&accountId='+thisOrder.Account__c+'&callcardId='+thisOrder.CallCard__c+'&returnToAccountVisit='+returnToAccountVisit;
+                        }
+                        window.location.href = rUrl;
+                    }
+                    
+                } else {
+                    //handling errors.
+                    j$('.actionButton').button('reset');
+                    alert(event.message);
+                }
+            });
+        }
+        function buildItemsToSave() {
+            var selector = 'div#content .row';
+            if (deviceType == 'desktop') {
+                selector = '#oiTable tbody tr';
+            }
+            
+            var exitSave = false;
+            var totalQty, carton, unit, bonusQty, bonusCarton, bonusUnit, discount, newItem;
+            var items = [];
+            var approvalProducts = [];
+            j$(selector).each(function() {
+                var orderItem = {};
+                var row = j$(this);
+                var orderItemId = this.getAttribute('data-oi-id');
+                var productId = this.getAttribute('data-product-id');
+                var productName = this.getAttribute('data-product-name');
+                var tolerance = parseFloat(this.getAttribute('data-tolerance'));
+				var loadedDiscount = parseFloat(this.getAttribute('data-loaded-discount'));
+                
+                orderItem['Id'] = orderItemId == '' ? null : orderItemId;
+                orderItem['RecordTypeId'] = itemRecordTypeId;
+                orderItem['Order__c'] = thisOrder.Id;
+                orderItem['Product__c'] = productId;
+                orderItem['Max_PA_Per_Case__c'] = tolerance;
+                orderItem['Loaded_Discount__c'] = loadedDiscount;
+                console.log('orderitem', orderItem);
+                j$(row).find('input,select,textarea').each(function() {
+                    var fld = j$(this);
+                    var fldName = fld.attr('field');
+                    if (fld.is('input')) {
+                        if (fld.is(':checkbox')) {
+                            orderItem[fldName] = fld.is(':checked');
+                        } else {
+                            orderItem[fldName] = fld.val();
+                        }
+                    } else if (fld.is('textarea')) {
+                        orderItem[fldName] = fld.val();
+                    } else if (fld.is('select')){
+                        orderItem[fldName] = fld.find(':selected').text();
+                    }
+                    if (fldName == 'Discount__c' && orderItem[fldName] > tolerance) {
+                        approvalProducts.push(productName);
+                    }
+                });        
+                
+                var addItem = false;
+                if (orderItem['Carton__c'] && parseInt(orderItem['Carton__c']) > 0) { addItem = true; }
+                if (orderItem['Unit__c'] && parseInt(orderItem['Unit__c']) > 0) { addItem = true; }
+                if (orderItem['Discount__c'] && parseFloat(orderItem['Discount__c']) > 0) { addItem = true; }
+                if (orderItem['Carton_Bonus__c'] && parseInt(orderItem['Carton_Bonus__c']) > 0) { addItem = true; }
+                if (orderItem['Unit_Bonus__c'] && parseInt(orderItem['Unit_Bonus__c']) > 0) { addItem = true; }
+                if (!addItem) { 
+                    return true;
+                }
+                
+                var errormessage = '';
+                var errorheader = requiredFieldsMessage;
+                for(var i = 0; i < requiredFields.length; i++) {
+                    if (orderItem[requiredFields[i]] == null || orderItem[requiredFields[i]] == '') {
+                        errormessage += requiredFields[i] + ', ';
+                    }
+                }
+                if (errormessage.length > 0) {
+                    j$('.actionButton').button('reset');
+                    loading('save',false, 0);
+                    errormessage = errormessage.substr(0, errormessage.length - 2);                    
+                    errormessage = '<p style="font-weight:normal;font-size:small;">' + errorheader + '\n</p><p style="font-size:smaller;font-weight:bold;">' + productName + ': ' + errormessage+'</p>';
+                    showMessage(errormessage);
+                    items = [];
+                    exitSave = true;
+                    return false;  // break out of row loop
+                } else {
+                	carton = orderItem.Carton__c == null || orderItem.Carton__c == '' ? 0 : parseInt(orderItem.Carton__c);
+                    unit = orderItem.Unit__c == null || orderItem.Unit__c == '' ? 0 : parseInt(orderItem.Unit__c);
+                    bonusCarton = orderItem.Carton_Bonus__c == null || orderItem.Carton_Bonus__c == '' ? 0 : parseInt(orderItem.Carton_Bonus__c);
+                    bonusUnit = orderItem.Unit_Bonus__c == null || orderItem.Unit_Bonus__c == '' ? 0 : parseInt(orderItem.Unit_Bonus__c);
+                    discount = orderItem.Discount__c == null || orderItem.Discount__c == '' ? 0 : parseFloat(orderItem.Discount__c);
+                    line_OrderQty = carton + unit;
+                    line_BonusQty = bonusCarton + bonusUnit;
+                    console.log('[buildItemsToSave] lineOrderQty', line_OrderQty);
+                    console.log('[buildItemsToSave] lineBonusQty', line_BonusQty);
+                    if (line_OrderQty == 0 && discount > 0) {
+                        showWarning(discountWithNoQtyErrorMessage);
+                        exitSave = true;
+                    } else if (line_OrderQty == 0 && line_BonusQty == 0) {
+                        showWarning(noQtyErrorMessage.replace('%0', productName));
+                        exitSave = true;
+                    } else {                    
+                		items.push(orderItem);
+                    }
+                }
+            });
+            console.log('[buildItemsToSave] # of items', items.length);
+            if (exitSave == true) { 
+                j$('.actionButton').button('reset');
+	    		return; 
+            }
+            
+            if (items.length == 0) {                  
+                j$('.actionButton').button('reset');
+                showWarning(noItemsErrorMessage);                
+            } else {
+                if (marketName == 'Australia') {
+                    var newItems = [];
+                    console.log('[buildItemsToSave] items', items);
+                    for(var i = 0; i < items.length; i++) {
+                        carton = items[i].Carton__c == null || items[i].Carton__c == '' ? 0 : parseInt(items[i].Carton__c);
+                        unit = items[i].Unit__c == null || items[i].Unit__c == '' ? 0 : parseInt(items[i].Unit__c);
+                        bonusCarton = items[i].Carton_Bonus__c == null || items[i].Carton_Bonus__c == '' ? 0 : parseInt(items[i].Carton_Bonus__c);
+                        bonusUnit = items[i].Unit_Bonus__c == null || items[i].Unit_Bonus__c == '' ? 0 : parseInt(items[i].Unit_Bonus__c);
+                        discount = items[i].Discount__c == null || items[i].Discount__c == '' ? 0 : parseFloat(items[i].Discount__c);
+                        console.log('[buildItemsToSave] carton: ' + carton + ', unit: ' + unit + ', discount: ' + discount);
+                        console.log('[buildItemsToSave] bonusCarton: ' + bonusCarton + ', bonusUnit: ' + bonusUnit);
+                        totalQty = carton + unit;
+                        bonusQty = bonusCarton + bonusUnit;
+                        console.log('[buildItemsToSave] totalQty: ' + totalQty + ', bonusQty: ' + bonusQty);
+                        if ((totalQty > 0 || discount > 0) && bonusQty > 0) {
+                            newItem = {};
+                			newItem['RecordTypeId'] = itemRecordTypeId;
+                			newItem['Order__c'] = thisOrder.Id;
+                			newItem['Product__c'] = items[i].Product__c;
+                            newItem['Carton__c'] = '';
+                            newItem['Unit__c'] = '';
+                            newItem['Carton_Bonus__c'] = items[i].Carton_Bonus__c;
+                            newItem['Unit_Bonus__c'] = items[i].Unit_Bonus__c;
+                            newItems.push(newItem);
+                            
+                            items[i].Carton_Bonus__c = 0;
+                            items[i].Unit_Bonus__c = 0;
+                        }
+                    }
+                    if (newItems.length > 0) {
+                        items = items.concat(newItems);
+                    }
+				}                
+    			console.log('[buildItemsToSave] items', items);
+                var confirmMessage = '';
+                if (approvalProducts.length > 0) {
+                    confirmMessage = approvalProducts.join();
+                    if (approvalProducts.length > 1) {
+                        confirmMessage += ' ' + dealMultipleProductsAboveToleranceMessage;
+                    } else {
+                        confirmMessage += ' ' + dealSingleProductAboveToleranceMessage;
+                    }
+                    
+                    j$('#btnConfirmDialogCancel').one('click', function() { j$('.actionButton').button('reset'); });
+            		j$('#btnConfirmDialogYes').show().one('click', function() { saveOrderItems(items, itemsToDelete); });
+            		j$('#confirmDialogMessage').text(confirmMessage);
+            		j$('#confirmDialog').modal('show');                    
+                } else {
+                    saveOrderItems(items, itemsToDelete);
+                }
+            }
+        }
+    	function saveOrderItems(items, itemsToDelete) {
+            console.log('[saveOrderItems] items', items, itemsToDelete);
+            OrderItemsHTML_Controller.saveOrderItems(items, itemsToDelete, function(result, event) {
+                if (event.status) {
+                    itemsToDelete = [];
+                    j$('.save').button('reset');
+                    loading(false);
+                    //if save and close is clicked, redirect to returnURL
+                    if(redirect){
+                        if(inSF1) {
+                            //sforce.one.back(false);
+                            sforce.one.navigateToURL('/apex/Order?id='+thisOrder.Id+'&returnToAccountVisit='+returnToAccountVisit, true);
+                        }else{
+                            var rUrl = urlPrefix + '/apex/Order?id=' + thisOrder.Id + '&recordTypeId='+thisOrder.RecordTypeId+'&accountId='+thisOrder.Account__c+'&callcardId='+thisOrder.CallCard__c+'&returnToAccountVisit='+returnToAccountVisit;
+                            if (returnURL == undefined || returnURL == "") {
+                                //rUrl = '{!URLFOR($Action.Order__c.view, thisOrder.Id)}'; 
+                            }
+                            window.location.href = rUrl;
+                        }
+                    } else {
+                        // rebuild rows with returned data
+                        var selector = 'div#content .row';
+                        if (deviceType == 'desktop') {
+                            selector = '#oiTable tbody tr';
+                        }
+                        //j$(selector).remove();
+                        if(marketName == 'Australia' || marketName == 'Czech Republic') {
+                            j$('.processOrder').removeAttr('disabled')
+                            				   .removeClass('hidden')
+                                			   .show();
+                        }
+                        orderItemList = result;
+                        //buildOrderItems();
+						buildProductItems();
+                    }
+                } else {
+                    //handling errors.
+                    j$('.save').button('reset');
+                    alert(event.message);
+                }
+            });
+        }
+        function showMessage(msg) {
+            j$('#pageMessages').empty()
+            				  .append('<p>'+msg+'</p>');
+        }
+        function showWarning(msg) {
+            console.log('[showWarning] msg', msg);
+            j$('#btnConfirmDialogCancel').one('click', function() { j$('.actionButton').button('reset'); });
+            j$('#btnConfirmDialogYes').hide();
+            j$('#confirmDialogMessage').text(msg);
+            j$('#confirmDialog').modal('show');                    
+        }
+    </script>
+    <div class="bootstrap" style="height:100%">
+        <div class="container-fluid theme-showcase" role="main">            
+            <div class="modal fade" id="confirmDialog" tabindex="-1" role="dialog" aria-labelledby="confirmDialogLabel" data-backdrop="static" data-keyboard="false">
+                <div class="modal-dialog modal-sm">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title" id="confirmDialogLabel" >{!$Label.Confirmation_Required}</h4>
+                        </div>
+                        <div class="modal-body">
+                            <span id="confirmDialogMessage"></span>
+                        </div>
+                        <div class="modal-footer">
+                            <button id="btnConfirmDialogCancel" type="button" class="btn btn-default" data-dismiss="modal">{!$Label.Cancel}</button>
+                            <a id="btnConfirmDialogYes" class="btn btn-warning btn-ok" data-dismiss="modal">{!$Label.OK}</a>
+                        </div>                        
+                    </div>
+                </div>
+            </div>
+            <div id="headerSection" class="section">
+                <div id="orderHeader" class="header btn-info">{!UPPER(orderType)}</div>
+            </div>
+            <div class="clear"></div>
+            <div id="filterSection" class="section text-center">
+                <div id="filterContent" class="text-center"></div>
+                <div class="clear"></div>
+                <div class="rowButtons text-center" style="padding-top: 5px; padding-bottom: 5px;">
+                    <button type="button" value="Clear All" id="clearFilter" data-role="none" class="btn bg-primary col-xs-push-3 col-lg-2">{!$Label.Clear_All}</button>
+                    <br />
+                    <span id="filterError" class="filterError label-warning label">{!$Label.No_Products_Found}</span>
+                </div>
+                <div class="clear"></div>
+                
+                <div id="productListContainer" class="container col-xs-12 hidden">
+                    <table id="bootgrid" class="bootgridtable table table-hover table-striped">
+                        <thead>
+                            <th class="headerRow" data-column-id="product" data-formatter="product" scope="col" colspan="1" data-identifier="true" data-header-css-class="bg_hd_productName"><div>{!$ObjectType.Product__c.Fields.Name.Label}</div></th>
+                            <th class="headerRow" data-column-id="brand" scope="col" colspan="1" data-header-css-class="bg_hd_brand"><div>{!$ObjectType.Brand__c.Label}</div></th>
+                            <th class="headerRow" data-column-id="spirittype" scope="col" colspan="1" data-header-css-class="bg_hd_spiritType"><div>{!$ObjectType.Brand__c.Fields.Spirit_Type__c.Label}</div></th>
+                            <th class="headerRow" data-column-id="unitsize" data-type="numeric" data-visibleInSelection="false" scope="col" colspan="1" data-header-css-class="bg_hd_unitSize"><div>{!$ObjectType.Product__c.Fields.Unit_Size__c.Label}</div></th>
+                            <th class="headerRow" data-column-id="supplier" scope="col" colspan="1" data-header-css-class="bg_hd_supplier"><div>{!$ObjectType.Supplier__c.Label}</div></th>
+                        </thead>
+                        <tbody id="bootgridTableBody">
+                        </tbody>
+                    </table>
+                        
+                </div>
+            </div>                
+
+            <div class="clear"></div>
+            <div id="topButtonDiv" class="buttonDiv text-center">
+                <button type="button" value="{!$Label.Save}" class="btn button save bg-primary actionButton" data-role="none" data-loading-text="{!$Label.Saving}">{!$Label.Save}</button>
+                <button type="button" value="{!$Label.Save_and_Close}" class="btn button save saveAndClose bg-primary actionButton" data-role="none" data-loading-text="{!$Label.Saving}">{!$Label.Save_and_Close}</button>
+                <button type="button" value="{!$Label.Cancel}" class="btn button cancel bg-primary actionButton" data-role="none">{!$Label.Cancel}</button>
+                <button type="button" value="{!$Label.Process_Order}" class="btn button processOrder bg-primary actionButton hidden" data-role="none" disabled="disabled">{!$Label.Process_Order}</button>
+                <div id="loadingImage" class="loadingImage" style="display:none">
+                    <img src="https://www.b-fonline.com/salesforceresources/SFA/img/transparentLoading.gif"/>
+                </div>
+                <div id="savedMessage" class="savedMessage" style="display:none">
+                    {!$Label.Saved}
+                    <apex:pagemessages id="messages"/>
+                </div>
+            </div>
+            <div id="pageMessages" style="text-align:center;color:red;font-weight:bold;">
+                
+            </div>
+            <div style="float:left;">
+                <span class="requiredField" style="margin-left: 20px; margin-right: 10px;"></span><span style="font-size: x-small;font-weight:bold;">{!$Label.AsteriskDenotesRequireField}</span>
+            </div>
+            
+            <div id="content" class="content section">
+                <div id="contentHeader" class="header btn-info">{!UPPER($ObjectType.Product__c.LabelPlural)}</div>
+                <div class="clear"></div>
+                <div class="rowButtons text-center">
+                    <button id="expandButton" class="btn rowButton expandBtn bg-primary" type="button" value="{!$Label.Expand_All}">{!$Label.Expand_All}</button>               
+                </div>
+            </div>
+            <div id="bottomButtonDiv" class="buttonDiv text-center">
+                <button type="button" value="{!$Label.Save}" class="btn button save bg-primary actionButton" data-loading-text="{!$Label.Saving}">{!$Label.Save}</button>
+                <button type="button" value="{!$Label.Save_and_Close}" class="btn button save saveAndClose bg-primary actionButton" data-loading-text="{!$Label.Saving}">{!$Label.Save_and_Close}</button>
+                <button type="button" value="{!$Label.Cancel}" class="btn button cancel bg-primary actionButton">{!$Label.Cancel}</button>
+                <button type="button" value="{!$Label.Process_Order}" class="btn button processOrder bg-primary actionButton hidden" data-role="none" disabled="disabled">{!$Label.Process_Order}</button>
+                <div class="loadingImage" style="display:none">
+                    <img src="https://www.b-fonline.com/salesforceresources/SFA/img/transparentLoading.gif"/>
+                </div>
+                <div class="savedMessage" style="display:none">
+                    {!$Label.Saved}
+                </div>
+            </div>
+            <div id="offlineModal" class="modal fade" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title">{!$Label.No_Connection}</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>{!$Label.Find_Connection}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">{!$Label.Close}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="clearFormModal" class="modal fade" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title">{!$Label.Clear_Form}</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>{!$Label.Clear_Form_Confirm}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">{!$Label.Cancel}</button>
+                            <button id="clearFormConfirm" type="button" value="{!$Label.Clear_Form}" class="btn button clearForm btn-danger" data-dismiss="modal" onclick="clearForm()" >{!$Label.Clear_Form}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--<script src="{!URLFOR($Resource.bootstrapmodernp, '/startbootstrap-modern-business-gh-pages/js/bootstrap.min.js')}"></script>-->
+    <script src="https://www.b-fonline.com/salesforceresources/BootstrapModernPages/js/bootstrap.min.js"></script>
+    <script> 
+        (function(){
+            try{
+                var a=navigator.userAgent; 
+		        if((a.indexOf('Salesforce')!=-1)&&(a.indexOf('iPhone')!=-1||a.indexOf('iPad')!=-1)&&(a.indexOf('Safari')==-1)){ 
+        			var s=document.createElement('style'); 
+			        s.innerHTML="html,html body{overflow: auto;-webkit-overflow-scrolling:touch;}body{position:absolute;left:0;right:0;top:0;bottom:0;}"; 
+        			document.getElementsByTagName('head')[0].appendChild(s);
+                }
+            }catch(e){
+            }
+        })(); 
+        window.onkeydown=function(){ window.focus(); }
+    </script> 
+
+</apex:page>

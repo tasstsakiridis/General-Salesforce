@@ -1,0 +1,1015 @@
+<apex:page title="Sales Proposal A&P Items" standardController="Promotion_Activity__c" extensions="PromotionActivity_Products_Controller" tabStyle="Promotion_Material_A_P__c" sidebar="false" docType="html-5.0" standardStylesheets="false" showHeader="false">
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="" />
+        <meta name="author" content="" />
+        
+        <script src='https://ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js'></script>        
+        
+        <script src="https://www.b-fonline.com/salesforceresources/numeral-js/min/numeral.min.js"></script>
+		<script src="https://www.b-fonline.com/salesforceresources/SFA/js/fastclick/lib/fastclick.js"></script>
+                
+	    <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SFA/css/font-awesome.min.css" />
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SFA/css/accountSurvey.css" />
+		<link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/BootstrapModernPages/css/bootstrap.min.css" />
+		<link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/BootstrapModernPages/css/bootstrap-theme.min.css" />
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SLDS091/assets/styles/salesforce-lightning-design-system-ltng.min.css" />
+
+        <!--<apex:includeScript value="{!URLFOR($Resource.SFA, '/js/fastclick/lib/fastclick.js')}" />-->
+        <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/numeral.js//1.4.5/numeral.min.js"></script>-->
+        
+        <!--<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css"/>-->
+        <!--<apex:stylesheet value="{!URLFOR($Resource.SFA, '/css/accountSurvey.css')}" />-->
+        <!--<apex:stylesheet value="{!URLFOR($Resource.SLDS091, '/assets/styles/salesforce-lightning-design-system-ltng.min.css')}" />-->
+        <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous"/>-->
+        <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous"/>-->
+    </head>
+    <style>
+        input.slds-input-clone {
+            background-color: white;
+            color: #16325c;
+            border: 1px solid #d8dde6;
+            border-radius: 0.25rem;
+            -webkit-transition: border 0.1s linear, background-color 0.1s linear;
+            transition: border 0.1s linear, background-color 0.1s linear;
+            display: inline-block;
+            padding: 0 1rem 0 0.75rem;
+            line-height: 2.125rem;
+            min-height: calc(2.125rem + 2px); 
+            margin-bottom: 0.5rem;
+        }
+        .productName {
+            min-width: 25%;
+        }
+        .sf-font {
+            font: 100%/1.5 "Salesforce Sans", Arial, sans-serif;
+        }
+        .jplist-pagination-info{
+            margin: 15px 15px 0 40px;
+        }
+        
+        .jplist-items-per-page{
+            margin: 15px 10px 0 0;
+        }
+        
+        .jplist-pagination{
+            margin: 10px 10px 0 30px;
+        }
+        .jplist-panel {
+            border-style: none;
+        }
+        .jplist-checkbox-dropdown {
+            width: 180px;
+            margin: 20px 0 0 10px;
+        }
+        .jplist-checkbox-dropdown ul {
+            width: 400px;
+        }
+        i.fa-plus:hover {
+            cursor: pointer;
+        }
+        .disabled {
+            cursor: not-allowed;
+            pointer-events: none;
+            disabled: true;
+            background-color: 'transparent';
+            box-shadow: none;
+            -webkit-box-shadow: none;
+        }
+        .input-group-label {
+            text-align: right;
+            width: 140px;
+        }
+        div.currency, div.double, div.percent, td.currency, td.double, td.percent {
+            text-align: right;
+        }
+        div.currency > span:before, td.currency > span:before {
+            content: attr(data-currency-code) " ";
+            font-size: smaller;
+        }
+        
+    </style>            
+    <script src="{!urlPrefix}/soap/ajax/35.0/connection.js" type="text/javascript"></script>    
+    <script>
+        var j$ = jQuery.noConflict();
+
+        //Initialize sforce Connection for MetaDataApi calls
+        sforce.connection.sessionId = '{!$Api.Session_ID}';
+        var urlPrefix = '{!urlPrefix}';
+        if(urlPrefix == '/sales'){
+            UserContext.siteUrlPrefix = urlPrefix;
+            sforce.connection.serverUrl = urlPrefix + sforce.connection.serverUrl;
+        }
+        
+        var filterRowsPerPage = 10;
+        
+        var thisActivity = [{!serializedActivity}][0];
+        var pmiList = [{!serializedPMIList}][0];        
+        var apItemFS = [{!serializedAPItemFS}][0];
+        var readOnlyFields = [{!serializedReadOnlyFieldList}][0];
+        var productList = [{!serializedProductList}][0];
+        var activityLocked = [{!lockActivity}][0];
+        var notApprovedMsg = "{!$Label.Promotion_Not_Approved}";
+        var returnURL = "{!URLFOR($Action.Promotion_Activity__c.View, thisActivity.Id)}";
+        var marketName = "{!marketName}";
+        var activityType = '{!activityType}';
+        var pmiRecordTypeId = '{!pmiRecordTypeId}';
+        var pmiRecordTypeName = '{!pmiRecordTypeName}';
+        var deviceType;
+        var redirect = false;
+        var inSF1 = false;
+        var isDesktop = true;
+        var userCurrency = '{!userCurrency}';
+        var returnTo = "{!$CurrentPage.Parameters.returnto}";
+        
+        var itemsToDelete = [];
+        
+        var picklistValuesMap = {};
+                
+        //map to create corresponding HTML input type for Salesforce field type
+        var inputTypeMap = {
+            'boolean':  'checkbox',
+            'double':   'number',
+            'currency': 'number',
+            'picklist': 'select',
+            'reference':'link',
+            'date':     'date',
+            'percent':  'number',
+            'textarea': 'text',
+            'string':   'text'
+        }
+
+    	var customFieldLabels = [
+            { objectName: 'Promotion_Material_A_P__c', market: 'Korea', fieldName: 'A_P_Item_Unit_Cost__c', customLabel: '{!$ObjectType.Product__c.Fields.Unit_Cost__c.Label}' },
+            { objectName: 'Promotion_Material_A_P__c', market: 'Korea', fieldName: 'A_P_Item_Total__c', customLabel: '{!$Label.ItemTotal}' },
+        ];
+        
+        j$(document).ready(function() {
+            j$(function() {
+                FastClick.attach(document.body);
+            });
+            
+            if( (typeof sforce != 'undefined') && (sforce.one != null) ) {
+                inSF1 = true;
+            }else{
+                inSF1 = false;
+            }
+                        
+            //get window width to determine whether or not to use tokenize, 768 = tablet
+            //sniff user agent to figure out if it's an iPad because screen resolution varies
+            var IS_IPAD = navigator.userAgent.match(/iPad/i) != null;
+            if(j$(window).width() >= 992 && !IS_IPAD){
+                deviceType = 'desktop';
+            }else{
+                j$('#expandButton').show();             //for cards layout
+                if(j$(window).width() >= 768){
+                    deviceType = 'tablet';
+                }else{
+                    deviceType = 'phone';
+                }
+            }
+            isDesktop = deviceType == 'desktop';
+            
+            buildHeaderSection();
+            
+            productListSelectOptionsHTML = buildProductListSelectOptions();
+            
+            if (thisActivity.Approval_Status__c == 'Approved') {
+                // change to show message that proposal cannot be modified after it's been approved
+                alert(notApprovedMsg);
+            } else {
+	            j$.when(getPicklistValuesForRecordType('Promotion_Material_A_P__c')).then(buildCollapsibleSections());            
+            }
+            bindEvents(isDesktop);
+            
+            if (activityLocked == true) {
+                j$('.save').hide();
+            }
+        });
+        
+        function bindEvents(buildTokenize){            
+            j$('.save').click(function() {
+                //redirect to returnURL on click of save and close
+                if(j$(this).hasClass('saveAndClose')){
+                    redirect = true;
+                }
+                //check for connection, if offline display modal warning
+                //alert(navigator.onLine);
+                if(navigator.onLine){
+                    j$('.actionButton').button('loading');
+                    buildItemsToSave();
+                }else{
+                    j$('#offlineModal').modal();
+                }                           
+            });
+            j$('.cancel').click(function(){
+                /*
+                if (returnTo == 'product') {
+                	returnURL = '/apex/PromotionActivity_Products?id='+thisActivity.Id+'&type=WetGoods';
+                } else if (returnTo == 'proposal') {
+	                returnURL = '/apex/PromotionActivity?id='+thisActivity.Id;
+                } 
+                                  
+                if(inSF1) {
+            		//sforce.one.back(false);
+                    sforce.one.navigateToURL(returnURL, true);
+                }else{
+                    
+                    window.location.href = returnURL;
+                }
+                */
+                closePage();
+            });
+            /*
+            j$('div.rowHeader').off("click");
+            j$('div.rowHeader').click(function(){
+                if(j$(this).siblings('.fields').hasClass('expanded')){
+                    j$(this).removeClass('headerShadow').siblings('.fields').removeClass('expanded fieldsShadow').slideUp();
+                }else{
+                    j$(this).addClass('headerShadow').siblings('.fields').addClass('expanded fieldsShadow').slideDown();
+                }
+            });
+            */
+            bindCardEvents();
+        }
+        function closePage() {
+            if (inSF1) {
+                    sforce.one.navigateToSObject(thisActivity.Id, 'detail');
+                } else {
+                    if (returnURL == undefined || returnURL == "") {
+                        returnURL = '{!URLFOR($Action.Promotion_Activity__c.view, thisActivity.Id)}'; 
+                    }
+                    window.location.href = returnURL;
+                }
+        }
+        function bindCardEvents() {
+            j$('div.rowHeader').off("click");
+            j$('div.rowHeader').click(function(){
+                if(j$(this).siblings('.fields').hasClass('expanded')){
+                    j$(this).removeClass('headerShadow').siblings('.fields').removeClass('expanded fieldsShadow').slideUp();
+                }else{
+                    j$(this).addClass('headerShadow').siblings('.fields').addClass('expanded fieldsShadow').slideDown();
+                }
+            });
+        }
+        function buildHeaderSection(){
+            //build header info 
+            //always add account link
+            var wholesalerNavUrl = urlPrefix + '\\' + thisActivity.Wholesaler__c;
+            var activityNavUrl = urlPrefix + '\\' + thisActivity.Id;
+
+            headerHTML = thisActivity.Wholesaler__r.Name + ' - ' + ' (' + thisActivity.RecordType.Name + ')';
+            j$('#activityHeader').html(headerHTML);            
+        }
+        
+        function buildProductListSelectOptions(selectedValue) {
+            var html = '<option value=""></option>';
+            var selected = '';
+            var description = '';
+            j$.each(productList, function(key, value) {
+                selected = '';
+                description = value.Name;
+                if (selectedValue && selectedValue == value.Id) {
+                    selected = 'selected="selected"';
+                }
+                html += '<option value="' + value.Id + '" ' + selected + '>'+description+'</option>';
+            });
+            
+            return html;
+        }
+        function setUnitCost(itemId, rowId, productId) {
+            //var itemId = j$(this).val();
+            console.log('[setUnitCost]');
+            var unitCost = 0;
+            
+            for(var i = 0; i < productList.length; i++) {
+                if (productList[i].Id == itemId) {
+					unitCost = productList[i].Unit_Cost__c;
+                    break;
+                }
+            }
+            var elementId = '#A_P_Item_Unit_Cost__c-'+rowId;
+            var elem = j$(elementId);
+    		if (elem.is(':input')) {
+				j$(elementId).val(unitCost);   
+            } else {
+				j$(elementId).html(numeral(unitCost).format('0,0.00'));            
+            }
+            
+        }
+        function buildAPLine(pmi, apItem, rowId, cnt, selectOptions) {
+            var html = '';
+            if (deviceType == 'desktop') {
+                html = '<tr id="' + rowId + '" data-pmi-id="'+pmi.Id+'" data-row-id="' + rowId + '" data-product-id="' + pmi.Product_Custom__c + '" data-apitem-id="'+apItem.Id+'">';
+                html += '<td class="apitem">';
+                if (!activityLocked) {
+                	html += '<i class="fa fa-remove" style="margin-right: 10px;" data-product-id="' + pmi.Product_Custom__c + '" data-row-id="' + rowId + '" data-apitem-id="'+apItem.Id+'" ></i>';
+	    	        html += '<select id="A_P_Item__c-'+rowId+'" data-row-id="'+rowId+'" data-product-id="'+pmi.Product_Custom__c+'" data-apitem-id="'+apItem.Id+'" field="A_P_Item__c" type="reference">'+selectOptions+'</select>';
+                } else {
+                    html += '<span id="A_P_Item__c-'+rowId+'" data-row-id="'+rowId+'" data-product-id="'+pmi.Product_Custom__c+'" data-apitem-id="'+apItem.Id+'" field="A_P_Item__c" type="reference">'+apItem.A_P_Item__r.Name+'</span>';
+                }
+                html += '</td>';
+            } else {
+                html = '<div class="row" id="' + rowId + '" data-pmi-id="'+pmi.Id+'" data-row-id="'+rowId+'" data-product-id="' + pmi.Product_Custom__c + '" data-apitem-id="'+apItem.Id+'">';
+                html += '<div class="rowHeader headerShadow">';
+                if (!activityLocked) {
+                	html += '<i class="fa fa-remove" data-row-id="' + rowId + '" data-product-id="' + pmi.Product_Custom__c + '" data-apitem-id="'+apItem.Id+'"></i>';
+	                html += '<select id="A_P_Item__c-'+rowId+'" class="apitem lead" data-row-id="' + rowId + '" data-product-id="'+pmi.Product_Custom__c+'" data-apitem-id="'+apItem.Id+'" field="A_P_Item__c" type="reference">' + selectOptions + '</select>';
+                } else {
+                    html += '<span id="A_P_Item__c-'+rowId+'" data-row-id="'+rowId+'" data-product-id="'+pmi.Product_Cutom__c+'" data-apitem-id="'+apItem.Id+'" field="A_P_Item__c" type="reference">'+apItem.A_P_Item__r.Name+'</span>';
+                }
+                html += '</div>';
+                html += '<div class="fields mandatory fieldsShadow">';
+                
+            }
+            var elementTag = 'div';
+            var section = 'cards';
+            var cssClass = ' col-xs-12 col-sm-6';
+            if (deviceType == 'desktop') { 
+                elementTag = 'td'; 
+                cssClass = '';
+                section = 'table';
+            }
+            
+            j$.each(apItemFS, function(key, value) {
+                html += '<' + elementTag + ' class="' + value.type + cssClass + '" data-currency-code="'+userCurrency+'">' + buildInput(value, true, apItem, pmi, section, cnt, rowId) + '</' + elementTag + '>';
+            });
+            if (deviceType == 'desktop') {
+                html += '</tr>';
+            } else {
+                html += '</div></div>';
+            }
+
+            return html;            
+        }
+        function addAPItemLineToProduct(pmiId) {
+            var pmi = {};
+            for(var i = 0; i < pmiList.length; i++) {
+                if (pmiList[i].Id == pmiId) {
+                    pmi = pmiList[i];
+                    break;
+                }
+            }
+            
+            var apItem = {};
+            apItem.Id = 'new';
+            apItem.Promotion_Material_Item__c = pmiId;
+            var selectOptions = productListSelectOptionsHTML;
+            
+			var tableId = '#Section' + pmiId;
+            var selector = 'div';
+            if (deviceType == 'desktop') {
+                selector = 'tr';
+                tableId += ' tbody';
+            } else {
+                tableId +='Body';
+            }
+            var cnt = j$(selector + '[data-pmi-id*="'+pmiId+'"]').length + 1;
+            var rowId = "pmi-" + pmiId + "-" + cnt;
+            var html = buildAPLine(pmi, apItem, rowId, cnt, selectOptions);
+            //j$('#pmiTable' + pmiId + ' tBody').append(html);
+            j$(tableId).append(html);            
+            /*
+            j$('#A_P_Item__c-'+rowId).change(function() {
+                setUnitCost(this.options[this.selectedIndex].value, this.getAttribute('data-row-id'), this.getAttribute('data-product-id'));
+            });
+            j$('#A_P_Item_Unit_Cost__c-'+rowId).change(function() {
+                var rowId = this.getAttribute('data-row-id');
+                var val = this.value;
+                var qty = j$('#Quantity__c-'+rowId).val();
+                var itemTotal = 0;
+                if (!isNaN(qty) && !isNaN(qty)) {
+                    itemTotal = val * qty;
+                }
+                console.log('rowid', rowId);
+                console.log('unitcost', val);
+                console.log('qty', qty);
+                console.log('itemTotal', itemTotal);
+                j$('#A_P_Item_Total__c-'+rowId).html(numeral(itemTotal).format('0,0.00'));
+            });
+            j$('#Quantity__c-'+rowId).change(function() {
+                var rowId = this.getAttribute('data-row-id');
+                var val = this.value;
+                var unitCost = j$('#A_P_Item_Unit_Cost__c-'+rowId).val();
+                var itemTotal = 0;
+                if (!isNaN(unitCost)) {
+                    itemTotal = val * unitCost;
+                }
+                console.log('rowid', rowId);
+                console.log('val', val);
+                console.log('unitcost', unitCost);
+                console.log('itemTotal', itemTotal);
+                j$('#A_P_Item_Total__c-'+rowId).html(numeral(itemTotal).format('0,0.00'));
+            });
+            j$('i[data-row-id*="'+rowId+'"]').click(function() {
+                removeFromProductTable(this.getAttribute('data-row-id'), this.getAttribute('data-apitem-id'), this.getAttribute('data-product-id'));
+            });
+		    */
+            
+            bindCardEvents();
+        }
+        function removeFromProductTable(rowId, apItemId, productId) {
+            if (rowId == undefined) { return; }
+            
+            if (apItemId != undefined && apItemId != '' && apItemId != 'new') {
+                var apItem = {};
+                apItem['Id'] = apItemId;
+                itemsToDelete.push(apItem);
+                
+                for (var i = 0; i < pmiList.length; i++) {
+                    if (pmiList[i].Product_Custom__c == productId) {
+                        for(var j = 0; j < pmiList[i].Promotion_Material_A_P_Items__r.length; j++) {
+                            if (cpList[i].Promotion_Material_A_P_Items__r[j].Id == apItemId) {
+                                cpList[i].Promotion_Material_A_P_Items__r.splice(j, 1);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            var selector = 'div';
+            if (deviceType == 'desktop') {
+                selector = 'tr';
+            }
+            j$(selector + '[data-row-id*="'+rowId+'"]').remove();            
+        }
+        
+        function buildCollapsibleSections() {
+            j$('div#content').empty();
+            var ctr = 0;
+            var collapsedStyle = 'in';
+            var sectionId = '';	
+            var sectionHTML = '<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">';
+            j$.each(pmiList, function(key, value) {
+                if (ctr > 0) { collapsedStyle = ''; }
+                sectionId = 'Section' + value.Id;
+                // PMI Actuals
+				sectionHTML += '<div class="panel panel-default">';
+                sectionHTML += '<div class="panel-heading" role="tab" id="' + value.Id + '">';
+                sectionHTML += '<h4 class="panel-title">';
+                sectionHTML += '<a role="button" data-toggle="collapse" data-target="#' + sectionId + '" data-parent="#accordion" aria-expanded="true" aria-controls="' + sectionId + '">' + value.Product_Custom__r.Name + '</a>';
+                if (!activityLocked) {
+	                sectionHTML += '<button type="button" value="{!$Label.Add_AP_Item}" data-pmi-id="'+value.Id+'" data-section-id="'+sectionId+'" data-product-id="'+value.Product_Custom__c+'" class="btn btn-sm bg-primary add-ap-item" style="margin-left:10px;">{!$Label.Add_AP_Item}</button>';
+                }
+                sectionHTML += '</h4>';
+                sectionHTML += '</div>';
+                sectionHTML += '<div id="' + sectionId + '" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="' + value.Id + '">';
+                sectionHTML += '<div class="panel-body" id="' + sectionId + 'Body">';
+
+                sectionHTML += buildPanelBodyForItem(value);
+
+                sectionHTML += '</div>'; // End-Div panel-body section
+                sectionHTML += '</div>'; // End-Div collapsible section
+                sectionHTML += '</div>'; // End-Div panel-heading
+                sectionHTML += '</div>'; // End-Div panel
+                
+                ctr++;
+            });
+            sectionHTML += '</div>';
+            
+			j$('div#content').append(sectionHTML);    
+            j$('.add-ap-item').off('click')
+            				  .click(function() {
+                                  console.log('[add-ap-item click]', this);
+                                  var pmiId = j$(this).attr('data-pmi-id');                                  
+                                  addAPItemLineToProduct(pmiId);
+                                  bindItemFieldEvents();
+                                  
+           	});     
+            bindItemFieldEvents();
+            
+        }
+        function bindItemFieldEvents() {
+            j$('i.fa-remove').off('click')
+            				 .click(function() {
+                removeFromProductTable(this.getAttribute('data-row-id'), this.getAttribute('data-apitem-id'), this.getAttribute('data-product-id'));
+            });
+            j$('select[field="A_P_Item__c"]').off('change')
+            							     .change(function() {
+                setUnitCost(this.options[this.selectedIndex].value, this.getAttribute('data-row-id'), this.getAttribute('data-product-id'));
+            });
+            j$('input[field="Quantity__c"]').off('change')
+             								.change(function() {
+                var rowId = this.getAttribute('data-row-id');
+                var val = this.value;
+                var elUnitCost = j$('#A_P_Item_Unit_Cost__c-'+rowId);
+                var unitCost = 0;                                
+                if (elUnitCost.is(':input')) {
+                    unitCost = elUnitCost.val();
+                } else {
+                	unitCost = numeral().unformat(elUnitCost.text());
+                }
+                
+                var itemTotal = 0;
+                if (!isNaN(unitCost)) {
+                    itemTotal = val * unitCost;
+                }
+                j$('#A_P_Item_Total__c-'+rowId).html(numeral(itemTotal).format('0,0.00'));
+            });
+            j$('input[field="A_P_Item_Unit_Cost__c"]').change(function() {
+                var rowId = this.getAttribute('data-row-id');
+                var val = this.value;
+                var qty = j$('#Quantity__c-'+rowId).val();
+                var itemTotal = 0;
+                if (!isNaN(qty) && !isNaN(qty)) {
+                    itemTotal = val * qty;
+                }
+                console.log('rowid', rowId);
+                console.log('unitcost', val);
+                console.log('qty', qty);
+                console.log('itemTotal', itemTotal);
+                j$('#A_P_Item_Total__c-'+rowId).html(numeral(itemTotal).format('0,0.00'));
+            });
+        }
+        function buildPanelBodyForItem(pmi) {
+            var panelBodyHTML = '';
+            if (deviceType == 'desktop') {
+                var tableId = 'pmiTable' + pmi.Id;
+                panelBodyHTML = '<div class="table-responsive col-md-12"><table id="' + tableId + '" class="pmiTable table table-striped"><thead class="headers">';
+                panelBodyHTML += '<th class="headerRow" data-column-id="apitem" scope="col" colspan="1"><div class="text-left">{!$ObjectType.Promotion_Material_A_P__c.Fields.A_P_Item__c.Label}</div></th>';
+                var fieldLabel = '';
+                var aligncss = '';
+                j$.each(apItemFS, function(key, value) {
+                    fieldLabel = value.label;
+                    for(var i = 0; i < customFieldLabels.length; i++) {
+                        if (customFieldLabels[i].fieldName == value.fieldPath && customFieldLabels[i].market == marketName) {
+                            fieldLabel = customFieldLabels[i].customLabel;
+                            break;
+                        }
+                    }
+                    aligncss = '';
+                    if (inputTypeMap[value.type] == 'number') {
+                        aligncss = 'style="text-align:center;"';
+                    }
+                    panelBodyHTML += '<th class="headerRow" data-column-id="' + value.fieldPath + '" scope="col" colspan="1"><div ' + aligncss + '>' + fieldLabel + '</div></th>';
+                });
+            	panelBodyHTML += '</thead><tbody class="tableBody">';
+            }
+
+            if (pmi.Promotion_Material_A_P_Items__r) {
+                j$.each(pmi.Promotion_Material_A_P_Items__r.records, function(caKey, apItem) {
+                    var selector = 'div';
+                    if (deviceType == 'desktop') {
+                        selector = 'tr';
+                    }
+                    
+                    var apItemId = 'new';
+                    var productId = pmi.Product_Custom__c;
+                    
+                    if (apItem.Promotion_Material_Item__c != undefined) {
+                        apItemId = apItem.Id;
+                    }
+    
+                    var rowId = "pmi-" + pmi.Id + "-" + caKey;
+                    
+                    var apItemSelectList = buildProductListSelectOptions(apItem.A_P_Item__c);
+                    var caHTML = buildAPLine(pmi, apItem, rowId, caKey, apItemSelectList);
+    
+                    panelBodyHTML += caHTML;
+                });
+            }
+            if (deviceType == 'desktop') {
+                panelBodyHTML += '</tbody></table></div>';
+            }
+            
+            return panelBodyHTML;
+        }
+        //build out the actual input tags for each type
+        function buildInput(obj, isNewRow, apItem, pmi, section, cnt, rowId){
+            var html = '';
+            var value = '';
+
+            var objectName = 'Promotion_Material_A_P__c';
+
+            if (section == 'cards') {
+                var fieldLabel = obj.label;
+                for(var i = 0; i < customFieldLabels.length; i++) {
+                    if (customFieldLabels[i].fieldName == value.fieldPath && customFieldLabels[i].market == marketName) {
+                        fieldLabel = customFieldLabels[i].customLabel;
+                        break;
+                    }
+                }
+                
+                html += '<label for=cpid-"' + apItem.Id + '" class="fieldLabel">' + fieldLabel + '</label>';
+            }
+            var isReadOnly = false;
+            var pos = readOnlyFields.indexOf(obj.fieldPath);            
+            if (pos >= 0 || activityLocked == true) {
+                isReadOnly = true;
+            }
+            
+            if (apItem != null) {
+                //var fieldPath = obj.fieldPath.replace('A_P_Item_','');
+                if (inputTypeMap[obj.type] == 'number' && isReadOnly == true) {
+                    if (obj.type == 'currency') {
+                        value = numeral(apItem[obj.fieldPath]).format('0,0.00');
+                    } else {
+                        value = numeral(apItem[obj.fieldPath]).format('0,0');
+                    }
+                } else {
+                	value = apItem[obj.fieldPath];                
+                }
+            }
+            if(value == undefined){
+                value = '';
+            }
+            console.log('[buildInput] apItem', apItem);
+            console.log('[buildInput] value', value);
+            console.log('[buildInput] obj', obj);
+            var elementId = obj.fieldPath + '-' + rowId;
+            var productId = pmi.Product_Custom__c;
+            
+            //build the correct HTML input type, read only in Account Info section if not required on field set
+            switch(inputTypeMap[obj.type]){                             
+                case 'number':
+                    if (isReadOnly == true) {
+                        html += '<span id="'+elementId+'" data-row-id="'+rowId+'" data-pmi-id="'+pmi.Id+'" data-product-id="'+productId+'" data-apitem-id="'+apItem.Id+'" field="'+obj.fieldPath+'" data-currency-code="'+userCurrency+'" style="margin-bottom: 0.5rem;">'+value+'</span>';
+                    } else {
+                        html += '<input id="'+elementId+'" data-row-id="'+rowId+'" data-pmi-id="'+pmi.Id+'" data-product-id="'+productId+'" data-apitem-id="'+apItem.Id+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" step="any" value="'+value+'" class="fieldInput slds-input" />';
+                    }
+                    break;
+                case 'select':
+                    if(isReadOnly == true){
+                        html += '<span style="margin-bottom: 0.5rem;">'+value+'</span>';
+                    }else{
+                        html += '<select id="'+elementId+'" data-row-id="'+rowId+'" data-pmi-id="'+pmi.Id+'" data-product-id="'+productId+'" data-apitem-id="'+apItem.Id+'" field="'+obj.fieldPath+'" class="fieldInput slds-select  "><option value=""></option>';
+                        var options = getSelectOptions(obj.fieldPath, objectName);
+                        if (options != null) {                            
+                            for(var i=0;i<options.length;i++){
+                                if(value == options[i]){
+                                    html+= '<option value="'+options[i]+'" selected>'+options[i]+'</option>';
+                                }else{
+                                    html+= '<option value="'+options[i]+'">'+options[i]+'</option>';
+                                }
+                            }
+                        }
+                        html += '</select>';
+                    }
+                    break;
+                case 'checkbox':
+                    if(isReadOnly == true){
+                        html += '<input id="'+elementId+'" data-row-id="'+rowId+'" data-pmi-id="'+pmi.Id+'" data-product-id="'+productId+'" data-apitem-id="'+apItem.Id+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" disabled="disabled" class="fieldInput cmn-toggle cmn-toggle-round-flat"/>';
+                        html += '<label for="'+elementId+'" class="'+section+'Checkbox"></label>';
+                    }else{
+                        if(value == true){
+                            html += '<input id="'+elementId+'" data-row-id="'+rowId+'" data-pmi-id="'+pmi.Id+'" data-product-id="'+productId+'" data-apitem-id="'+apItem.Id+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" checked="checked" class="fieldInput cmn-toggle cmn-toggle-round-flat"/>';
+                        }else{
+                            html += '<input id="'+elementId+'" data-row-id="'+rowId+'" data-pmi-id="'+pmi.Id+'" data-product-id="'+productId+'" data-apitem-id="'+apItem.Id+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" class="fieldInput btn cmn-toggle cmn-toggle-round-flat"/>';
+                        }
+                        html += '<label for="'+elementId+'" class="'+section+'Checkbox"></label>';
+                    }                    
+                    break;
+                case 'link':
+                    
+                    var relationshipName = obj.fieldPath.replace('__c', '__r');
+                    var infoField = eval("pmiList." + relationshipName);
+                    var relatedValue = '';
+                    if (infoField != null && infoField != undefined) {
+                        relatedValue = infoField.Name;
+                    }
+                    var lookupField;
+                    for(var i = 0; i < relationships.length; i++) {
+                        if (relationships[i].name == obj.fieldPath) {
+                            lookupField = relationships[i];
+                            break;
+                        }
+                    }
+                                        
+                    if (lookupField) {                            
+                        html += '<div id="' + elementId + '" data-row-id="'+rowId+'" data-pmi-id="'+pmi.Id+'" data-product-id="'+productId+'" data-apitem-id="'+apItem.Id+'">';
+
+                        $Lightning.use("c:CustomLookup", function() {
+                            $Lightning.createComponent(
+                                "c:lookupComponent",
+                                { searchString: relatedValue, recordId: value, label:obj.fieldPath, pluralLabel: '', sObjectAPIName: lookupField.objectName, filterClause: lookupField.filter, listIconSVGPath:"/resource/SLDS091/assets/icons/standard-sprite/svg/symbols.svg#account", listIconClass:"slds-icon-standard-account"},
+                                obj.fieldPath,
+                                function(cmp) {
+                                }
+                            );
+                        });
+                    }
+                    break;
+                case 'date':
+                    if (isReadOnly == true) {
+                        html += '<span id="'+elementId+'" data-row-id="'+rowId+'" style="margin-bottom: 0.5rem;">'+value+'</span>';
+                    } else {
+	                    html += '<input id="'+elementId+'" data-row-id="'+rowId+'" data-pmi-id="'+pmi.Id+'" data-product-id="'+productId+'" data-apitem-id="'+apItem.Id+'" field="'+obj.fieldPath+'" class="'+inputTypeMap[obj.type]+'Input slds-input-clone" type="'+inputTypeMap[obj.type]+'" value="'+value+'" />';
+                    }
+                    break;
+                default:
+                    if (obj.type == 'textarea') {
+                        html += '<textarea id="'+elementId+'" data-pmi-id="'+pmi.Id+'" data-product-id="'+productId+'" data-apitem-id="'+apItem.Id+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" value="'+value+'" class="fieldInput slds-textarea" row="4" />';
+                    } else {
+                        html += '<input id="'+elementId+'" data-pmi-id="'+pmi.Id+'" data-product-id="'+productId+'" data-apitem-id="'+apItem.Id+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" value="'+value+'" class="fieldInput slds-input" />';
+                    }
+            } 
+            return html;               
+        }
+        
+        function buildProductTableHeader() {
+            if (deviceType == 'desktop') {
+                var headerHTML = '<div class="table-responsive col-md-12"><table id="pmiTable" class="pmiTable table table-striped"><thead class="headers">';
+                headerHTML += '<th class="headerRow" data-column-id="selected" scope="col" colspan="1"><div>&nbsp;</div></th>';
+                headerHTML += '<th class="headerRow" data-column-id="product" scope="col" colspan="2"><div class="text-left">{!$ObjectType.Product__c.Label}</div></th>';
+                headerHTML += '</thead><tbody class="tableBody"></tbody></table></div>';
+                j$('div#content').append(headerHTML);
+            }
+        }                    
+
+        //get all picklist values for this market's recordtype
+        function getPicklistValuesForRecordType (objectName) {
+            var bigString = [];
+            var masterBigString = [];
+            var recordTypeName = pmiRecordTypeName;
+            var recordTypeMappings = sforce.connection.describeLayout(objectName).recordTypeMappings;
+            if(recordTypeMappings.length == undefined){
+                if (recordTypeMappings.picklistsForRecordType.length == undefined) {
+                    var field = {
+                        name: recordTypeMappings.picklistsForRecordType.picklistName,
+                        values: returnPickListValue(recordTypeMappings.picklistsForRecordType)
+                    };
+                    bigString.push(field);
+                } else {
+                    for(var x=0; x<recordTypeMappings.picklistsForRecordType.length; x++){
+                       var field = {
+                        name: recordTypeMappings.picklistsForRecordType[x].picklistName,
+                        values: returnPickListValue(recordTypeMappings.picklistsForRecordType[x])                        
+                       };                           
+                       bigString.push(field);
+                   }
+               }
+            }else{
+                for (var i=0; i <recordTypeMappings.length; i++) {
+                    if (recordTypeMappings[i].name == recordTypeName){
+                        if (recordTypeMappings[i].picklistsForRecordType.length == undefined) {
+                            var field = {
+                                name: recordTypeMappings[i].picklistsForRecordType.picklistName,
+                                values: returnPickListValue(recordTypeMappings[i].picklistsForRecordType)
+                            };
+                            bigString.push(field);
+                        } else {
+                            for(var x=0; x<recordTypeMappings[i].picklistsForRecordType.length; x++){
+                                var field = {
+                                    name: recordTypeMappings[i].picklistsForRecordType[x].picklistName,
+                                    values: returnPickListValue(recordTypeMappings[i].picklistsForRecordType[x])                        
+                                };                          
+                                bigString.push(field);
+                            }
+                        }
+                    } else if (recordTypeMappings[i].name == 'Master') {
+                        for(var x=0; x<recordTypeMappings[i].picklistsForRecordType.length; x++){
+                            var field = {
+                                name: recordTypeMappings[i].picklistsForRecordType[x].picklistName,
+                                values: returnPickListValue(recordTypeMappings[i].picklistsForRecordType[x])                        
+                            };                          
+                            masterBigString.push(field);
+                        }
+                    }
+                }
+            }
+            
+            if (bigString.length == 0) {
+                picklistValuesMap[objectName] = masterBigString;
+            } else {
+                picklistValuesMap[objectName] = bigString;
+            }
+        }
+    
+        //get the individual values
+        function returnPickListValue (obj) {
+            var values = [];
+            if (obj.picklistValues) {
+                if (obj.picklistValues.label == undefined) {
+                    for (var y=0; y <obj.picklistValues.length; y++) {
+                        values.push(obj.picklistValues[y].label);
+                        }
+                } else {
+                    values.push(obj.picklistValues.label);
+                }
+            }
+            return values;
+        }
+        
+        //toggle loading gif and saved message
+        function loading(val) {
+            if (val) {
+                j$(".loadingImage").fadeIn(100).css("display","inline").css('visibility','visible');
+            }
+            else {
+                j$(".loadingImage").css('visibility', 'hidden');    
+                j$(".savedMessage").fadeIn(100).css("display","inline").delay(3000).fadeOut();    
+            }
+        }
+        //find the picklist values for this field
+        function getSelectOptions(fieldName, objectName){
+            for(var i=0;i<picklistValuesMap[objectName].length;i++){
+                if(picklistValuesMap[objectName][i].name == fieldName){
+                    return picklistValuesMap[objectName][i].values;
+                }
+            }
+        }
+        
+        function buildItemsToSave() {
+            var selector = '.panel-body .row';   
+            if (deviceType == 'desktop') {
+                selector = '.pmiTable tbody tr';
+            }
+            var items = [];
+            var tt = j$(selector);
+            j$(selector).each(function() {
+                var apItem = {};
+                var row = j$(this);
+                var apItemId = this.getAttribute('data-apitem-id');
+                var pmiId = this.getAttribute('data-pmi-id');
+                console.log('[save] this', this);
+                console.log('[save] row', row);
+                apItem['Id'] = apItemId == '' || apItemId == 'new' ? null : apItemId;
+                apItem['Promotion_Material_Item__c'] = pmiId;
+                apItem['RecordTypeId'] = pmiRecordTypeId;
+                apItem['Activity__c'] = thisActivity.Id;
+                
+                j$(row).find('input,select,textarea').each(function() {
+                    var fld = j$(this);
+                    var fldName = fld.attr('field');
+                    if (fld.is('input')) {
+                        console.log(fldName, fld.val());
+                        if (fld.is(':checkbox')) {
+                            apItem[fldName] = fld.is(':checked');
+                        } else if (fld.prop('type') == 'date') {
+                            if (fld.val() != null && fld.val().length > 0) {
+                               var d = new Date(fld.val());
+                               var dd = ('00' + d.getDate()).slice(-2);
+                               var mm = ('00' + (d.getMonth()+1)).slice(-2);
+                                apItem[fldName] = d.getFullYear() + '-' + mm + '-' + dd;
+                            }
+                        } else {
+                            apItem[fldName] = fld.val();
+                        }
+                    } else if (fld.is('textarea')) {
+                        apItem[fldName] = fld.val();
+                    } else if (fld.is('select')){
+                        if (fld.attr('type') == 'reference') {
+                            apItem[fldName] = fld.find(':selected').val();
+                        } else {
+                        	apItem[fldName] = fld.find(':selected').text();
+                        }
+                    }
+                }); 
+
+                items.push(apItem);
+            });
+            
+            console.log('[save] pmilist', pmiList);
+            console.log('[save] items', items);
+            console.log('[save] itemstodelete', itemsToDelete);
+            PromotionActivity_Products_Controller.saveAPItems(thisActivity.Id, items, itemsToDelete, redirect, function(result, event) {
+                j$('.actionButton').button('reset');
+                if (event.status) {
+                    //if save and close is clicked, redirect to returnURL
+                    loading(false);
+                    if(redirect){
+                        closePage();
+                    } else {
+                        // rebuild rows with returned data
+                        //j$(selector).remove();
+                        console.log('result', result);
+                        j$.when(updatePMIList(result))
+                          .done(buildCollapsibleSections())
+                          .done(function() {
+                              //j$('select[field="A_P_Item__c"]').trigger('change');
+                              j$('input[field="Quantity__c"]').trigger('change');
+                          });
+                    }
+                } else {
+                    //handling errors.
+	                j$(".loadingImage").css('visibility', 'hidden');    
+    	            j$(".savedMessage").fadeOut();    
+                    
+                    alert(event.message);
+                }
+            });
+          
+        }
+        function updatePMIList(updatedItems) {
+            var found = false;
+            console.log('updateditems', updatedItems);
+            console.log('pmiList', pmiList);
+            for(var i = 0; i < updatedItems.length; i++) {
+                for (var j = 0; j < pmiList.length; j++) {
+                    if (pmiList[j].Id == updatedItems[i].Promotion_Material_Item__c) {
+                        //pmiList[j].Promotion_Material_A_P_Items__r = { records: [updatedItems[i]] };
+                        
+                        if (pmiList[j].Promotion_Material_A_P_Items__r) {
+                            found = false;
+                            for(var k = 0; k < pmiList[j].Promotion_Material_A_P_Items__r.records.length; k++) {
+                                if (pmiList[j].Promotion_Material_A_P_Items__r.records[k].Id == updatedItems[i].Id) {
+                                    pmiList[j].Promotion_Material_A_P_Items__r.records[k] = updatedItems[i];
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            console.log('[updatePMIList] found', found);
+                            if (!found) {
+                                pmiList[j].Promotion_Material_A_P_Items__r.records.push(updatedItems[i]);
+                            }                            
+                        } else {
+                            pmiList[j].Promotion_Material_A_P_Items__r = { records: [updatedItems[i]] };
+                        }
+                        
+                        break;
+                    }
+                }
+            }
+            console.log('[updatepmilist] pmilist', pmiList);
+        }
+    </script>
+    <div class="bootstrap" style="height:100%">
+        <div class="container-fluid theme-showcase" role="main">            
+            <div id="headerSection" class="section">
+                <div id="activityHeader" class="header btn-info">{!UPPER(activityType)}</div>
+            </div>
+            <div class="clear"></div>
+            <div id="topButtonDiv" class="buttonDiv text-center">
+                <button type="button" value="{!$Label.Save}" class="btn button save bg-primary actionButton" data-role="none" data-loading-text="{!$Label.Saving}">{!$Label.Save}</button>
+                <button type="button" value="{!$Label.Save_and_Close}" class="btn button save saveAndClose bg-primary actionButton" data-role="none" data-loading-text="{!$Label.Saving}">{!$Label.Save_and_Close}</button>
+                <button type="button" value="{!$Label.Cancel}" class="btn button cancel bg-primary actionButton" data-role="none">{!$Label.Cancel}</button>
+                <div id="loadingImage" class="loadingImage" style="display:none">
+                    <img src="https://www.b-fonline.com/salesforceresources/SFA/img/transparentLoading.gif"/>
+                </div>
+                <div id="savedMessage" class="savedMessage" style="display:none">
+                    {!$Label.Saved}
+                    <apex:pagemessages id="messages"/>
+                </div>
+            </div>
+            <div id="content" class="content section">
+                <div id="contentHeader" class="header btn-info">{!UPPER($ObjectType.Promotion_Material_A_P__c.Fields.A_P_Item__c.Label)}</div>
+                <div class="clear"></div>
+                <div class="rowButtons text-center">
+                    <button id="expandButton" class="btn rowButton expandBtn bg-primary" type="button" value="{!$Label.Expand_All}">{!$Label.Expand_All}</button>               
+                </div>
+            </div>
+            <div id="bottomButtonDiv" class="buttonDiv text-center">
+                <button type="button" value="{!$Label.Save}" class="btn button save bg-primary actionButton" data-loading-text="{!$Label.Saving}">{!$Label.Save}</button>
+                <button type="button" value="{!$Label.Save_and_Close}" class="btn button save saveAndClose bg-primary actionButton" data-loading-text="{!$Label.Saving}">{!$Label.Save_and_Close}</button>
+                <button type="button" value="{!$Label.Cancel}" class="btn button cancel bg-primary actionButton">{!$Label.Cancel}</button>
+                <div class="loadingImage" style="display:none">
+                    <img src="https://www.b-fonline.com/salesforceresources/SFA/img/transparentLoading.gif"/>
+                </div>
+                <div class="savedMessage" style="display:none">
+                    {!$Label.Saved}
+                </div>
+            </div>
+            <div id="offlineModal" class="modal fade" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title">{!$Label.No_Connection}</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>{!$Label.Find_Connection}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">{!$Label.Close}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="clearFormModal" class="modal fade" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title">{!$Label.Clear_Form}</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>{!$Label.Clear_Form_Confirm}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">{!$Label.Cancel}</button>
+                            <button id="clearFormConfirm" type="button" value="{!$Label.Clear_Form}" class="btn button clearForm btn-danger" data-dismiss="modal" onclick="clearForm()" >{!$Label.Clear_Form}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--<script src="{!URLFOR($Resource.bootstrapmodernp, '/startbootstrap-modern-business-gh-pages/js/bootstrap.min.js')}"></script>-->
+    <script src="https://www.b-fonline.com/salesforceresources/BootstrapModernPages/js/bootstrap.min.js"></script>
+    <script> 
+        (function(){
+            try{
+                var a=navigator.userAgent; 
+        		if((a.indexOf('Salesforce')!=-1)&&(a.indexOf('iPhone')!=-1||a.indexOf('iPad')!=-1)&&(a.indexOf('Safari')==-1)){ 
+			        var s=document.createElement('style'); 
+			        s.innerHTML="html,html body{overflow: auto;-webkit-overflow-scrolling:touch;}body{position:absolute;left:0;right:0;top:0;bottom:0;}"; 
+			        document.getElementsByTagName('head')[0].appendChild(s);
+                }
+            }catch(e){
+            }
+        })(); 
+        window.onkeydown=function(){ window.focus(); }
+    </script> 
+</apex:page>

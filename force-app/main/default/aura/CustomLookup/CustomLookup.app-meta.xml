@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AuraDefinitionBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>36.0</apiVersion>
+    <description>A custom lookup component to use in Visual Force page to replace the standard Salesforce lookup control.</description>
+</AuraDefinitionBundle>

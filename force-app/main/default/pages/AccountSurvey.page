@@ -1,0 +1,1395 @@
+<apex:page title="Account Survey" standardController="Account_Survey__c" extensions="AccountSurvey_Controller" sidebar="false" tabStyle="Account" docType="html-5.0" standardStylesheets="false" showHeader="false">
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="" />
+        <meta name="author" content="" />
+        
+        <script src='https://ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js'></script>
+        <!--<script src="../../soap/ajax/33.0/connection.js" type="text/javascript"></script>-->
+        <script src="https://www.b-fonline.com/salesforceresources/SFA/js/fastclick/lib/fastclick.js"></script>
+        <script src="https://www.b-fonline.com/salesforceresources/SFA/lib/tokenize/Tokenize-2.4/jquery.tokenize.js"></script>
+        
+        
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SFA/css/font-awesome.min.css" />
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SFA/css/accountSurvey.css" />
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SFA/lib/tokenize/Tokenize-2.4/jquery.tokenize.css" />
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SF1/oneIcon/style.css" />
+
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/BootstrapModernPages/css/bootstrap.min.css" />
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/BootstrapModernPages/css/bootstrap-theme.min.css" />     
+        <style>
+            .options-dropdown {
+                float:right;
+                margin-left: 5px !important;
+                margin-right: 5px !important;
+                display: none;
+            }
+            .options-dropdown-content {
+                display: none;
+                position: absolute;
+                right: 5px;
+                background-color: #f9f9f9;
+                min-width: 160px;
+                overflow: auto;
+                box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+                z-index: 1;
+                font-weight: normal;
+                font-size: 75%;
+                text-align: right;
+            }
+            .options-dropdown-content a {
+                color: black;
+                padding: 12px 16px;
+                text-decoration: none;
+                display: block;
+            }
+            .options-dropdown-content a:hover {
+                background-color: #f1f1f1;
+                text-decoration: none !important;
+            }
+            .options-show {
+                display:block;
+            }
+            .overflow {
+                height: 200px;
+            }
+            html,body{
+                -webkit-overflow-scrolling : touch !important;
+                overflow: auto !important;
+                height: 100% !important;
+            }
+        
+        </style>
+    </head>
+    
+    <script src="{!urlPrefix}/soap/ajax/35.0/connection.js" type="text/javascript"></script>
+    <script>
+        //Initialize sforce Connection for MetaDataApi calls
+        sforce.connection.sessionId = '{!$Api.Session_ID}';
+        var urlPrefix = '{!urlPrefix}';
+        
+        if(urlPrefix == '/sales'){
+            UserContext.siteUrlPrefix = urlPrefix;
+            sforce.connection.serverUrl = urlPrefix + sforce.connection.serverUrl;
+        }
+        var headerInfo = [{!serializedAccSurvey}][0];           //values        
+        var headerFS = [{!serializedAccSurveyFS}][0];           //field set
+        var contentInfo = [{!serializedProdList}][0];           //values
+        var contentFS = [{!serializedASIFS}][0];                //field set
+        var accSurveyDIVFS = [{!serializedAccSurveyDIVFS}][0];  //  Do not persist values for the fields in this fieldset
+        var callCardInfo = [{!serializedCallCard}][0];
+        var asiDIVFS = [];
+        var firstSurvey = {!firstSurvey};
+        var newSurvey = {!newSurvey};
+        var marketName = ['{!marketName}'][0];
+        var recordTypeName = ['{!recordTypeName}'][0];      
+        var asiRecordTypeId = ['{!asiRecordTypeId}'][0];
+        var surveyId;
+        var headerHTML = '';
+        var filterHTML = '';
+        var surveyHeadersHTML = '';
+        var surveyBodyHTML = '';
+        var deviceType = '';
+        var distributionFields = [];
+        var surveyItems = [];
+        var toggleHTML = '';
+        var expandedClass = '';
+        var returnURL = '{!$CurrentPage.Parameters.retURL}';
+        var callCardId = '{!$CurrentPage.Parameters.ccId}';
+        var surveyType = '{!$CurrentPage.Parameters.surveyType}';
+        var surveyChannel = '{!$CurrentPage.Parameters.channel}';
+        var redirect = false;
+        var inSF1 = false;
+        
+        var picklistValuesMap = {};
+        
+        //map to create corresponding HTML input type for Salesforce field type
+        var inputTypeMap = {
+            'boolean':  'checkbox',
+            'double':   'number',
+            'currency': 'number',
+            'picklist': 'select',
+            'reference':'link',
+            'date':     'date',
+            'percent':  'number',
+            'textarea': 'textarea'  
+        }
+        
+        //map to get corresponding icon for mandatory product status
+        var icon = {
+            'Mandatory':        'exclamation-circle red',
+            'Optional':         'asterisk yellow',
+            'OrderableProduct': 'pencil-square-o green',
+            'StockListing':     'cubes brown',
+            'ActivityListing':  'line-chart blue',
+            'JustinTimeListing':'clock-o purple',
+            'Key':              'key',
+            'Magnifying':       'search',
+            'DoNotList':        'ban'
+        }
+        
+        //arrays for each of the filters to build out select options
+        var brandSearch = [];
+        var spiritTypesSearch = [];
+        var sizeSearch = [];
+        var supplierSearch = [];
+        var statusSearch = [];
+        
+        var distributionMarkets = ["Germany"];
+    
+        var j$ = jQuery.noConflict();
+        j$(document).ready(function() { 
+            j$(function() {
+                FastClick.attach(document.body);
+            });
+            if(firstSurvey){
+                var accInfo = {};
+                accInfo['Id'] = '{!accId}';
+                //accInfo['Name'] = '{!accountName}'.replace(/'/g, "\\'");
+                accInfo['Name'] = "{!accountName}";
+                headerInfo.Account__r = accInfo;
+            }       
+        
+            if (callCardId == null || callCardId.length == 0) {
+                callCardId = "{!ccId}";
+            }
+            
+            if( (typeof sforce != 'undefined') && (sforce.one != null) ) {
+                inSF1 = true;
+            }else{
+                inSF1 = false;
+            }
+            
+            if (returnURL.indexOf('accountId') < 0) {
+                if (returnURL.indexOf('?') > 0) { returnURL += '&'; } else { returnURL += '?'; }
+                returnURL += 'id='+callCardInfo.Account__c;
+            }
+            
+            generateOptionsMenu();
+            
+            //temp arrays for sorting
+            var mandatoryArray = [];
+            var availableArray = [];
+            var previousValueArray = [];
+            var everythingElseArray = [];
+            
+            //loop through contentInfo and sort
+            j$.each(contentInfo, function(key, value){
+                //products with a mandatory product status are first
+                if(contentInfo[key].Mandatory_Products__r != undefined){
+                    mandatoryArray.push(value);
+                    return;
+                }
+                //products marked as available are next, followed by products with any other values
+                if(contentInfo[key].Store_Survey_Items__r != undefined && contentInfo[key].Mandatory_Products__r == undefined){
+                    if(contentInfo[key].Store_Survey_Items__r.records[0].Available__c){
+                        availableArray.push(value);
+                        return;
+                    }else{
+                        previousValueArray.push(value);
+                        return;
+                    }
+                }
+                //all other products added at bottom
+                if(contentInfo[key].Mandatory_Products__r == undefined && contentInfo[key].Store_Survey_Items__r == undefined){
+                    everythingElseArray.push(value);
+                    return;
+                } 
+            });
+            
+            //clear out contentInfo and then add back sorted values 
+            contentInfo.length = 0;
+            contentInfo.push.apply(contentInfo, mandatoryArray);
+            contentInfo.push.apply(contentInfo, availableArray);
+            contentInfo.push.apply(contentInfo, previousValueArray);
+            contentInfo.push.apply(contentInfo, everythingElseArray);
+            
+            //get window width to determine whether or not to use tokenize, 768 = tablet
+            //sniff user agent to figure out if it's an iPad because screen resolution varies
+            var IS_IPAD = navigator.userAgent.match(/iPad/i) != null;
+            if(j$(window).width() >= 992 && !IS_IPAD){
+                deviceType = 'desktop';
+            }else{
+                j$('#expandButton').show();             //for cards layout
+                if(j$(window).width() >= 768){
+                    deviceType = 'tablet';
+                }else{
+                    deviceType = 'phone';
+                }
+            }
+            
+            //grab all the picklist values for this market's record type and then build out the survey grid
+            j$.when(getPicklistValuesForRecordType('Account_Survey__c')).then(buildHeaderSection());
+            j$.when(getPicklistValuesForRecordType('Account_Survey_Item__c')).then(buildTable());
+            
+            j$('#clearForm').click(function(){
+                j$('#clearFormModal').modal();
+            });
+            
+            j$('#clearFormConfirm').click(function(){
+                clearForm();
+            });
+            
+            if(deviceType == 'desktop'){
+                bindEvents(true);
+            }else{
+                bindEvents(false);
+            }
+        });
+        
+        function bindEvents(buildTokenize){
+            spiritTypesSearch.sort();
+            brandSearch.sort();
+            sizeSearch.sort();
+            supplierSearch.sort();
+            statusSearch.sort();
+            var tempHTML = '';
+            //build out the select options for the filters
+            for(var i=0;i<spiritTypesSearch.length;i++){
+                tempHTML += '<option value="'+spiritTypesSearch[i]+'">'+spiritTypesSearch[i]+'</option>';
+            }
+            if(tempHTML != ''){
+                filterHTML+= '<div class="selectDiv col-lg-3 col-md-3 col-sm-12 col-xs-12"><span class=" selectLabel label col-md-12 col-lg-12 col-sm-4 col-xs-4">{!$ObjectType.Brand__c.fields.Spirit_Type__c.label}</span><select id="spiritTypeSearch" multiple="multiple" class="spiritTypeSearch tokenize col-lg-12 col-md-12 col-sm-8 col-xs-8" data-role="none">'
+                filterHTML+= tempHTML + '</select></div>';
+                //j$('#spiritTypeSearch').append(tempHTML).show();
+            }
+            tempHTML = '';
+            for(var b=0;b<brandSearch.length;b++){
+                tempHTML += '<option value="'+brandSearch[b]+'">'+brandSearch[b]+'</option>';
+            }
+            if(tempHTML != ''){
+                filterHTML+= '<div class="selectDiv col-lg-3 col-md-3 col-sm-12 col-xs-12"><span class="selectLabel label col-md-12 col-lg-12 col-sm-4 col-xs-4">{!$ObjectType.Brand__c.label}</span><select id="brandSearch" multiple="multiple" class="brandSearch tokenize col-lg-12 col-md-12 col-sm-8 col-xs-8" data-role="none">'
+                filterHTML+= tempHTML + '</select></div>';
+                //j$('#brandSearch').append(tempHTML).show();
+            }
+            tempHTML = '';
+            for(var s=0;s<sizeSearch.length;s++){
+                tempHTML += '<option value="'+sizeSearch[s]+'">'+sizeSearch[s]+'</option>';
+            }
+            if(tempHTML != ''){
+                filterHTML+= '<div class="selectDiv col-lg-3 col-md-3 col-sm-12 col-xs-12"><span class="selectLabel label col-md-12 col-lg-12 col-sm-4 col-xs-4">{!$ObjectType.Product__c.fields.Unit_Size__c.label}</span><select id="sizeSearch" multiple="multiple" class="sizeSearch tokenize col-lg-12 col-md-12 col-sm-8 col-xs-8" data-role="none">'
+                filterHTML+= tempHTML + '</select></div>';
+                //j$('#sizeSearch').append(tempHTML).show();
+            }
+            tempHTML = '';
+            for(var x=0;x<supplierSearch.length;x++){
+                tempHTML += '<option value="'+supplierSearch[x]+'">'+supplierSearch[x]+'</option>';
+            }
+            if(tempHTML != ''){
+                filterHTML+= '<div class="selectDiv col-lg-3 col-md-3 col-sm-12 col-xs-12"><span class="selectLabel label col-md-12 col-lg-12 col-sm-4 col-xs-4">{!$ObjectType.Supplier__c.label}</span><select id="supplierSearch" multiple="multiple" class="supplierSearch tokenize col-lg-12 col-md-12 col-sm-8 col-xs-8" data-role="none">'
+                filterHTML+= tempHTML + '</select></div>';
+                //j$('#supplierSearch').append(tempHTML).show();
+            }
+            tempHTML = '';
+            for(var y=0;y<statusSearch.length;y++){
+                tempHTML += '<option value="'+statusSearch[y]+'">'+statusSearch[y]+'</option>';
+            }
+            if(tempHTML != ''){
+                filterHTML+= '<div class="selectDiv col-lg-3 col-md-3 col-sm-12 col-xs-12"><span class="selectLabel label col-md-12 col-lg-12 col-sm-4 col-xs-4">{!$ObjectType.Promotion__c.fields.Status__c.label}</span><select id="statusSearch" multiple="multiple" class="statusSearch tokenize col-lg-12 col-md-12 col-sm-8 col-xs-8" data-role="none">'
+                filterHTML+= tempHTML + '</select></div>';
+                //j$('#statusSearch').append(tempHTML).show();
+            }
+            tempHTML = '';
+            filterHTML += '<button type="button" value="Clear All" id="clearFilter" data-role="none" class="btn bg-primary col-xs-push-3 col-sm-push-3 col-md-push-4 col-lg-push-4" style="text-align: center; margin-top:10px;">{!$Label.Clear_All}</button>';
+            filterHTML += '<span id="filterError" class="filterError label-warning label col-xs-12">{!$Label.No_Products_Found}</span>';
+            j$('#filterSection').append(filterHTML);
+            //only build tokenize on initial load, we don't want to call it again after each filter
+            
+            if(buildTokenize){
+                //call tokenize for filters, pass in which filter they used (e.select[0].id) 
+                j$('.tokenize').tokenize({
+                    onAddToken: function(value, text, e){filterRows()}, 
+                    onRemoveToken: function(value, e){filterRows()},
+                    displayDropdownOnFocus: true
+                });
+                /*
+                j$('.spiritTypeSearch').select2();
+                j$('.brandSearch').select2();
+                j$('.sizeSearch').select2();
+                j$('.supplierSearch').select2();
+                j$('.statusSearch').select2();
+                j$('.select2Search').on("change", function(evt) {
+                    filterProducts();
+                });
+                */
+            }else{
+                j$('select.tokenize').show().change(function(){filterRows();});
+            }
+
+            j$('.save').click(function(){
+                //redirect to returnURL on click of save and close
+                if(j$(this).hasClass('saveAndClose')){
+                    redirect = true;
+                }
+                j$('.save').button('loading');
+                //setTimeout(function() {j$('.save').button('reset');loading(false,false)}, 5000); 
+                buildSurveyToSave(function() {j$('.save').button('reset');loading(false,false)});
+                //check for connection, if offline display modal warning
+                /*if(navigator.onLine){
+                    j$('.save').button('loading');
+                    buildSurveyToSave();
+                }else{
+                    j$('#offlineModal').modal();
+                } */         
+            });
+            //redirect to returnURL
+            j$('.cancel').click(function(){
+                if(inSF1) {
+                    //sforce.one.back(false);
+                    sforce.one.navigateToURL(returnURL, true);
+                }else{
+                    window.location.href = returnURL;
+                }
+                /*try{
+                    if(sForce.one){
+                        sForce.one.navigateToURL(returnURL);
+                    }
+                }catch(err){
+                    window.location.href = returnURL;
+                }*/
+            });
+            
+            //clear all filter options
+            j$('#clearFilter').click(function(){
+                
+                if(buildTokenize){
+                    j$('select.tokenize').each(function(){
+                        j$(this).data('tokenize').clear();
+                        
+                    });
+                    //j$('select.select2Search').val(null).trigger("change");                
+                }else{
+                    j$('select.tokenize :selected').removeAttr("selected");
+                    filterRows();
+                }
+                
+            });
+            //on click of card header, toggle display
+            j$('div.rowHeader').click(function(e){
+                if(j$(this).siblings('.fields').hasClass('expanded')){
+                    j$(this).removeClass('headerShadow').siblings('.fields').removeClass('expanded fieldsShadow').slideUp();
+                }else{
+                    j$(this).addClass('headerShadow').siblings('.fields').addClass('expanded fieldsShadow').slideDown();
+                }
+            });
+            //either expand or collapse all cards
+            j$('#expandButton').click(function(){
+                if(j$(this).hasClass('expandBtn')){
+                    j$('.fields').addClass('expanded fieldsShadow').slideDown();
+                    j$('div.rowHeader').addClass('headerShadow');
+                    j$(this).toggleClass('expandBtn collapseBtn').html('{!$Label.Collapse_All}');
+                }else{
+                    j$('.fields').removeClass('expanded fieldsShadow').slideUp();
+                    j$('div.rowHeader').removeClass('headerShadow');
+                    j$(this).toggleClass('expandBtn collapseBtn').html('{!$Label.Expand_All}');
+                }
+                j$('.bg-success').removeClass('bg-success');
+            });
+            //expand or collapse section
+            j$('div.header').click(function(){
+                j$(this).siblings().slideToggle();
+            });
+            //product distribution button group - only allow one to be selected
+            j$('.btn-group').children().click(function(){
+                var prodId = j$(this).attr('data-prod-id');
+                if (j$(this).attr('field') == 'Delisted__c') {
+                    j$('.distributionFields'+prodId).children().removeClass('btn-primary').addClass('btn-default');
+                } else {
+                    if (distributionMarkets.indexOf(marketName) >= 0) {
+                        j$('.delisted'+prodId).children().removeClass('btn-primary').addClass('btn-default');
+                    } else {
+                        j$('.delisted'+prodId).children().removeClass('btn-primary').addClass('btn-default');
+                        j$(this).siblings().removeClass('btn-primary').addClass('btn-default');
+                    }
+                }
+                j$(this).toggleClass('btn-primary btn-default');
+            });
+        }
+        
+        function filterRows(){
+            var selector='';
+            //loop through each filter select input
+            j$('select.tokenize').each(function(key, value){
+                var searchType = j$(this)[0].id;
+                //if there is a value for this filter select input
+                if(j$(this).val() != null && j$(this).val() != ''){
+                    var filterSelector = '';
+                    //loop through array of selected values and add to a jQuery selector (escaping single quotes)
+                    j$.each(j$(this).val(), function(key, value){
+                        if(searchType == 'statusSearch'){
+                            filterSelector += '['+searchType+'*="'+value.replace(/'/g,"\\'")+'"],';
+                        }else{
+                            filterSelector += '['+searchType+'="'+value.replace(/'/g,"\\'")+'"],';
+                        }
+                    }); 
+                    //trimming last comma and adding to a jQuery filter function
+                    filterSelector = filterSelector.substring(0,filterSelector.length -1);
+                    selector += '.filter(\''+filterSelector+'\')';
+                }   
+            });
+            //no filter criteria, show all rows
+            if(selector == ''){
+                if(deviceType == 'desktop'){
+                    j$('#surveyGrid tbody tr').show();
+                }else{
+                    j$('#content div.row').show();
+                }
+            }else{
+                //build out selector
+                if(deviceType == 'desktop'){
+                    selector = "j$('#surveyGrid tbody tr')"+selector;
+                }else{
+                    selector = "j$('#content div.row')"+selector;
+                }
+
+                j$selectedRows = eval(selector);
+                //find all rows that don't match filter criteria and hide them, show the rest
+                if(deviceType == 'desktop'){
+                    j$('#surveyGrid tbody tr').not(j$selectedRows).hide();
+                }else{
+                    j$('#content div.row').not(j$selectedRows).hide();
+                }
+                j$selectedRows.show();
+            }
+            //if no rows match criteria, display error message
+            if(j$('#surveyGrid tbody tr:visible').length == 0 && j$('#content div.row:visible').length == 0){
+            console.log('showing filter error');
+                j$('#filterError').css('visibility','visible');
+            }else{
+            console.log('hiding filter error');
+                j$('#filterError').css('visibility','hidden');
+            }
+        }
+        
+        function buildHeaderSection(){
+            //build header info 
+            //always add account link
+            var accountNavUrl = '';
+            if(inSF1) {
+                accountNavUrl = 'javascript:sforce.one.navigateToSObject(\'' + headerInfo.Account__r.Id + '\')';
+            }else{
+                accountNavUrl = urlPrefix + '\\' + headerInfo.Account__r.Id;
+            }
+            
+            headerHTML += '<dt>{!$ObjectType.Account.Label}</dt><dd><a target="_blank" href="'+accountNavUrl+'">'+headerInfo.Account__r.Name+'</a></dd>';
+            if (marketName == 'Australia') {
+                headerHTML += '<dt>&nbsp;</dt><dd>'+surveyChannel+'</dd>';
+            }
+            j$.each(headerFS, function(key, value){
+                headerHTML += '<dt>'+value.label+'</dt><dd>'+buildInput(headerFS[key], headerInfo, 'header')+'</dd>';
+            });
+            j$('dl#headerDL').append(headerHTML);
+        }
+        
+        function buildTable(){
+            //build table headers by looping through field set  
+            var hasDistributionFields = false;
+            if(deviceType == 'desktop'){
+                var surveyTableHTML = '<div class="table-responsive col-md-12"><table id="surveyGrid" class="surveyGrid table table-striped"><thead class="headers"><th data-override="Product__c">'+"{!$ObjectType.Product__c.fields.Name.label}"+'</th><th class="mandatoryIcon"></th>';      
+                
+                //loop through all fields to create headers and check for distribution fields (no headers)
+                j$.each(contentFS, function(key, value){
+                    if(contentFS[key].fieldPath != 'Available__c' && contentFS[key].fieldPath != 'Out_of_Stock__c' && contentFS[key].fieldPath != 'Delisted__c'){
+                        surveyHeadersHTML += '<th data-override="'+value.fieldPath+'">'+value.label+'</th>';
+                    }else{
+                        hasDistributionFields = true;
+                    }
+                });
+                //create distribution header
+                if(hasDistributionFields){
+                    surveyTableHTML += '<th class="headers">{!$Label.Distribution}</th>';
+                }
+                surveyTableHTML += surveyHeadersHTML;
+                surveyTableHTML += '</thead><tbody class="tableBody"></tbody></table></div>';
+                j$('div#content').append(surveyTableHTML);
+            }
+            
+            //build a row for each product
+            var brandName = '';
+            var spiritType = '';
+            var supplierName = '';
+            j$.each(contentInfo, function(contentKey, contentValue){
+                //build filters
+                if (contentInfo[contentKey].Brand__r == null) {
+                    brandName = '';
+                    spiritType = '';
+                    supplierName = '';
+                } else {
+                    brandName = contentInfo[contentKey].Brand__r.Name;
+                    spiritType = contentInfo[contentKey].Brand__r.Spirit_Type__c;
+                    supplierName = contentInfo[contentKey].Brand__r.Supplier__r == null ? '' : contentInfo[contentKey].Brand__r.Supplier__r.Name;
+                }
+                
+                if(j$.inArray(brandName, brandSearch) === -1){
+                    brandSearch.push(brandName);
+                }
+                if(j$.inArray(spiritType, spiritTypesSearch) === -1){
+                    spiritTypesSearch.push(spiritType);
+                }
+                var fullSize = '';
+                if(contentInfo[contentKey].Unit_Size__c != undefined){
+                    fullSize = contentInfo[contentKey].Unit_Size__c;
+                    if(contentInfo[contentKey].UOM__c != undefined){
+                        fullSize += ' ' + contentInfo[contentKey].UOM__c;
+                    }
+                    if(j$.inArray(fullSize, sizeSearch) === -1){                    
+                        sizeSearch.push(fullSize);
+                    }
+                }
+                if(j$.inArray(supplierName, supplierSearch) === -1){
+                    supplierSearch.push(supplierName);
+                }
+                
+                //see if we are updating existing ASI's or creating new ones
+                var asiId = 'new';
+                if(contentInfo[contentKey].Store_Survey_Items__r != undefined && newSurvey == false){
+                    asiId = contentInfo[contentKey].Store_Survey_Items__r.records[0].Id;
+                }
+                //check to see if there is a mandatory product status
+                var statusHTML = '';
+                var statusString = '';
+                expandedClass = '';
+                if(contentInfo[contentKey].Mandatory_Products__r != undefined){
+                    //build html for all applicable icons using icon map defined above
+                    if(deviceType == 'desktop'){
+                        statusHTML += '<td class="mandatoryIcon">';
+                    }else{
+                        statusHTML += '<span class="mandatoryIcon">';
+                    }
+                    if (contentInfo[contentKey].Mandatory_Products__r.records[0].Product_Status__c != null) {
+                        var productStatus = contentInfo[contentKey].Mandatory_Products__r.records[0].Product_Status__c.split(';');
+                        for(var s=0;s<productStatus.length;s++){
+                            expandedClass = 'mandatoryRow expanded fieldsShadow';
+                            var iconName = eval('icon.'+productStatus[s].replace(/ /g, ''));
+                            statusHTML += '<i class="fa fa-'+iconName+'" title="'+productStatus[s]+'"></i>';
+                            if(j$.inArray(productStatus[s], statusSearch) === -1){
+                                statusSearch.push(productStatus[s]);
+                            }
+                            statusString += productStatus[s]+',';
+                        }
+                    }
+                    if(deviceType == 'desktop'){
+                        statusHTML += '</td>';
+                    }else{
+                        statusHTML += '</span>'; 
+                    }
+                }else{
+                    //create empty td for products w/o mandatory product status
+                    if(deviceType == 'desktop'){
+                        statusHTML = '<td class="mandatoryIcon"></td>';
+                    }
+                }
+                //build new row with attributes for filters and add product name in first cell
+                if(deviceType == 'desktop'){
+                    surveyBodyHTML += '<tr id="' + contentInfo[contentKey].Id
+                                    +'" asiID="' + asiId
+                                    +'" spiritTypeSearch="' + spiritType
+                                    +'" brandSearch="' + brandName
+                                    +'" sizeSearch="' + fullSize
+                                    +'" supplierSearch="' + supplierName
+                                    +'" statusSearch="' + statusString+'">';
+                    surveyBodyHTML += '<td class="productName">'+contentInfo[contentKey].Name+'</td>';
+                    surveyBodyHTML += statusHTML;
+                }else{
+                    
+                    surveyBodyHTML += '<div class="row" id="' + contentInfo[contentKey].Id
+                                    +'" asiID="' + asiId
+                                    +'" spiritTypeSearch="' + spiritType
+                                    +'" brandSearch="' + brandName
+                                    +'" sizeSearch="' + fullSize
+                                    +'" supplierSearch="' + supplierName
+                                    +'" statusSearch="' + statusString +'">';
+                    
+                }
+                //loop through field set to get field and values
+                var fieldsHTML = '';
+                distributionFields.length = 0;
+                j$.each(contentFS, function(fsKey, fsValue){
+                    if(contentFS[fsKey].fieldPath != 'Available__c' && contentFS[fsKey].fieldPath != 'Out_of_Stock__c' && contentFS[fsKey].fieldPath != 'Delisted__c'){
+                        if(deviceType == 'desktop'){
+                            fieldsHTML += '<td class="'+contentFS[fsKey].type+'">'+buildInput(contentFS[fsKey], contentKey, 'table', contentInfo[contentKey].Id)+'</td>';
+                        }else{
+                            fieldsHTML += '<div class="'+contentFS[fsKey].type+' col-xs-12 col-sm-6">'+buildInput(contentFS[fsKey], contentKey, 'cards', contentInfo[contentKey].Id)+'</div>';
+                        }
+                    }else{
+                    //Get existing/previous value for distribution fields
+                        hasDistributionFields = true;
+                        var tempArray = [];
+                        tempArray.push(contentFS[fsKey].fieldPath);
+                        tempArray.push(contentFS[fsKey].label);
+                        if(contentInfo[contentKey].Store_Survey_Items__r != undefined){
+                            value = eval('contentInfo[contentKey].Store_Survey_Items__r.records[0].'+contentFS[fsKey].fieldPath);
+                            tempArray.push(value);
+                            if(expandedClass == ''){
+                                expandedClass = 'mandatoryRow expanded fieldsShadow';
+                            }
+                        }
+                        distributionFields.push(tempArray);
+                    }
+                });
+                //Create toggle switch for distribution fields
+                if(hasDistributionFields){
+                    toggleHTML = '';
+                    if(deviceType == 'desktop'){
+                        toggleHTML += '<td class="distribution"><div class="btn-toolbar" role="toolbar">';
+                        toggleHTML += buildDistributionOptions(distributionFields, contentInfo[contentKey].Id);
+                        toggleHTML += '</div></td>';
+                    }else{
+                        toggleHTML += '<div class="distribution col-xs-12 col-sm-6"><div class="btn-toolbar" role="toolbar">';
+                        toggleHTML += buildDistributionOptions(distributionFields, contentInfo[contentKey].Id);
+                        toggleHTML += '</div></div>';
+                    }
+                    fieldsHTML = toggleHTML + fieldsHTML;
+                }
+                //create div for cards, auto expand if it has a mandatory status or has values
+                if(deviceType != 'desktop'){
+                    
+                    if(expandedClass != ''){
+                        surveyBodyHTML += '<div class="rowHeader headerShadow"><span class="productName lead">'+contentInfo[contentKey].Name+'</span>';
+                    }else{
+                        surveyBodyHTML += '<div class="rowHeader"><span class="productName lead">'+contentInfo[contentKey].Name+'</span>';
+                    }
+                    
+                    surveyBodyHTML += statusHTML +'</div>';
+                    surveyBodyHTML += '<div class="fields '+expandedClass+'">';
+                }
+                surveyBodyHTML += fieldsHTML;
+                if(deviceType == 'desktop'){
+                    surveyBodyHTML += '</tr>';
+                }else{
+                    surveyBodyHTML += '</div></div></div>';
+                }
+            });
+            
+            //put our HTML on the page
+            if(deviceType == 'desktop'){
+                j$('#surveyGrid tbody').append(surveyBodyHTML);
+            }else{
+                j$('div#content').append(surveyBodyHTML);
+            }
+        }
+        
+        //build out the actual input tags for each type
+        function buildInput(obj, productIndex, section, prodId){
+            var html = '';
+            var value;
+            var objectName = 'Account_Survey_Item__c';
+
+            var divFS = accSurveyDIVFS;
+            if (section == 'detail') {
+                divFS = asiDIVFS;
+            }
+            console.log('divFS', divFS);
+            var persistValue = true;
+            for(var fsCtr = 0; fsCtr < divFS.length; fsCtr++) {
+                if (divFS[fsCtr].fieldPath == obj.fieldPath) {
+                    persistValue = false; break;
+                }
+            }
+            console.log('persistValue', persistValue);
+            console.log('section', section);
+            if (persistValue) {
+                //get previous value to prepopulate
+                if((section == 'table' || section == 'cards') && contentInfo[productIndex].Store_Survey_Items__r != undefined){
+                    value = eval('contentInfo[productIndex].Store_Survey_Items__r.records[0].'+obj.fieldPath);
+                    //set class value to auto expand cards with values
+                    if(expandedClass == ''){
+                        expandedClass = 'mandatoryRow expanded fieldsShadow';
+                    }
+                } else if (section == 'header') {
+                    console.log('headerInfo.' + obj.fieldPath, headerInfo[obj.fieldPath]);
+                    value = headerInfo[obj.fieldPath];
+                } else {
+                    //set values in Account Info section
+                    if(eval("productIndex." + obj.fieldPath) != undefined){
+                        value = eval("productIndex." + obj.fieldPath);
+                    }
+                }
+            }
+            if(section == 'header'){
+                objectName = 'Account_Survey__c';
+            }
+            if(value == undefined){
+                value = '';
+            }
+            if(section == 'cards'){
+                html += '<label for="'+prodId+'" class="fieldLabel">'+obj.label+'</label>';
+            }
+            //build the correct HTML input type, read only in Account Info section if not required on field set
+            switch(inputTypeMap[obj.type]){                             
+                case 'number':
+                    if(obj.required || section == 'table' || section == 'cards'){
+                        html += '<input id="'+obj.fieldPath+prodId+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" step="any" value="'+value+'" class="fieldInput"/>';
+                        //html += '<input id="'+obj.fieldPath+prodId+'" field="'+obj.fieldPath+'" type="text" step="any" value="'+value+'" class="fieldInput"/>';
+                    }else{
+                        html += value;
+                    }
+                    break;
+                case 'select':
+                    if(obj.required || section == 'table' || section == 'cards'){
+                        html += '<select id="'+obj.fieldPath+'-'+prodId+'" field="'+obj.fieldPath+'" class="fieldInput"><option value=""></option>';
+                        var options = getSelectOptions(obj.fieldPath, objectName);
+                        for(var i=0;i<options.values.length;i++){
+                            if(value == options.values[i]){
+                                html+= '<option value="'+options.values[i]+'" selected>'+options.labels[i]+'</option>';
+                            }else{
+                                html+= '<option value="'+options.values[i]+'">'+options.labels[i]+'</option>';
+                            }
+                        }
+                        html += '</select>';
+                    }else{
+                        html += value;
+                    }
+                    break;
+                case 'checkbox':
+                    if(obj.required || section == 'table' || section == 'cards'){
+                        if(value == true){
+                            html += '<input id="'+obj.fieldPath+prodId+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" checked="checked" class="fieldInput cmn-toggle cmn-toggle-round-flat"/>';
+                        }else{
+                            html += '<input id="'+obj.fieldPath+prodId+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" class="fieldInput btn cmn-toggle cmn-toggle-round-flat"/>';
+                        }
+                        html += '<label for="'+obj.fieldPath+prodId+'" class="'+section+'Checkbox"></label>';
+                    }else{
+                        html += '<input id="'+obj.fieldPath+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" disabled="disabled" class="fieldInput cmn-toggle cmn-toggle-round-flat"/>';
+                        html += '<label for="'+obj.fieldPath+'" class="'+section+'Checkbox"></label>';
+                    }                    
+                    break;
+                case 'link':
+                    var relationshipName = obj.fieldPath.replace('__c', '__r');
+                    html+= obj.label+': <a href="/'+eval("productIndex."+relationshipName+".Id")+'">'+eval("productIndex."+relationshipName+".Name")+'</a>';
+                    break;
+                case 'date':
+                    if(obj.required || section == 'table' || section == 'cards'){
+                        html += '<input id="'+obj.fieldPath+prodId+'" field="'+obj.fieldPath+'" class="'+inputTypeMap[obj.type]+'Input" type="'+inputTypeMap[obj.type]+'" value="'+value+'" class="fieldInput"/>';
+                    }else{
+                        html += value;
+                    }
+                    break;
+                default:
+                    if(obj.required || section == 'table' || section == 'cards'){
+                        html += '<input id="'+obj.fieldPath+prodId+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" value="'+value+'" class="fieldInput"/>';
+                    }else{
+                        html += value;
+                    }
+            } 
+            return html;               
+        }
+        
+        //get all picklist values for this market's recordtype
+        function getPicklistValuesForRecordType (objectName) {
+            var bigString = [];
+            //var recordTypeName = '{!marketName}';
+            var isUSAMarket = '{!usaMarket}';
+            if(isUSAMarket == 'true'){
+                recordTypeName = 'USA';
+            }
+            var vl = {};
+            var recordTypeMappings = sforce.connection.describeLayout(objectName).recordTypeMappings;
+            if(recordTypeMappings.length == undefined){
+                if (recordTypeMappings.picklistsForRecordType != undefined) {
+                   for(var x=0; x<recordTypeMappings.picklistsForRecordType.length; x++){
+                      vl = returnPickListValue(recordTypeMappings.picklistsForRecordType[x]);
+                      var field = {
+                        name: recordTypeMappings.picklistsForRecordType[x].picklistName,
+                        //values: returnPickListValue(recordTypeMappings.picklistsForRecordType[x]),
+                        values: vl.values,
+                        labels: vl.labels
+                      };                           
+                      bigString.push(field);
+                   }
+                }
+            }else{
+                for (var i=0; i <recordTypeMappings.length; i++) {
+                    if (recordTypeMappings[i].name == recordTypeName){
+                        if (recordTypeMappings[i].picklistsForRecordType != undefined) {
+                            if (recordTypeMappings[i].picklistsForRecordType.length == undefined) {
+                                vl = returnPickListValue(recordTypeMappings[i].picklistsForRecordType);
+                                var field = {
+                                    name: recordTypeMappings[i].picklistsForRecordType.picklistName,
+                                    //values: returnPickListValue(recordTypeMappings[i].picklistsForRecordType),
+                                    values: vl.values,
+                                    labels: vl.labels
+                                };                          
+                                bigString.push(field);
+                            } else {
+                               for(var x=0; x<recordTypeMappings[i].picklistsForRecordType.length; x++){
+                                   vl = returnPickListValue(recordTypeMappings[i].picklistsForRecordType[x]);
+                                   var field = {
+                                       name: recordTypeMappings[i].picklistsForRecordType[x].picklistName,
+                                       //values: returnPickListValue(recordTypeMappings[i].picklistsForRecordType[x]),
+                                       values: vl.values,
+                                       labels: vl.labels
+                                   };                          
+                                   bigString.push(field);
+                               }
+                            }
+                        }
+                    }
+                }
+            }
+            picklistValuesMap[objectName] = bigString;
+        }
+        
+        //get the individual values
+        function returnPickListValue (obj) {
+            var values = [];
+            var labels = [];
+            if (obj.picklistValues) {
+                if (obj.picklistValues.label == undefined) {
+                    for (var y=0; y <obj.picklistValues.length; y++) {
+                        values.push(obj.picklistValues[y].value);
+                        labels.push(obj.picklistValues[y].label);
+                        }
+                } else {
+                    values.push(obj.picklistValues.value);
+                    labels.push(obj.picklistValues.label);
+                }
+            }
+            return {values: values, labels: labels};
+        }
+        //find the picklist values for this field
+        function getSelectOptions(fieldName, objectName){
+            for(var i=0;i<picklistValuesMap[objectName].length;i++){
+                if(picklistValuesMap[objectName][i].name == fieldName){
+                    return picklistValuesMap[objectName][i];
+                }
+            }
+            
+            return {values: [], labels: []};
+        }
+        
+        function buildSurveyToSave(errorCallback){
+            //display loading gif
+            loading(true);
+            
+            //save Account Survey fields
+            //set survey id on new accountSurvey object
+            var accountSurvey = {Status__c: 'Complete'};
+            if(!newSurvey){
+                if(surveyId == null){
+                    surveyId = headerInfo.Id;
+                }
+                //accountSurvey = {'Id':surveyId};
+                accountSurvey['Id'] = surveyId;
+                if(headerInfo['Survey_Type__c'] != undefined){
+                    if( (headerInfo['Survey_Type__c'].indexOf('CPT') == -1 && surveyType == 'CPT') || 
+                        (headerInfo['Survey_Type__c'].indexOf('Account') == -1 && surveyType == 'Account')){
+                            accountSurvey['Survey_Type__c'] = headerInfo['Survey_Type__c'] + ',' + surveyType;
+                    }
+                }else{
+                    accountSurvey['Survey_Type__c'] = surveyType;
+                }
+            }else{
+                accountSurvey['Id'] = null;
+                accountSurvey['CallCard__c'] = callCardId;
+                accountSurvey['Account__c'] = headerInfo.Account__c;
+                //accountSurvey['RecordTypeId'] = recordTypeId;
+                accountSurvey['Visit_Date__c'] = new Date(headerInfo.Visit_Date__c).getTime();
+                accountSurvey['Survey_Type__c'] = surveyType;
+                if (marketName == 'Australia') {
+                    accountSurvey['Survey_Channel__c'] = headerInfo.Survey_Channel__c;
+                }
+            }
+            //loop through each input in the header table and add it's value to our object
+            j$('#headerDL').find('input,select').each(function(){
+                if(j$(this).is(':checkbox')){
+                    accountSurvey[j$(this).attr('field')] = j$(this).is(':checked');
+                }else{
+                    if(j$(this).val()) {
+                        if(j$(this).attr('type') == 'date'){
+                            var formattedDate = new Date(j$(this).val()).getTime();
+                            accountSurvey[j$(this).attr('field')] = formattedDate;
+                        } else {
+                            accountSurvey[j$(this).attr('field')] = j$(this).val();
+                        }
+                    }
+                }
+            });
+
+            var hasIncompleteData = buildItemsToSave();
+            if (hasIncompleteData) {
+                alert('Please complete selections for all Mandatory products');
+                loading(false);
+                j$('.save').button('reset');
+            } else {
+                //call remote action to save accountSurvey, if successful, set surveyId and call save for items 
+                AccountSurvey_Controller.saveSurvey(accountSurvey, function(result, event) {
+                    if (event.status) {
+                        newSurvey = false;
+                        surveyId = result.Id;
+                        console.log('Survey fields saved');
+                        //buildItemsToSave();
+                        saveSurveyItems(surveyId);
+                    } else {
+                        //handling errors.
+                        errorCallback();
+                        alert(event.message);
+                    }
+                });
+            }
+        }
+        
+        function buildItemsToSave(){
+            //save Account Survey Item fields
+            surveyItems = [];
+            var counter = 0;
+            var selector = '';
+
+            if(deviceType == 'desktop'){
+                selector = '#surveyGrid tbody tr';
+            }else{
+                selector = '#content div.row';
+            }
+
+            var hasIncompleteData = false;                
+            //loop through each row and create asi object
+            j$(selector).each(function(){
+                var row = j$(this);
+                var asi = {};
+                var asiId = j$(row).attr('asiid');
+                var hasData = false;
+                var delisted = false;
+
+                asi['Product__c'] = j$(row).attr('id');
+
+                //check distribution toggle switch for selected value                
+                console.log('primary btns', j$(row).find('.btn-primary').attr('field'));                
+                j$(row).find('.btn-primary').each(function() {
+                    let fieldName = j$(this).attr('field');
+                    console.log('fieldname', fieldName);
+                    if (fieldName != undefined) {
+                        if (fieldName == 'Delisted__c') { delisted = true; }
+
+                        asi[fieldName] = true;
+                        hasData = true;
+                    }
+                });
+                /*
+                j$(row).find('.btn-primary').attr('field') != undefined){
+                    asi[j$(row).find('.btn-primary').attr('field')] = true;
+                    console.log('setting ' + j$(row).find('.btn-primary').attr('field') + ' to true');
+                    //if delisted is selected, we need to clear out all other values for product
+                    if(j$(row).find('.btn-primary').attr('field') == 'Delisted__c'){
+                        delisted = true;
+                    }
+                    asi['Product__c'] = j$(row).attr('id');
+                    hasData = true;
+                }
+                    */
+                //loop through all inputs in row and get values
+                j$(row).find('input,select').each(function(){
+                    if(asiId != 'new'){
+                        //loop through each item and save it's value
+                        hasData = true;
+                        asi['Id'] = asiId;
+                        if(j$(this).is(':checkbox')){
+                            if(delisted){
+                                asi[j$(this).attr('field')] = false;
+                            }else{
+                                asi[j$(this).attr('field')] = j$(this).is(':checked');
+                            }
+                        }else{
+                            if(delisted){
+                                asi[j$(this).attr('field')] = '';
+                            }else{
+                                asi[j$(this).attr('field')] = j$(this).val();
+                            }
+                        }
+                    }else{
+                        //just grab fields with values
+                        asi['Product__c'] = j$(row).attr('id');
+                        if(j$(this).is(':checkbox:checked')){
+                            if(delisted){
+                                asi[j$(this).attr('field')] = false;
+                            }else{
+                                asi[j$(this).attr('field')] = j$(this).is(':checked');
+                                hasData = true;
+                            }
+                        }else{
+                            if(j$(this).val() != '' && j$(this).is(':checkbox') == false){
+                                if(delisted){
+                                    asi[j$(this).attr('field')] =  '';
+                                }else{
+                                    asi[j$(this).attr('field')] = j$(this).val();
+                                    hasData = true;
+                                }
+                            }
+                        }
+                    }
+
+                    console.log('asi', asi);
+                });
+                //loop through product status icons so we can stamp the asi with status at the time of survey
+                var productStatus = '';
+                j$(row).find('i').each(function(){
+                    productStatus += j$(this).attr('title') + ';';
+                });
+                
+                console.log('productStatus', productStatus.substr(0,9));
+                console.log('marketName', marketName);
+                console.log('hasIncompleteData', hasIncompleteData);
+                if(productStatus != ''){
+                    if (marketName == 'France' && productStatus.substr(0,9) == 'Mandatory') {
+                        var fldVal = '';
+                        console.log('asi', asi);
+                        if (!asi['Available__c'] && !asi['Delisted__c'] && !asi['Out_of_Stock__c']) {
+                            hasIncompleteData = true;
+                        } else {
+                            if (asi['Available__c'] == true || asi['Out_of_Stock__c'] == true) {
+                                for(var i =0 ; i < contentFS.length; i++) {
+                                    if (contentFS[i].fieldPath != 'Available__c' && contentFS[i].fieldPath != 'Delisted__c' && contentFS[i].fieldPath != 'Out_of_Stock__c') {
+                                        fldVal = asi[contentFS[i].fieldPath];
+                                        console.log(contentFS[i].fieldPath, fldVal);
+                                        if (fldVal == null || fldVal == '') {
+                                            hasIncompleteData = true; console.log('row has incomplete data'); break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (hasIncompleteData) { 
+                        return false; // Break jquery loop 
+                    }
+                    asi['Product_Status__c'] = productStatus;
+                    hasData = true;
+                }
+                //only add asi object to array if there is data
+                if(hasData){
+                    j$(row).find('.btn-default').each(function(){
+                        asi[j$(this).attr('field')] = false;
+                    });
+                    if(newSurvey){
+                        asi['Id'] = null;
+                    }
+                    asi['Account_Survey__c'] = surveyId;
+                    surveyItems[counter] = asi;
+                    counter++;
+                }
+            });
+
+            return hasIncompleteData;
+        }
+        function saveSurveyItems(surveyId) {            
+            //upsert the survey items and set id on row of any newly created asi's
+            for(var i = 0; i < surveyItems.length; i++) {
+                surveyItems[i].RecordTypeId = asiRecordTypeId;
+                surveyItems[i].Account_Survey__c = surveyId;
+            }
+            console.log('[saveSurveyItems] surveyItems', surveyItems);
+            AccountSurvey_Controller.saveASI(surveyItems, function(result, event) {
+                if (event.status) {
+                    j$(result).each(function(){
+                        j$('#'+this.Product__c).attr('asiid', this.Id);
+                    });
+                    console.log('Survey Items saved');
+                    if(!redirect)
+                        j$('.save').button('reset');
+                    loading(false);
+                    //if save and close is clicked, redirect to returnURL
+                    if(redirect){
+                        if(inSF1) {
+                            //sforce.one.back(false);
+                            sforce.one.navigateToURL(returnURL, true);
+                        }else{
+                            window.location.href = returnURL;
+                        }
+                        /*try{
+                                    if(sForce.one){
+                                        sforce.one.navigateToURL(returnURL);
+                                    }
+                                }catch(err){
+                                    window.location.href = returnURL;
+                                }*/
+                            } else {
+                                // Only allow save button and hide loading if not redirecting
+                                loading(false);
+                                j$('.save').button('reset');
+                            }
+                        } else {
+                            //handling errors.
+                            loading(false);
+                            alert(event.message);
+                        }
+                });
+        }
+        
+        //get url param
+        function getQueryVariable(variable)
+        {
+           var query = window.location.search.substring(1);
+           var vars = query.split("&");
+           for (var i=0;i<vars.length;i++) {
+               var pair = vars[i].split("=");
+               if(pair[0] == variable){return pair[1];}
+           }
+           return(false);
+        }
+        
+        //toggle loading gif and saved message
+        function loading(val,showFading) {
+            if (val) {
+                j$(".loadingImage").fadeIn(100).css("display","inline").css('visibility','visible');
+            }
+            else {
+                j$(".loadingImage").css('visibility', 'hidden');    
+                if (showFading != false) {
+                    j$(".savedMessage").fadeIn(100).css("display","inline").delay(3000).fadeOut();    
+                }                
+            }
+        }
+        
+        //build HTML for distribution toggle
+        function buildDistributionOptions(flds, prodId){
+            var tempHTML = '<div class="btn-group btn-group-sm distributionFields' + prodId + '" data-prod-id="' + prodId + '" data-toggle="buttons">';
+            var tempHTML2 = '<div class="btn-group btn-group-sm delisted' + prodId + '" data-prod-id="' + prodId + '">';
+            j$.each(distributionFields, function(key,value){
+                if (distributionFields[key][0] == 'Delisted__c') {
+                    if(distributionFields[key][2]){
+                        tempHTML2 += '<button type="button" class="btn btn-primary" data-prod-id="' + prodId + '" field="'+distributionFields[key][0]+'">'+distributionFields[key][1]+'</button>';
+                    }else{
+                        tempHTML2 += '<button type="button" class="btn btn-default" data-prod-id="' + prodId + '" field="'+distributionFields[key][0]+'">'+distributionFields[key][1]+'</button>';
+                    }
+                } else {
+                    if(distributionFields[key][2]){
+                        tempHTML += '<button type="button" class="btn btn-primary" data-prod-id="' + prodId + '" field="'+distributionFields[key][0]+'">'+distributionFields[key][1]+'</button>';
+                    }else{
+                        tempHTML += '<button type="button" class="btn btn-default" data-prod-id="' + prodId + '" field="'+distributionFields[key][0]+'">'+distributionFields[key][1]+'</button>';
+                    }
+                }
+            });
+            tempHTML += '</div>';
+            tempHTML2 += '</div>';
+           return tempHTML + tempHTML2;            
+        }
+        
+        function clearForm(){
+            j$('#content input,select').val('');
+            j$('#content .btn-group').find('button').addClass('btn-default').removeClass('btn-primary');
+            j$('#content input:checkbox').prop('checked',false);
+        }
+    
+        // (Overflow/More) Options menu (top right corner)
+        function showOptionsDropdown() {
+            document.getElementById("optionsMenuDropdown").classList.toggle("show");
+        }
+        // Close (Overflow/More) Options menu when not clicked on                              
+        window.onclick = function(event) {
+            if (!event.target.matches('.optionMenuButton')) {
+                var dropdowns = document.getElementsByClassName("options-dropdown-content");
+                var i;
+                for (i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
+        
+        // Generate (Overflow/More) Options menu based on JSON
+        function generateOptionsMenu() {
+            // Menu definition from Market Object
+            var menu = {!serializedMenuJSON}
+            console.log('menu', menu);
+            // Show menu if menu definition has > 0 elements
+            if(menu.length > 0)
+                j$('#overflowmenu').show();
+            
+            // Add links to menu
+            var menuDiv = j$("#optionsMenuDropdown");
+            menu.forEach(function(element) {
+                // Create base link element
+                var a = document.createElement('a');
+                var linkText = document.createTextNode(element.label);
+                a.appendChild(linkText);
+                // Add link if present (not advanced button) -- process link for sf1 detection and urlprefix
+                if(element.link) {
+                    // If link starts with http, paste straight in (external link), otherwise is Salesforce link and process
+                    if(element.link.startsWith("http")) {
+                        // Detect if in Salesforce1 or not
+                        if(inSF1) {
+                            a.href = 'javascript:sforce.one.navigateToURL("' + urlPrefix + element.link + '", ' + element.SF1isRedirect +')';
+                        } else {
+                            a.href = element.link;
+                            a.setAttribute("target", element.target);
+                        }
+                    } else {
+                        // Detect if in Salesforce1 or not
+                        if(inSF1) {
+                            a.href = 'javascript:sforce.one.navigateToURL("' + urlPrefix + element.link + '", ' + element.SF1isRedirect +')';
+                        } else {
+                            a.href = urlPrefix + element.link;
+                            a.setAttribute("target", element.target);
+                        }
+                    }
+                } else {
+                    // Advaned button, define button behavior based on name
+                    
+                    // Accounts Nearby (This Account)
+                    if(element.name == "Accounts_Nearby_This_Account") {
+                        // Detect if in Salesforce1 or not
+                        if(inSF1) {
+                            a.href = 'javascript:sforce.one.navigateToURL("' + urlPrefix + '/apex/AccountsNearby?id=' + callCardInfo.Account__r.Id + '", ' + element.SF1isRedirect +')';
+                        } else {
+                            a.href = urlPrefix + '/apex/AccountsNearby?id=' + callCardInfo.Account__r.Id;
+                            a.setAttribute("target", element.target);
+                        }
+                    }
+                }
+                
+                // Add to menu
+                menuDiv.append(a);
+            });
+        }
+        
+    </script>
+    <div class="bootstrap" style="height:100%">
+        <div class="container-fluid theme-showcase" role="main">
+            <nav class="navbar navbar-default navbar-fixed-top">
+                <div id="topButtonDiv" class="buttonDiv text-center">
+                
+                    <button type="button" value="{!$Label.Save}" class="btn button save bg-primary" data-role="none" data-loading-text="{!$Label.Saving}">{!$Label.Save}</button>
+                    <button type="button" value="{!$Label.Save_and_Close}" class="btn button save saveAndClose bg-primary" data-role="none" data-loading-text="{!$Label.Saving}">{!$Label.Save_and_Close}</button>
+                    <button type="button" value="{!$Label.Cancel}" class="btn button cancel bg-primary" data-role="none">{!$Label.Cancel}</button>
+                    <div id="loadingImage" class="loadingImage" style="display:none">
+                        <!--<img src="{!URLFOR($Resource.SFA, '/img/transparentLoading.gif')}"/>-->
+                        <img src="https://www.b-fonline.com/salesforceresources/SFA/img/transparentLoading.gif" />
+                    </div>
+                    <div id="savedMessage" class="savedMessage" style="display:none">
+                        {!$Label.Saved}
+                        <apex:pagemessages id="messages"/>
+                    </div>
+                <div class="options-dropdown" id='overflowmenu'>
+                    <button id="optionMenuButton" type="button" class="btn-sm btn-flat btn-info optionMenuButton" onclick="showOptionsDropdown()">&#x22EE;</button>
+                    <div id="optionsMenuDropdown" class="options-dropdown-content"></div>
+                </div>
+                </div>
+            </nav>
+            <div id="accountInfo" class="section" style="padding-top: 50px;">
+                <div id="accountHeader" class="header btn-info">{!UPPER($Label.Account_Info)}</div>
+                <dl id="headerDL" class="dl-horizontal headerDL left list-group row">
+                </dl>
+            </div>
+            <div class="clear"></div>
+            <div id="filterSection" class="section text-center">
+                <div id="filterHeader" class="header btn-info">{!UPPER($Label.Filters)}</div>
+            </div>
+            <div class="clear"></div>
+            <div id="content" class="content section">
+                <div id="contentHeader" class="header btn-info">{!UPPER($ObjectType.Product__c.LabelPlural)}</div>
+                <div class="clear"></div>
+                <div class="rowButtons text-center">
+                    <button id="clearForm" type="button" value="{!$Label.Clear_Form}" class="btn button clearForm btn-danger" >{!$Label.Clear_Form}</button>
+                    <button id="expandButton" class="btn rowButton expandBtn bg-primary" type="button" value="{!$Label.Expand_All}">{!$Label.Expand_All}</button>               
+                </div>
+                <!-- <div class="clear"></div> -->
+            </div>
+            <div id="bottomButtonDiv" class="buttonDiv text-center">
+                <button type="button" value="{!$Label.Save}" class="btn button save bg-primary" data-loading-text="{!$Label.Saving}">{!$Label.Save}</button>
+                <button type="button" value="{!$Label.Save_and_Close}" class="btn button save saveAndClose bg-primary" data-loading-text="{!$Label.Saving}">{!$Label.Save_and_Close}</button>
+                <button type="button" value="{!$Label.Cancel}" class="btn button cancel bg-primary">{!$Label.Cancel}</button>
+                <div class="loadingImage" style="display:none">
+                    <!--<img src="{!URLFOR($Resource.SFA, '/img/transparentLoading.gif')}"/>-->
+                    <img src="https://www.b-fonline.com/salesforceresources/SFA/img/transparentLoading.gif" />
+                </div>
+                <div class="savedMessage" style="display:none">
+                    {!$Label.Saved}
+                </div>
+            </div>
+            <div id="offlineModal" class="modal fade" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title">{!$Label.No_Connection}</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>{!$Label.Find_Connection}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">{!$Label.Close}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="clearFormModal" class="modal fade" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title">{!$Label.Clear_Form}</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>{!$Label.Clear_Form_Confirm}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">{!$Label.Cancel}</button>
+                            <button id="clearFormConfirm" type="button" value="{!$Label.Clear_Form}" class="btn button clearForm btn-danger" data-dismiss="modal" onclick="clearForm()" >{!$Label.Clear_Form}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--<script src="{!URLFOR($Resource.bootstrapmodernp, '/startbootstrap-modern-business-gh-pages/js/bootstrap.min.js')}"></script>-->
+    <script src="https://www.b-fonline.com/salesforceresources/BootstrapModernPages/js/bootstrap.min.js" ></script>
+    <script>
+        /*
+        (function() {
+            try {
+                var a = navigator.userAgent;
+                var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                if (iOS) {
+                    //Check if iOS 9, if so load hack
+                    //if (a.indexOf('OS/9') != -1 || a.indexOf('OS 9') != -1) {
+                        var s = document.createElement('style');
+                        s.innerHTML =
+                            "html,html body{overflow: auto;-webkit-overflow-scrolling:touch;}body{position:absolute;left:0;right:0;top:0;bottom:0;}";
+                        document.getElementsByTagName('head')[0].appendChild(s);
+
+                    //}
+                }
+            } catch (e) {}
+        })();
+        */
+        (function(){
+            try{
+                var a=navigator.userAgent;
+                if (a.indexOf('Safari') == -1 && (a.indexOf('Salesforce') >= 0 && (a.indexOf('iPhone') >= 0 || a.indexOf('iPad') >= 0))) {                
+                    var s=document.createElement('style'); 
+                    s.innerHTML="html,html body{overflow: scroll;-webkit-overflow-scrolling:touch;}body{position:absolute;left:0;right:0;top:0;bottom:0;}"; 
+                    document.getElementsByTagName('head')[0].appendChild(s);
+                    
+                    function IOS_SCROLL_BOOTSTRAP() { 
+                        var children = Array.prototype.slice.call(document.body.children), 
+                            placeholder = document.createElement('section'), 
+                            fragment = document.createDocumentFragment(), 
+                            styles, 
+                            width, 
+                            height; 
+                        
+                        children.forEach(function(c){ fragment.appendChild(c); }); 
+                        placeholder.appendChild(fragment); 
+                        styles = [ 
+                            'width:100%;', 
+                            'height:', (window.screen.height - 42), 'px;', 
+                            'position: absolute; overflow: auto; -webkit-overflow-scrolling: touch' 
+                        ].join(''); 
+                        placeholder.style.cssText = styles; 
+                        document.body.appendChild(placeholder); 
+                    } 
+                    window.addEventListener('load', function (e) { 
+                        IOS_SCROLL_BOOTSTRAP(); 
+                    });                     
+                }
+            }catch(e){
+            }
+        })(); 
+        
+        window.onkeydown=function(){ window.focus(); }
+    </script> 
+</apex:page>
