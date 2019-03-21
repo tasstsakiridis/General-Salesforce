@@ -247,12 +247,12 @@ global with sharing class Account_Visit_Controller {
         orderQueryString += ' ORDER BY Order_Date__c DESC';
         
         String promoId = ApexPages.currentPage().getParameters().get('uploadToPromotionId');
-        if (promoId != null && promoId.length() > 0) {
-            promoQueryString += ' FROM Promotion__c WHERE Id =:promoId';
-        } else {
+        //if (promoId != null && promoId.length() > 0) {
+        //    promoQueryString += ' FROM Promotion__c WHERE Id =:promoId';
+        //} else {
             promoQueryString += ' FROM Promotion__c WHERE Is_Active__c = true AND Promotion_End_Date__c >= today AND Account__c = \'' + this.a.Id + '\'';
             promoQueryString += ' ORDER BY Promotion_Start_Date__c DESC';            
-        }
+        //}
         System.debug('promoQuery: ' + promoQueryString);
         List<Order__c> orders = Database.query(orderQueryString);
         List<PromotionWrapper> orderList = new List<PromotionWrapper>();
@@ -567,8 +567,8 @@ global with sharing class Account_Visit_Controller {
     }
 
     @RemoteAction
-    global static String postToChatter(String groupId, String groupName, String accountName, String promoId, String promoName, String managerId, String linkUrl, String chatterText, String urlPrefix, String feedItemId) {
-        ConnectApi.CommentInput commentInput = new ConnectApi.CommentInput();
+    global static String postToChatter(String groupId, String groupName, String accountName, String promoId, String promoName, String managerId, String linkUrl, String chatterText, String urlPrefix, String contentVersionIdcha) {
+        ConnectApi.FeedItemInput feedInput = new ConnectApi.FeedItemInput();
         ConnectApi.MentionSegmentInput mentionSegmentInput = new ConnectApi.MentionSegmentInput();
         ConnectApi.MessageBodyInput messageBodyInput = new ConnectApi.MessageBodyInput();
         ConnectApi.TextSegmentInput textSegmentInput = new ConnectApi.TextSegmentInput();
@@ -602,19 +602,24 @@ global with sharing class Account_Visit_Controller {
             mgrMention.id = managerId;
             messageBodyInput.messageSegments.add(mgrMention);
         }
-        commentInput.body = messageBodyInput;
+
+        feedInput.feedElementType = ConnectApi.FeedElementType.FEEDITEM;
+        feedInput.body = messageBodyInput;
+        feedInput.subjectId = promoId;
 
         ConnectApi.Comment commentRep = null;
+        ConnectApi.FeedElement feed = null;
         try {
-            commentRep = ConnectApi.ChatterFeeds.postCommentToFeedElement(null, feedItemId, commentInput, null);                    
+            //commentRep = ConnectApi.ChatterFeeds.postCommentToFeedElement(null, feedItemId, commentInput, null);                    
+            feed = ConnectApi.ChatterFeeds.postFeedElement(Network.getNetworkId(), feedInput, null);
         }catch(Exception ex) {
             System.debug('exception raised posting comment to feed item. ' + ex.getMessage());                    
         }
         
-        if (commentRep == null) {
+        if (feed == null) {
             return ''; 
         } else {
-            return commentRep.Id;            
+            return feed.Id;            
         }
     }
 

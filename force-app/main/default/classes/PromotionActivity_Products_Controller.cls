@@ -144,7 +144,7 @@ System.debug('fieldsetname: ' + fieldSetName);
         Promotion_Activity__c theActivity = [SELECT Id, Requires_Marketing_Approval__c, SalesProposal_Products_Updated__c FROM Promotion_Activity__c WHERE Id =:activityId LIMIT 1];
         theActivity.Requires_Marketing_Approval__c = requiresMarketingApproval;
         theActivity.Is_Taking_From_Marketing_Budget__c = requiresMarketingApproval;
-        theActivity.SalesProposal_Products_Updated__c = true;
+        theActivity.SalesProposal_Products_Updated__c = updateActivityTotals;
         update theActivity;
 
         return itemsToAdd;

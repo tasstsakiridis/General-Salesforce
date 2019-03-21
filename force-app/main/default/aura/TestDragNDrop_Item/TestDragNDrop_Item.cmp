@@ -1,0 +1,17 @@
+<aura:component >
+    <ltng:require scripts="{!join(',',$Resource.fullCalendar_v3_9_0+'/fullCalendar_v3_9_0/lib/jquery.min.js',$Resource.fullCalendar_v3_9_0+'/fullCalendar_v3_9_0/lib/jquery-ui.min.js')}" 
+                  afterScriptsLoaded="{!c.doInit}" />
+    
+    <aura:attribute name="account" type="Object" default="{}" />
+    <aura:attribute name="accountCode" type="String" default="" />
+    
+    <div class="slds-p-around_x-small slds-border_top">
+        <div aura:id="account-container" id="{!v.accountCode}" class="draggable-item" draggable="true" ondragstart="{!c.handleDragStart}">
+            <p class="smallFont">{!v.account.AccountNumber}</p>
+            <h2 class="slds-truncate">
+            	<a aura:id="accountName" id="itemName" href="javascript:void(0);" onclick="{!c.handleClick}" >{!v.account.Name}</a>
+            </h2>
+        </div>
+    </div>
+    
+</aura:component>

@@ -1,0 +1,14 @@
+<aura:component >
+    <aura:attribute name="accounts" type="Account[]" />
+
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    
+    <lightning:card aura:id="dashboard_container" title="Accounts" class="dashboard">
+        <ui:scrollerWrapper aura:id="account-list_scroller" class="scroller-size">
+            <aura:iteration items="{!v.accounts}" var="a" indexVar="a_idx">            
+                <c:TestDragNDrop_Item account="{!a}" accountCode="{!a_idx}"  />
+            </aura:iteration>
+        </ui:scrollerWrapper>
+        
+    </lightning:card>    
+</aura:component>

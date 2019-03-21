@@ -1,0 +1,7 @@
+.THIS .smallFont {
+    font-size: 0.625rem;
+}
+.THIS .draggable-item {
+    cursor: pointer;
+    z-index: 9999;
+}

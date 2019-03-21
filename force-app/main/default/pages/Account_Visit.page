@@ -66,7 +66,7 @@
 
         .object-content_container {
             margin-bottom: 40px;
-            overflow: scroll;
+            overflow: auto;
             
         }
         @media screen and (max-width: 768px) {
@@ -82,8 +82,8 @@
             display: none;
         }
         .object-content {
-            margin-bottom: 40px;
-            overflow: scroll;
+            margin-bottom: 60px;
+            overflow: auto;
             padding-bottom: 15px;
         }
         #tasksContainer .row:first-child {
@@ -211,6 +211,17 @@
         .green{
   	    	color: #4AB471;
       	}
+        .panel-heading .accordion-toggle:after {
+            /* symbol for "opening" panels */
+            font-family: 'Glyphicons Halflings';  /* essential for enabling glyphicon */
+            content: "\e114";    /* adjust as needed, taken from bootstrap.css */
+            float: right;        /* adjust as needed */
+            color: grey;         /* adjust as needed */
+        }
+        .panel-heading .accordion-toggle.collapsed:after {
+            /* symbol for "collapsed" panels */
+            content: "\e080";    /* adjust as needed, taken from bootstrap.css */
+        }
 
     </style>
     </head>
@@ -234,6 +245,7 @@
         var survey;
         var skipCallCard = '{!$CurrentPage.Parameters.skip}';
         var jumpToCamera = '{!$CurrentPage.Parameters.jumpToCamera}';
+        console.log('jumpToCamera', jumpToCamera);
     	var jumpToView = '{!$CurrentPage.Parameters.view}';
         var uploadToPromotionId = '{!$CurrentPage.Parameters.uploadToPromotionId}';
         var showProofOfConcept = '{!$CurrentPage.Parameters.showProofOfConcept}';
@@ -348,18 +360,18 @@
 
             if (deviceType == 'phone') {
                 j$('.table').addClass('table-sm');
-                j$('#cameraContainer').addClass('sm_max-width');
-                j$('#ordersContainer').addClass('sm_max-width');
-                j$('#promotionsContainer').addClass('sm_max-width');
+                //j$('#cameraContainer').addClass('sm_max-width');
+                //j$('#ordersContainer').addClass('sm_max-width');
+                //j$('#promotionsContainer').addClass('sm_max-width');
             }
 
             let marginTop = j$('#top-panel').height() + (deviceType == 'desktop' ? 0 : 10);
-            if (deviceType != 'desktop') {
+            if (deviceType != 'desktop' || communityUser) {
                 marginTop += 20;
             }
 
-            let marginBottom = j$('#bottom-panel').height() + (deviceType == 'desktop' ? 0 : 10);
-            let mainHeight = j$('.main').height() - (deviceType == 'desktop' ? 0 : (marginTop + marginBottom + 20));
+            let marginBottom = j$('#bottom-panel').height() + (deviceType != 'desktop' || communityUser ? 10 : 0);
+            let mainHeight = j$('.main').height() - (deviceType != 'desktop' || communityUser ? (marginTop + marginBottom + 20) : 0);
             console.log('mainHeight', mainHeight);
             j$(".main").css("margin-top", marginTop + "px");
             j$(".main").css("margin-bottom", marginBottom + "px");
@@ -631,7 +643,13 @@
             var tabsAvailable = [];
             var defaultPageSet = false;
             console.log('[configureTabs] defaultLandingPage', defaultLandingPage);
-            if (hasAccessToSurvey == 'false') { j$('#tabSurvey').hide(); } else { defaultPageSet = true; tabsAvailable.push('tabSurvey'); }
+            if (hasAccessToSurvey == 'false') { 
+                j$('#tabSurvey').hide(); 
+            } else { 
+                defaultPageSet = true; 
+                tabsAvailable.push('tabSurvey'); 
+                j$('.fixed-bottom .surveys').click(); 
+            }
             if (hasAccessToCallCard == 'false') { 
                 j$('#navCallCard').hide(); 
             } else { 
@@ -736,12 +754,9 @@
                 jumpToView = 'camera';
                 j$.each(promotionList, function(key, value) {
                     if (value.id == uploadToPromotionId) {
-                        j$('#fuPromotionMenuText').attr('data-promo-id', uploadToPromotionId)
-                                                .attr('data-promo-name', value.linkName)
-                                                .attr('data-promo-channel', value.promoChannel)
-                                                .attr('data-promo-startdate', value.displayStartDate)
-                                                .attr('data-promo-enddate', value.displayEndDate)
-                                                .val(value.linkName);
+                        promotion = value;
+                        console.log('promotion', promotion);
+
                         j$('#btnSelectOtherPromotion').attr('disabled', 'disabled');
                         return false;
                     }
@@ -800,20 +815,20 @@
                     if (survey.Survey_Type__c.indexOf('Account') != -1){
                         if (survey.Survey_Channel__c != undefined) {
                             if (survey.Survey_Channel__c.toLowerCase().substr(0,2) == 'on') {
-                                j$('#existingOnAccountSurvey').css('display', 'inline');
+                                j$('#existingOnAccountSurvey').css('display', 'table-row');
                                 j$('.onchannelsurvey').attr('data-survey-id', survey.Id);
                             } else {
-                                j$('#existingOffAccountSurvey').css('display', 'inline');
+                                j$('#existingOffAccountSurvey').css('display', 'table-row');
                                 j$('.offchannelsurvey').attr('data-survey-id', survey.Id);
                             }
                         } else {
-                            j$('#existingAccountSurvey').css('display', 'inline');
+                            j$('#existingAccountSurvey').css('display', 'table-row');
                             j$('.singlechannelsurvey').attr('data-survey-id', survey.Id);
 
                         }
                     }
                     if (survey.Survey_Type__c.indexOf('CPT') != -1){
-                        j$('#existingCPTSurvey').css('display', 'inline');
+                        j$('#existingCPTSurvey').css('display', 'table-row');
                         j$('.cptsurvey').attr('data-survey-id', survey.Id);
                     }
                 }
@@ -822,7 +837,7 @@
             if ((account.Market__r.Country__c == 'USA' || account.Market__r.Country__c == 'United States') && (account.Channel__c == 'Off' || account.Channel__c == 'Off Premise')){
                 showCPT = true;
                 skipCallCard = true;
-                j$('.cptLink').css('display', 'inline');
+                j$('.cptLink').css('display', 'table-row');
             }
             
             if (hasAccessToAccountSurvey) {
@@ -1267,11 +1282,12 @@
         function buildTasksPage(){
             // Create Sales Materials section if market is enabled
             if (showSalesMaterials == true) {
-                var materialsHTML = '<div class="card mb-3"><div class="card-header"><h3><a class="accordion-toggle collapsed" data-toggle="collapse" href="#collapseSalesMaterials" data-target="#collapseSalesMaterials">{!HTMLENCODE($ObjectType.Sales_Material__c.LabelPlural)}</a></h3></div><div class="card-body">';
+                var materialsHTML = '<div id="SalesMaterialsContainer" class="card mb-3"><div class="card-header p-1"><h5><a class="accordion-toggle collapsed" style="color: inherit;" data-toggle="collapse" href="#collapseSalesMaterials" data-target="#collapseSalesMaterials">{!HTMLENCODE($ObjectType.Sales_Material__c.LabelPlural)}</a>';
 
                 // Build Sales Materials Header/Wrapper
                 if (allSalesMaterials.length > 0) {
-                materialsHTML += '<div id="collapseSalesMaterials" class="panel-collapse collapse"><ul class="list-group">';
+                    materialsHTML += '<i class="fas fa-chevron-down float-right" style="margin-right: 10px;" /></h3></div>';
+                materialsHTML += '<div id="collapseSalesMaterials" class="card-body panel-collapse collapse"><ul class="list-group">';
                 j$.each(allSalesMaterials, function() {
                     materialsHTML += '<li class="list-group-item text-center">';
                     // If iOS, open in Google apps
@@ -1286,25 +1302,42 @@
                 });
                 materialsHTML += '</ul></div>';
                 } else {
-                    materialsHTML += '<div id="collapseSalesMaterials" class="panel-collapse collapse"><ul class="list-group"><li class="list-group-item text-center">{!$Label.No_Sales_Materials}</li></ul></div>';
+                    materialsHTML += '<i class="fas fa-chevron-right float-right" style="margin-right: 10px;" /></h3></div>';
+                    materialsHTML += '<div id="collapseSalesMaterials" class="card-body panel-collapse collapse"><ul class="list-group"><li class="list-group-item text-center">{!$Label.No_Sales_Materials}</li></ul></div>';
                 }
-                materialsHTML += '</div></div>';
+                materialsHTML += '</div>';
 
                 j$('#tasksContent').append(materialsHTML);
                 // Show panel if has content
-                if(allSalesMaterials.length > 0)
+                if(allSalesMaterials.length > 0) {
                     j$('#collapseSalesMaterials').collapse('show');
+                }
+                j$('#collapseSalesMaterials').on('show.bs.collapse', function() {
+                    j$('#SalesMaterialsContainer i.fa-chevron-right').removeClass('fa-chevron-right')
+                                                                        .addClass('fa-chevron-down');
+                });
+                j$('#collapseSalesMaterials').on('hide.bs.collapse', function() {
+                    j$('#SalesMaterialsContainer i.fa-chevron-down').removeClass('fa-chevron-down')
+                                                                        .addClass('fa-chevron-right');
+                });
+
             }
 
             // build keys tasks
             allTasks = [{!serializedTasks}][0];
             
-            var taskHTML = '<div class="card"><div class="card-header"><h3>{!$ObjectType.Key_Task__c.LabelPlural}</h3></div>';
+            let marginClass = (deviceType == 'desktop' ? '' : 'm-o');
+            var taskHTML = '<div class="card ' + marginClass + ' p-0">';
+            console.log('allSalesMaterials', allSalesMaterials.length);
+            if (showSalesMaterials) {
+                taskHTML += '<div class="card-header p-1"><h5>{!$ObjectType.Key_Task__c.LabelPlural}</h3></div>';
+            }
             if (allTasks.length > 0) {
-                console.log('allTasks', allTasks);
-                taskHTML += '<div class="card-body"><div class="list-group list-group-flush m-0 p-0">';
+                
+                //console.log('allTasks', allTasks);
+                taskHTML += '<div class="card-body ' + marginClass + ' p-0"><div class="list-group list-group-flush ' + marginClass + ' p-0">';
                 var mToday = moment();
-                console.log('saveAllKeyTasks', saveAllKeyTasks);
+                //console.log('saveAllKeyTasks', saveAllKeyTasks);
                 j$.each(allTasks, function(key, value) {
                     
                     var taskId = value.taskId;
@@ -1314,14 +1347,38 @@
                     var mDaysDiff = mToday.diff(mTaskDate, 'days');
                     //var taskCompletedToday = (taskDate.toDateString() == todaysDate.toDateString())
                     var taskCompletedToday = mDaysDiff == 0;
-                    console.log('value.name: ' + value.name + ', today: ' + mToday.toString() + ', taskDate: ' + mTaskDate.toString() + ', diff: ' + mDaysDiff);                    
+                    //console.log('value.name: ' + value.name + ', today: ' + mToday.toString() + ', taskDate: ' + mTaskDate.toString() + ', diff: ' + mDaysDiff);                    
                     if (taskCompletedToday == false && saveAllKeyTasks == "true") {
                         taskId = null;
                     }
                     //if (isToday) { taskId = value.taskId; }
                     
                     if (deviceType == 'phone') {
-                        taskHTML += '<div id="task_' + value.templateId + '" class="list-group-item task" data-task-id="' + taskId + '" data-template-id="' + value.templateId + '" data-task-name="' + value.name + '" data-complete="' + value.complete + '">';
+                        taskHTML += '<div id="task_' + value.templateId + '" class="list-group-item task m-0 p-0" data-task-id="' + taskId + '" data-template-id="' + value.templateId + '" data-task-name="' + value.name + '" data-complete="' + value.complete + '">';
+                        taskHTML += '<div class="d-flex justify-content-between">';
+                        taskHTML += '<span>';
+                        if (value.description == null) {
+                            taskHTML += value.name;
+                        } else {
+                            taskHTML += value.description;
+                        }
+                        taskHTML += '</span>';
+
+                        if (value.complete && (saveAllKeyTasks == "false" || taskCompletedToday)) {
+                            //taskHTML += value.displayDate;
+                            taskHTML += '<span class="card-title">'+moment(taskDate).format('LLL') + '</span>';
+                        }
+                        taskHTML += '<div class="taskData toggle float-right">';
+                        if (value.complete && (saveAllKeyTasks == "false" || taskCompletedToday)) {
+                            taskHTML += '<input type="checkbox" id="' + value.templateId + '" class="cmn-toggle cmn-toggle-round-flat" checked/>';
+                        }else{
+                            taskHTML += '<input type="checkbox" id="' + value.templateId + '" class="cmn-toggle cmn-toggle-round-flat"/>';
+                            //taskHTML += '<div class="custom-control custom-switch"><input type="checkbox" class="custom-control-input" /></div>';
+                        }
+                        taskHTML += '<label class="toggle" for="' + value.templateId + '"></label>';
+                        
+                        taskHTML += '</div></div></div>'; // d-flex - toggle - list-group-item
+                        /*    
                         taskHTML += '<div class="card text-center"><div class="card-body">';
                         if (value.complete && (saveAllKeyTasks == "false" || taskCompletedToday)) {
                             //taskHTML += value.displayDate;
@@ -1344,6 +1401,7 @@
                         taskHTML += '<label class="toggle" for="' + value.templateId + '"></label>';
 
                         taskHTML += '</div></div></div></div>'; // toggle - card-footer - card - list-group-item
+                        */
                     } else {
                         taskHTML += '<div id="task_' + value.templateId + '" class="list-group-item task m-0 p-0" data-task-id="' + taskId + '" data-template-id="' + value.templateId + '" data-task-name="' + value.name + '" data-complete="' + value.complete + '">';
                         taskHTML += '<div class="container mt-2"><div class="row">';
@@ -1542,7 +1600,7 @@
                 }                
 
                 if (deviceType == 'phone') {
-                    orderHTML += '<div class="list-group-item list-group-item-action orderRows"><div class="card" id="' + order.id + '">';
+                    orderHTML += '<div class="list-group-item list-group-item-action orderRows m-0 p-0"><div class="card m-0 p-0" id="' + order.id + '">';
                     orderHTML += '<div class="card-header">';
                     if (canEditOrders) { 
                         orderHTML += '<i id="' + j$(this)[0].id + '" class="fas fa-2x gray mr-2 order fa-edit" title="{!$Label.Edit}" object="order"></i>';
@@ -1553,16 +1611,28 @@
                         orderHTML += '<a href="' + url + '" target="_blank">' + order.linkName + '</a>';
                     }
                     orderHTML += ' - '+ order.recordTypeName+'</div>'; // End Card Header
-                    orderHTML += '<div class="card-body">';
-                    orderHTML += '<div class="text-left"><span class="col-12 font-weight-bold">{!$ObjectType.Wholesaler__c.Label}</span><span class="col-12">';
+                    orderHTML += '<div class="card-body m-0 p-2">';
+                    orderHTML += '<dl><dt class="font-weight-bold">{!$ObjectType.Wholesaler__c.Label}</dt><dd>';
                     if (inSF1) {
                         orderHTML += '<a href="javascript:sforce.on.navigateToURL(\'' + wholesalerUrl + '\')">' + order.activityName + '</a>';
                     } else {
                         orderHTML += '<a href="' + wholesalerUrl + '" target="_blank">' + order.activityName + '</a>';
                     }
-                    orderHTML += '</span></div>';
-                    orderHTML += '<div class="text-left"><span class="col-12 font-weight-bold">{!$Label.Date}</span><span class="col-12">'+order.displayStartDate+'</span></div>';
-                    orderHTML += '<div class="text-left"><span class="col-12 font-weight-bold">{!$ObjectType.Order__c.Fields.Status__c.Label}</span><span class="col-12">'+statusText+'</span></div>';
+                    orderHTML += '</dd>';
+                    orderHTML += '<dt class="font-weight-bold">{!$Label.Date}</dt><dd>'+order.displayStartDate+'</p></dd>';
+                    orderHTML += '<dt class="font-weight-bold">{!$ObjectType.Order__c.Fields.Status__c.Label}</dt><dd class="">'+statusText+'</dd>';
+                    orderHTML += '</dl>';
+                        /*
+                    orderHTML += '<div class="text-left"><p class="font-weight-bold">{!$ObjectType.Wholesaler__c.Label}</p><p class="">';
+                    if (inSF1) {
+                        orderHTML += '<a href="javascript:sforce.on.navigateToURL(\'' + wholesalerUrl + '\')">' + order.activityName + '</a>';
+                    } else {
+                        orderHTML += '<a href="' + wholesalerUrl + '" target="_blank">' + order.activityName + '</a>';
+                    }
+                    orderHTML += '</p></div>';
+                    orderHTML += '<div class="text-left"><p class="font-weight-bold">{!$Label.Date}</p><span p="">'+order.displayStartDate+'</p></div>';
+                    orderHTML += '<div class="text-left"><p class="font-weight-bold">{!$ObjectType.Order__c.Fields.Status__c.Label}</p><p class="">'+statusText+'</p></div>';
+                    */
                     orderHTML += '</div></div></div>';
                     
                 } else {
@@ -1709,7 +1779,7 @@
 
 
                 if (deviceType == 'phone') {
-                    lHTML += '<div class="list-group-item list-group-item-action promotionRows"><div class="card" id="' + promo.id + '">';
+                    lHTML += '<div class="list-group-item list-group-item-action promotionRows m-0 p-0"><div class="card" id="' + promo.id + '">';
                     lHTML += '<div class="card-header">';
                     if (canEditOrders) { 
                         lHTML += '<i id="' + promo.id + '" class="fas fa-2x gray mr-2 promotion fa-edit" title="{!$Label.Edit}" object="promotion"></i>';
@@ -1719,15 +1789,27 @@
                     } else {
                         lHTML += '<a href="' + url + '" target="_blank">' + promo.linkName + '</a>';
                     }
-                    lHTML += ' - '+ promo.recordTypeName; // End Card Header
+                    lHTML += '<p>'+ promo.recordTypeName; // End Card Header
                     // Add image_attached__c indicator paperclip
                     lHTML += ' <i class="fa fa-paperclip';
                     if(promo.imageAttached == false) {
                         lHTML += ' hidden';
                     }
                     lHTML += '" data-promo-id="'+j$(this)[0].id+'"></i>';
-                    lHTML += '</div>';
-                    lHTML += '<div class="card-body">';
+                    lHTML += '</p></div>';
+                    lHTML += '<div class="card-body m-0 p-2">';
+                    lHTML += '<dl><dt class="slds-truncate font-weight-bold>{!$ObjectType.Promotion_Activity__c.Label}</dt><dd>';
+                    if (inSF1) {
+                        lHTML += '<a href="javascript:sforce.on.navigateToURL(\'' + activityUrl + '\')">' + promo.activityName + '</a>';
+                    } else {
+                        lHTML += '<a href="' + activityUrl + '" target="_blank">' + promo.activityName + '</a>';
+                    }
+                    lHTML += '</dd>';
+                    lHTML += '<dt class="text-truncate font-weight-bold">{!$ObjectType.Promotion__c.Fields.Promotion_End_Date__c.Label}</dt><dd class="">'+promo.displayStartDate+'</dd>';
+                    lHTML += '<dt class="text-truncate font-weight-bold">{!$ObjectType.Promotion__c.Fields.Promotion_End_Date__c.Label}</dt><dd class="">'+promo.displayEndDate+'</dd>';
+                    lHTML += '</dl>';
+
+                    /*
                     lHTML += '<div class="text-left"><span class="col-12 text-truncate font-weight-bold">{!$ObjectType.Promotion_Activity__c.Label}</span><span class="col-12">';
                     if (inSF1) {
                         lHTML += '<a href="javascript:sforce.on.navigateToURL(\'' + activityUrl + '\')">' + promo.activityName + '</a>';
@@ -1735,8 +1817,9 @@
                         lHTML += '<a href="' + activityUrl + '" target="_blank">' + promo.activityName + '</a>';
                     }
                     lHTML += '</span></div>';
-                    lHTML += '<div class="text-left"><span class="col-12 text-truncate font-weight-bold">{!$ObjectType.Promotion__c.Fields.Promotion_End_Date__c.Label}</span><span class="col-12">'+promo.displayStartDate+'</span></div>';
-                    lHTML += '<div class="text-left"><span class="col-12 text-truncate font-weight-bold">{!$ObjectType.Promotion__c.Fields.Promotion_End_Date__c.Label}</span><span class="col-12">'+promo.displayEndDate+'</span></div>';
+                    lHTML += '<div class="text-left"><p class="text-truncate font-weight-bold">{!$ObjectType.Promotion__c.Fields.Promotion_End_Date__c.Label}</p><p class="">'+promo.displayStartDate+'</span></div>';
+                    lHTML += '<div class="text-left"><p class="text-truncate font-weight-bold">{!$ObjectType.Promotion__c.Fields.Promotion_End_Date__c.Label}</p><p class="">'+promo.displayEndDate+'</span></div>';
+                    */
                     lHTML += '</div></div></div>';
                     
                 } else {
@@ -1892,6 +1975,7 @@
                 showBusyDialog(postToChatter());
             });
             j$('.returnToPromotion').hide();
+            j$('#btnRestartUploadProcess').hide();
 			j$('#btnMoveToChatter').hide()
             					   .click(moveToChatterPage);
             j$('#fileUploadContainer').hide();
@@ -1968,10 +2052,14 @@
                 j$('#fuPromotionActivityPromotionList').empty();
             }
             
+            j$('#fuPromotionActivityList .promotionListContent').remove();
+
             j$('#fuPromotionActivityContainer').attr('data-promotion-id', '');
+            j$('#fileUploadContainer').hide();
             j$('#btnUploadAndAttachBadge').text('0');
             j$('#btnUploadAndAttach').hide();
             j$('#btnMoveToChatter').hide();
+            j$('#btnRestartUploadProcess').hide();
             j$('#fuPromotionActivityPromotionsListPanel').hide();
             j$('#fuPromotionActivityPromotionListTitle').text('');
             j$('#fuSelectedPromotion').hide();
@@ -2070,13 +2158,13 @@
             console.log('can auto create promo: ' + canAutoCreatePromotionFromActivity);
             //j$('#noPromotionsForActivityMessage').hide();
             if (pHTML.length == 0) {
-                //if (canAutoCreatePromotionFromActivity == "true") {
-                //	buildPromotionFromActivity(activityId);
-                //} else {
+                if (canAutoCreatePromotionFromActivity == "true") {
+                	buildPromotionFromActivity(activityId);
+                } else {
                     //j$('#noPromotionsForActivityMessage').removeClass('hidden').show();
                     //j$('#fuPromotionActivityPromotionsListPanel').hide();    
                     j$('#fuPromotionActivityList a[data-activity-id="'+activityId+'"]').append('<div class="promotionListContent"><div class="card text-white bg-warning m-4"><div class="card-body">{!$Label.NoPromotionForActivityFound}</div></div></div>');
-                //}
+                }
             } else {
                 j$('#fuPromotionActivityList a[data-activity-id="'+activityId+'"]').append(tHTML);                
                 /*                    
@@ -2123,6 +2211,7 @@
                         promotion = {
                             id: promotionId,
                             name: promotionName,
+                            linkName: promotionName,
                             channel: promotionChannel,
                             startDate: promotionStartDate,
                             endDate: promotionEndDate,
@@ -2154,7 +2243,7 @@
                             selector = '#tfuPromotionsForActivityBody';
                         }
                         j$(selector + ' span[data-promo-id*="' + activityId + '"]').removeClass('hidden');
-                        j$('#fuPromotionMenuText').val(result.linkName)
+                        j$('#fuPromotionActivityContainer').attr('data-promo-id', result.id)
                                                   .attr('data-promo-id', result.id)
                                                   .attr('data-promo-name', result.linkName)
                                                   .attr('data-promo-channel', result.promoChannel)
@@ -2206,6 +2295,7 @@
         function buildChatterPanel() {
             var cHTML = '';
             j$('#fuChatterGroupsDropDown').empty();
+            console.log('chatterGroups', chatterGroups);
             j$.each(chatterGroups, function(key, value) {
                 cHTML += '<li><a id="' + value.Id + '" href="javascript:void(0);" data-group-id="' + value.Id + '">' + value.Name + '</a></li>';
             });
@@ -2228,8 +2318,8 @@
         function postToChatter() {
             var chatterText = j$('#taChatterPost').val();
             var mentionManager = j$('#cbMentionManager').prop('checked');
-            var promoId = j$('#fuPromotionMenuText').attr('data-promo-id');
-            var promoName = j$('#fuPromotionMenuText').val();
+            //var promoId = j$('#fuPromotionMenuText').attr('data-promo-id');
+            //var promoName = j$('#fuPromotionMenuText').val();
             var chatterGroupId = j$('#chatterGroupText').attr('data-group-id');
             var chatterGroupName = j$('#chatterGroupText').val();
             if (chatterGroupId == null) { chatterGroupId = ''; chatterGroupName = ''; }
@@ -2242,11 +2332,13 @@
 
             Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.Account_Visit_Controller.postToChatter}',
-                chatterGroupId, chatterGroupName, account.Name, promoId, promoName, managerId, linkUrl, chatterText, urlPrefix, feedItemId,
+                chatterGroupId, chatterGroupName, account.Name, promotion.id, promotion.name, managerId, linkUrl, chatterText, urlPrefix, feedItemId,
                 function(result, event) {
                     j$('#busyDialog').modal('hide');
                     console.log('[posttochatter1] status: ' + event.status + ', message: ' + event.message);
+                    console.log('[posttochatter1] result: ' + result);
                     if (event.status) {
+                        j$('#btnGoToChatterPost').attr('data-post-id', result);
                         j$('#ChatterContainer').fadeOut(500, function() {
                             j$('#uploadCompletedDiv').fadeIn();
                         });
@@ -2273,8 +2365,8 @@
             }
         }
         function moveToChatterPage() {
-            var promoName = j$('#fuPromotionMenuText').val();
-            j$('#sHashtagPromotion').text('#' + promoName);
+            //var promoName = j$('#fuPromotionMenuText').val();
+            j$('#sHashtagPromotion').text('#' + promotion.name);
             j$('#taChatterPost').val('');
             j$('#cbMentionManager').prop('checked', true);
             j$('#chatterGroupText').val('')
@@ -2294,6 +2386,7 @@
         function moveToUploadPage() {
             //j$('#fuPromotionActivityContainer').fadeOut("slow");
 
+            console.log('promotion', promotion);
             /*
             var selectedPromo = j$('#fuPromotionMenuText');
             var promoId = selectedPromo.attr('data-promo-id');
@@ -2302,20 +2395,32 @@
             var promoStartDate = selectedPromo.attr('data-promo-startdate');
             var promoEndDate = selectedPromo.attr('data-promo-enddate');
             */
+            if (promotion == null) {
+                let container = j$('#fuPromotionActivityContainer');
+                promotion = {
+                    'id': container.attr('data-promo-id'),
+                    'name': container.attr('data-promo-name'),
+                    'linkName': container.attr('data-promo-name'),
+                    'channel': container.attr('data-promo-channel'),
+                    'startDate': container.attr('data-promo-startdate'),
+                    'endDate': container.attr('data-promo-enddate')
+                };
+
+            }
             var selector = '#fuSelectedPromotionContainer';
             var paHTML = '';
             if (deviceType == 'desktop') {
                 selector = '#tfuSelectedPromotionBody';
                 paHTML += '<tr id="' + promotion.id + '" data-promo-id="' + promotion.id + '">';
-                paHTML += '<td><div class="text-left">' + promotion.name + '</div></td>';
-                paHTML += '<td><div>' + promotion.channel + '</div></td>';
+                paHTML += '<td><div class="text-left">' + promotion.linkName + '</div></td>';
+                paHTML += '<td><div>' + (promotion.channel == null ? '' : promotion.channel) + '</div></td>';
                 paHTML += '<td><div class="text-left">' + promotion.startDate + '</div></td>';
                 paHTML += '<td><div class="text-left">' + promotion.endDate + '</div></td>';
                 paHTML += '</tr>';
             } else {
                 paHTML += '<div id="' + promotion.id + '" data-item-id="' + promotion.id + '">';
-                paHTML += '<div class="col-xs-12 col-sm-6"><label for="' + promotion.id + '" class="fieldLabel" style="margin-right: 0.5em;">{!$ObjectType.Promotion__c.Fields.Name.Label}</label><span style="margin-bottom: 0.5rem;">' + promotion.name + '</span></div>';
-                paHTML += '<div class="col-xs-12 col-sm-6"><label for="' + promotion.id + '" class="fieldLabel" style="margin-right: 0.5em;">{!$ObjectType.Promotion__c.Fields.Channel__c.Label}</label><span style="margin-bottom: 0.5rem;">' + promotion.channel + '</span></div>';
+                paHTML += '<div class="col-xs-12 col-sm-6"><label for="' + promotion.id + '" class="fieldLabel" style="margin-right: 0.5em;">{!$ObjectType.Promotion__c.Fields.Name.Label}</label><span style="margin-bottom: 0.5rem;">' + promotion.linkName + '</span></div>';
+                paHTML += '<div class="col-xs-12 col-sm-6"><label for="' + promotion.id + '" class="fieldLabel" style="margin-right: 0.5em;">{!$ObjectType.Promotion__c.Fields.Channel__c.Label}</label><span style="margin-bottom: 0.5rem;">' + (promotion.channel == null ? '' : promotion.channel) + '</span></div>';
                 paHTML += '<div class="col-xs-12 col-sm-6"><label for="' + promotion.id + '" class="fieldLabel" style="margin-right: 0.5em;">{!$ObjectType.Promotion__c.Fields.Promotion_Start_Date__c.Label}</label><span style="margin-bottom: 0.5rem;">' + promotion.startDate + '</span></div>';
                 paHTML += '<div class="col-xs-12 col-sm-6"><label for="' + promotion.id + '" class="fieldLabel" style="margin-right: 0.5em;">{!$ObjectType.Promotion__c.Fields.Promotion_End_Date__c.Label}</label><span style="margin-bottom: 0.5rem;">' + promotion.endDate + '</span></div>';
                 paHTML += '</div>';                                
@@ -2328,6 +2433,7 @@
             j$('#btnUploadAndAttachBadge').text('0');
             j$('#btnUploadAndAttach').hide();
             j$('#fileUploadInputGroup').show();
+            j$('#btnSelectOtherPromotion').removeClass('disabled').prop('disabled', '').show();
             
             if (deviceType == 'desktop') {
                 j$('#tUploadItems .tableBody').empty();
@@ -2403,7 +2509,7 @@
             });
         }
         function uploadAndAttachItems(event) {
-            j$('#btnSelectOtherPromotion').addClass('disabled');
+            j$('#btnSelectOtherPromotion').hide();
             
             var selector = '#UploadItemsPanel div';
             if (deviceType == 'desktop') {
@@ -2506,7 +2612,7 @@
                             pHTML += '<td><div>' + value.type + '</div></td>';
                             pHTML += '<td><div class="text-right">' + size.toFixed(2) + '<div></td>';
                             pHTML += '<td><input type="text" data-item-id="' + value.name + '" class="fuInputFilename" style="width:500px;" value="' + value.name + '"/></td>';
-                            pHTML += '<td><button type="button" class="btn btn-default btn-sm removeButton" data-item-id="' + value.name + '" data-attached-text="{!$Label.Attached}"><span class="glyphicon glyphicon-trash"/>&nbsp;' + removeLabel + '</button></td>';
+                            pHTML += '<td><button type="button" class="btn btn-secondary btn-sm removeButton" data-item-id="' + value.name + '" data-attached-text="{!$Label.Attached}"><span class="glyphicon glyphicon-trash"/>&nbsp;' + removeLabel + '</button></td>';
                             pHTML += '</tr>';
                         } else {
                             pHTML += '<div class="row" id="' + value.name + '" data-item-id="' + value.name + '" data-item-extension="'+value.name.substr(-3)+'" data-item-type="' + value.type + '" data-item-uploaded="0">';
@@ -2515,7 +2621,7 @@
                             pHTML += '<div class="col-xs-12 col-sm-6"><label for="' + value.name + '" class="fieldLabel" style="margin-right: 0.5em;">{!$Label.Type}</label><span style="margin-bottom: 0.5rem;">' + value.type + '</span></div>';
                             pHTML += '<div class="col-xs-12 col-sm-6"><label for="' + value.name + '" class="fieldLabel" style="margin-right: 0.5em;">{!$Label.Size}</label><span style="margin-bottom: 0.5rem;">' + size.toFixed(2) + '</span></div>';
                             pHTML += '<div class="col-xs-12 col-sm-6"><label for="' + value.name + '" class="fieldLabel" style="margin-right: 0.5em;">{!$Label.Filename}</label><input type="text" data-item-id="' + value.name + '" class="fuInputFilename" style="width: 250px;" value="' + value.name + '" /></div>';
-                            pHTML += '<div class="col-xs-12 col-sm-6"><button type="button" class="btn btn-default btn-sml removeButton" data-item-id="' + value.name + '" data-attached-text="{!$Label.Attached}"><span class="glyphicon glyphicon-trash" data-item-id="' + value.name + '">&nbsp;' + removeLabel + '</button></div>';
+                            pHTML += '<div class="col-xs-12 col-sm-6"><button type="button" class="btn btn-secondary btn-sml removeButton" data-item-id="' + value.name + '" data-attached-text="{!$Label.Attached}"><span class="glyphicon glyphicon-trash" data-item-id="' + value.name + '">&nbsp;' + removeLabel + '</button></div>';
                             pHTML += '</div>';
                         }
                     } else {
@@ -2589,7 +2695,7 @@
                 delete tempResult[0].success;
                 //callEinstein(result);
                 feedItemId = result[0].id;
-                j$('#btnGoToChatterPost').attr('data-post-id', feedItemId);
+                //j$('#btnGoToChatterPost').attr('data-post-id', feedItemId);
                 var selector = '#UploadItemsPanel div';
                 if (deviceType == 'desktop') {
                     selector = '#tUploadItems tr';
@@ -2610,11 +2716,12 @@
                 j$('#btnUploadAndAttach').hide();
                 j$('#btnUploadAndAttachBadge').text('0').hide();
                 j$('#btnMoveToChatter').show();
+                j$('#btnRestartUploadProcess').show();
                 if (returnToPromotion == 'true') {
                     j$('.returnToPromotion').show();
                 }
             } else {
-	            j$('#btnSelectOtherPromotion').removeClass('disabled');
+	            j$('#btnSelectOtherPromotion').removeClass('disabled').show();
 
                 alert(uploadAttachmentError + '\n' + result[0].errors.message);
             }
@@ -2924,7 +3031,7 @@
                         <span id="confirmDialogMessage"></span>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">{!$Label.Cancel}</button>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">{!$Label.Cancel}</button>
                         <a id="btnConfirmDialogYes" class="btn btn-warning btn-ok" data-dismiss="modal">{!$Label.Yes_ImSure}</a>
                         <a id="btnConfirmDialogOK" class="btn btn-warning btn-ok hidden" data-dismiss="modal">{!$Label.OK}</a>
                     </div>                        
@@ -2948,13 +3055,13 @@
                         </div>
                     </div>                        
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal" >{!$Label.Close}</button>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal" >{!$Label.Close}</button>
                     </div>                        
                 </div>
             </div>
         </div>
     
-        <div class="modal fade" id="newContactDialog" tabindex="-1" role="dialog" aria-labelledby="newContactModalLabel" style="overflow-y: scroll;">
+        <div class="modal fade" id="newContactDialog" tabindex="-1" role="dialog" aria-labelledby="newContactModalLabel" style="overflow-y: auto;">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -3021,7 +3128,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">{!$Label.Close}</button>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">{!$Label.Close}</button>
                     </div>
                 </div>
             </div>
@@ -3040,16 +3147,16 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">{!$Label.Close}</button>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">{!$Label.Close}</button>
                     </div>
                 </div>
             </div>
         </div>
     
-        <div class="container-fluid theme-showcase " role="main"> 
+        <div class="container-fluid theme-showcase p-0" role="main"> 
 			<nav class="navbar navbar-light bg-light fixed-top" id="top-panel">
                 <div class="navbar-brand justify-content-start">
-                    <a id="sectionTitleAccountName" class="">{!a.Name}</a> - <span id="sectionTitle">{!$Label.Surveys}</span>
+                    <a id="sectionTitleAccountName" class="text-wrap">{!a.Name}</a> - <span id="sectionTitle">{!$Label.Surveys}</span>
                 </div>
                 <div>
                     <button id="saveBtn" class="btn-sm btn-flat btn-primary saveBtn actionButton bfOnly">
@@ -3057,11 +3164,11 @@
                         <span class="sr-only">Saving...</span>
                         <i class="fas fa-save white faButton" title="Save"></i>
                     </button>
-                    <button id="checkInBtn" class="btn-sm btn-flat btn-primary bfOnly checkIn actionButton hide" onclick="checkIn()">
+                    <button id="checkInBtn" class="btn-sm btn-flat btn-primary bfOnly checkIn actionButton hidden" onclick="checkIn()">
                         <i class="fas white fa-sign-in-alt faButton" title="{!$ObjectType.CallCard__c.Fields.Check_In__c.Label}"></i>
                         <span id="checkInBtnText" class="checkInText"></span>
                     </button>
-                    <button id="checkOutBtn" class="btn-sm btn-flat btn-primary bfOnly checkIn actionButton hide disabled" disabled="disabled" onclick="checkOut()">
+                    <button id="checkOutBtn" class="btn-sm btn-flat btn-primary bfOnly checkIn actionButton hidden disabled" disabled="disabled" onclick="checkOut()">
                         <i class="fas white fa-sign-out-alt faButton" title="{!$ObjectType.CallCard__c.Fields.Check_Out__c.Label}"></i>
                         <span id="checkOutBtnText" class="checkInText"></span>
                     </button>
@@ -3073,7 +3180,7 @@
                 </div>
             </nav>
 
-            <div class="main container-fluid" style="height: 500px !important;">                
+            <div class="main container-fluid p-1" style="height: 500px !important;">                
                 <div class="">
                     <div id="messagesContainer" class="card col-12 bfOnly hidden"  style="background-color: #f8edef;">
                         <div class="card-body">
@@ -3095,8 +3202,8 @@
                         <div id="callCardContent" class="object-content"></div>
                     </div>
                     
-                    <div id="tasksContainer" class="content object-content_container object-content_hidden tasks col-12 bfOnly" object="Tasks">
-                        <div id="tasksContent" class="object-content"></div>
+                    <div id="tasksContainer" class="content object-content_container object-content_hidden tasks m-sm-0 p-sm-0 bfOnly" object="Tasks">
+                        <div id="tasksContent" class="object-content p-0"></div>
                     </div>
 
                     <div id="surveysContainer" class="content object-content_container object-content_hidden surveys col-12 " object="Surveys">
@@ -3195,7 +3302,7 @@
                                 </div>
                             </div>
     
-                            <div id="orderContainer" class="container mx-sm-0 mx-md-auto px-sm-0 mx-md-auto">                            
+                            <div id="orderContainer" class="container m-0 p-0 m-md-auto p-md-auto">                            
                             </div>
                         </div>
                     </div>
@@ -3223,7 +3330,7 @@
                                     <div id="fuSelectedPromotionContainer">
                                     </div>
                                     <div>
-                                        <button id="btnSelectOtherPromotion" type="button" class="btn btn-primary btn-lg center-block" onclick="confirmSelectOtherPromotion()"><i class="fas fa-chevron-left" />&nbsp;{!$Label.Go_Back_Select_Other_Promotion}</button>
+                                        <button id="btnSelectOtherPromotion" type="button" class="btn btn-primary center-block" onclick="confirmSelectOtherPromotion()"><i class="fas fa-chevron-left" />&nbsp;{!$Label.Go_Back_Select_Other_Promotion}</button>
                                     </div>
                                 </div>
                             </div>
@@ -3263,6 +3370,10 @@
                                     <button id="btnMoveToChatter" type="button" class="btn btn-primary btn-lg" >
                                         {!$Label.Post_to_Chatter}&nbsp;&nbsp;<i class="fas fa-long-arrow-right"></i>
                                     </button>
+                                    <button id="btnRestartUploadProcess" type="button" class="btn btn-primary btn-lg" style="margin-left: 10px;" onclick="initialiseCameraPage()">
+                                        {!$Label.Restart}
+                                    </button>
+                                
                                     <button type="button" class="btn btn-primary btn-lg returnToPromotion" onclick="returnToThePromotion()">
                                         {!$Label.Return_To_Record}
                                     </button>
@@ -3311,7 +3422,7 @@
                                             </div>
                                             <textarea class="form-control" rows="10" id="taChatterPost"></textarea>
                                             <div>
-                                                <button id="btnPostToChatter" type="button" class="btn btn-default pull-right" style="margin-left: 5px; margin-right: 10px;">{!$Label.Post}</button>                                        
+                                                <button id="btnPostToChatter" type="button" class="btn btn-primary pull-right" style="margin: 10px 5px 0px 10px;">{!$Label.Post}</button>                                        
                                             </div>
                                         </div>
                                     </div>
@@ -3325,7 +3436,7 @@
                                 <div class="card-body text-center">
                                     <div class="center-block">
                                         <i class="fas fa-2x gray col-lg-2 col-md-2 text-center tab" title="spacer"></i>
-                                        <button id="btnRestartUploadProcess" type="button" class="btn btn-default btn-lg col-lg-4 col-md-4 col-sm-12 col-xs-12" style="margin: 10px;" onclick="initialiseCameraPage()">
+                                        <button id="btnRestartUploadProcess" type="button" class="btn btn-primary btn-lg col-lg-4 col-md-4 col-sm-12 col-xs-12" style="margin: 10px;" onclick="initialiseCameraPage()">
                                             {!$Label.Restart}
                                         </button>
                                         <button id="btnGoToChatterPost" type="button" class="btn btn-primary btn-lg col-lg-4 col-md-4 col-sm-12 col-xs-12" style="margin: 10px;" onclick="goToChatterPost()">
@@ -3356,7 +3467,7 @@
                                 </div>
                             </div>
     
-                            <div id="promotionContainer" class="container mx-sm-0 mx-md-auto px-sm-0 mx-md-auto">
+                            <div id="promotionContainer" class="container m-0 m-md-auto p-0 p-md-auto">
                             </div>                        
                         </div>
             

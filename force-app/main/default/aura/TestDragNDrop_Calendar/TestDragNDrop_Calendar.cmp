@@ -1,0 +1,6 @@
+<aura:component >
+	
+    <lightning:card title="Items">
+    	
+    </lightning:card>
+</aura:component>

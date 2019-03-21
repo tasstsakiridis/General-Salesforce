@@ -1,0 +1,12 @@
+<aura:component implements="force:appHostable,flexipage:availableForAllPageTypes">
+
+    <lightning:layout aura:id="appointment_calendar_container" verticalAlign="stretch" class="full_height">
+        <lightning:layoutItem aura:id="dDashboard" flexibility="auto, no-shrink" size="12" smallDeviceSize="12" mediumDeviceSize="4">            
+            <c:TestDragNDrop_Dashboard aura:id="dashboard" />
+        </lightning:layoutItem>   
+        <lightning:layoutItem aura:id="dCalendar" flexibility="auto, no-shrink" size="8" smallDeviceSize="12" mediumDeviceSize="8" padding="around-small">
+            <c:TestDragNDrop_Calendar />
+        </lightning:layoutItem>
+    </lightning:layout>
+    
+</aura:component>
