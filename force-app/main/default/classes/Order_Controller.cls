@@ -253,7 +253,7 @@ System.debug('Orderid: ' + orderId);
     }
     @RemoteAction
     global static void processOrder(String orderId, Boolean requiresApproval) {
-        Order__c order = [SELECT Id, Market__c, Status__c FROM Order__c WHERE Id =: orderId];
+        Order__c order = [SELECT Id, Market__c, Is_Flagged_for_Approval__c, Status__c FROM Order__c WHERE Id =: orderId];
         if (requiresApproval == false) {
             //order.Status__c = 'New';
 	        order.Status__c = 'Process Order';       
@@ -262,10 +262,11 @@ System.debug('Orderid: ' + orderId);
             }
         }
         System.debug('order market name: ' + order.Market__c);
-        if (order.Market__c == 'Australia') {
-	    	order.RecordTypeId = Order__c.SObjectType.getDescribe().getRecordTypeInfosByName().get('Locked').getRecordTypeId();     
-		}
         order.Is_Flagged_for_Approval__c = requiresApproval;
+        System.debug('requiresapproval: ' + order.Is_Flagged_for_Approval__c);
+        if (order.Market__c == 'Australia') {
+            order.RecordTypeId = Order__c.SObjectType.getDescribe().getRecordTypeInfosByName().get('Locked').getRecordTypeId();     
+        }
         update order;
     }
     

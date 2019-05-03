@@ -1,5 +1,5 @@
 <aura:component >
-    <ltng:require scripts="{!join(',',$Resource.fullCalendar_v3_9_0+'/fullCalendar_v3_9_0/lib/jquery.min.js',$Resource.fullCalendar_v3_9_0+'/fullCalendar_v3_9_0/lib/jquery-ui.min.js')}" 
+    <ltng:require scripts="{!join(',',$Resource.jQuery340,$Resource.jQueryUI12)}" 
                   afterScriptsLoaded="{!c.doInit}" />
     
     <aura:attribute name="account" type="Object" default="{}" />

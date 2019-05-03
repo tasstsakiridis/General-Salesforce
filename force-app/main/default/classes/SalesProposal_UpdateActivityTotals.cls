@@ -36,6 +36,10 @@ public with sharing class SalesProposal_UpdateActivityTotals {
         Decimal totalAPDiscount = 0;
         Decimal totalAPDiscount9L = 0;
         Decimal totalAPQuantity = 0;
+        Decimal actualFreeBottleQty = 0;
+        Decimal actualQty = 0;
+        Decimal actualAP = 0;
+        Decimal actualDiscount = 0;
 
         Map<Id, Promotion_Material_Item__c> materialItems = new Map<Id, Promotion_Material_Item__c>();
         Promotion_Material_Item__c materialItem;
@@ -77,6 +81,9 @@ public with sharing class SalesProposal_UpdateActivityTotals {
                 totalFreeBottleCOGS9L += pmi.Free_Bottle_COGS_9L__c == null ? 0 : pmi.Free_Bottle_COGS_9L__c;
                 totalFreeBottleCost += pmi.Free_Bottle_Cost__c == null ? 0 : pmi.Free_Bottle_Cost__c;    
 
+                pmi.Remaining_Volume__c = pmi.Target_Qty__c;
+                pmi.Remaining_Discount__c = pmi.Total_Outlet_Incentive__c;
+                pmi.Remaining_Free_Bottle_Qty__c = pmi.Free_Bottle_Quantity__c;
                 materialItems.put(pmi.Id, pmi);            
             }
 
@@ -106,17 +113,30 @@ public with sharing class SalesProposal_UpdateActivityTotals {
 
             if (theActivity.PMI_Actuals__r != null) {
                 for(PMI_Actual__c pmia : theActivity.PMI_Actuals__r) {
-                    totalActualAP += pmia.Actual_A_P__c;
-                    totalActualQty += pmia.Act_Qty__c;
-                    totalActualDiscount += pmia.Actual_Discount__c;
-                    totalActualFreeBottleQty += pmia.Actual_Free_Bottle_Qty__c;
+                    actualAP = pmia.Actual_A_P__c == null ? 0 : pmia.Actual_A_P__c;
+                    actualQty = pmia.Act_Qty__c == null ? 0 : pmia.Act_Qty__c;
+                    actualFreeBottleQty = pmia.Actual_Free_Bottle_Qty__c == null ? 0 : pmia.Actual_Free_Bottle_Qty__c;
+                    actualDiscount = pmia.Actual_Discount__c == null ? 0 : pmia.Actual_Discount__c;
+
+                    totalActualAP += actualAP;
+                    totalActualQty += actualQty;
+                    totalActualDiscount += actualDiscount;
+                    totalActualFreeBottleQty += actualFreeBottleQty;
 
                     if (materialItems.containsKey(pmia.Promotion_Material_Item__c)) {
                         materialItem = materialItems.get(pmia.Promotion_Material_Item__c);
-                        materialItem.Remaining_A_P__c -= pmia.Actual_A_P__c;
-                        materialItem.Remaining_Discount__c -= pmia.Actual_Discount__c;
-                        materialItem.Remaining_Volume__c -= pmia.Act_Qty__c;
-                        materialItem.Remaining_Free_Bottle_Qty__c -= pmia.Actual_Free_Bottle_Qty__c;
+                        if (materialItem.Remaining_A_P__c != null && materialItem.Remaining_A_P__c > 0) {
+                            materialItem.Remaining_A_P__c -= actualAP;
+                        }
+                        if (materialItem.Remaining_Discount__c != null && materialItem.Remaining_Discount__c > 0) {
+                            materialItem.Remaining_Discount__c -= actualDiscount;
+                        }
+                        if (materialItem.Remaining_Volume__c != null && materialItem.Remaining_Volume__c > 0) {
+                            materialItem.Remaining_Volume__c -= actualQty;
+                        }
+                        if (materialItem.Remaining_Free_Bottle_Qty__c != null && materialItem.Remaining_Free_Bottle_Qty__c > 0) {
+                            materialItem.Remaining_Free_Bottle_Qty__c -= actualFreeBottleQty;
+                        }
                         materialItems.put(pmia.Promotion_Material_Item__c, materialItem);
                     }
                 }

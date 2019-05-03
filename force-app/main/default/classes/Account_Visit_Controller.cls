@@ -29,6 +29,7 @@ global with sharing class Account_Visit_Controller {
     public String serializedMenuJSON                     { get; set; }
     public Boolean canAutoCreatePromotionFromActivity    { get; set; }
     public Boolean hasAccessToTitlePicklist              { get; set; }
+    public Integer showHistoricalPromotions              { get; set; }
 
     //survey variables
     public String serializedAccountSurveys               { get; set; }
@@ -82,10 +83,11 @@ global with sharing class Account_Visit_Controller {
                     FROM Account 
                     WHERE Id = :accId];
         */
-        this.a = [SELECT Id, Name, Actionable_Segment__c, Call_Card_Objectives__c, Objectives__c, Channel__c, Store_Type__c, Market__r.Country__c, Market__c, Market__r.Name, RecordType.Name, National_Banner_Group__c, 
+        this.a = [SELECT Id, Name, Actionable_Segment__c, Call_Card_Objectives__c, Objectives__c, Channel__c, Store_Type__c, Market__r.Country__c, Market__c, Market__r.Name, RecordType.Name, Banner_Group__c, Banner_Group__r.National_Banner_Group__c, 
                         (SELECT Id, Name FROM Contacts WHERE Is_Active__c = true ORDER BY LastName ASC)
                     FROM Account 
                     WHERE Id = :accId];
+        System.debug('account: ' + this.a);
         serializedAccount = JSON.serialize(a);
 
         surveyRecordTypeName = a.Market__r.Name;
@@ -114,6 +116,8 @@ global with sharing class Account_Visit_Controller {
         ccRecordTypeName = 'Call Card - ' + a.Market__r.Name;
         if (a.Market__r.Name == 'Poland') {
             ccRecordTypeName = 'PL - CallCard';
+        } else if (a.RecordType.Name == 'USA - Outlets') {
+            ccRecordTypeName = 'Call Card - US';
         }
 
         Map<String, RecordTypeInfo> rtList = CallCard__c.SObjectType.getDescribe().getRecordTypeInfosByName();
@@ -134,7 +138,7 @@ global with sharing class Account_Visit_Controller {
             }
         }
         
-        Market__c thisMarket = [SELECT Can_Upload_Multiple_Items__c, Store_CallCard_Geolocation__c, ImageResizeScalar__c, Show_SalesMaterials_in_Account_Visit__c , Account_Visit_Landing_Page__c, Save_all_KeyTasks_per_AccountVisit__c, Enable_CheckIn_Service__c, Can_Auto_Create_Promotion_from_Activity__c FROM Market__c WHERE Id =: this.a.Market__c][0];
+        Market__c thisMarket = [SELECT Can_Upload_Multiple_Items__c, Store_CallCard_Geolocation__c, ImageResizeScalar__c, Show_SalesMaterials_in_Account_Visit__c , Account_Visit_Landing_Page__c, Save_all_KeyTasks_per_AccountVisit__c, Enable_CheckIn_Service__c, Can_Auto_Create_Promotion_from_Activity__c, Show_Historical_Promotions__c FROM Market__c WHERE Id =: this.a.Market__c][0];
         canUploadMultipleItems = thisMarket.Can_Upload_Multiple_Items__c;        
         defaultLandingPage = thisMarket.Account_Visit_Landing_Page__c;
         saveAllKeyTasks = thisMarket.Save_all_KeyTasks_per_AccountVisit__c;
@@ -144,6 +148,7 @@ global with sharing class Account_Visit_Controller {
         storeCallCardGeolocation  = thisMarket.Store_CallCard_Geolocation__c;
         showSalesMaterials = thisMarket.Show_SalesMaterials_in_Account_Visit__c;
         canAutoCreatePromotionFromActivity = thisMarket.Can_Auto_Create_Promotion_from_Activity__c;
+        showHistoricalPromotions = thisMarket.Show_Historical_Promotions__c == null ? 0 : (Integer)thisMarket.Show_Historical_Promotions__c;
         
         // Bring in overflow menu
         System.debug('Account_Visit' + this.a.Market__c + this.a.Channel__c + this.a.Store_Type__c);
@@ -164,8 +169,8 @@ global with sharing class Account_Visit_Controller {
         //buildTasks(saveAllKeyTasks);
         buildTasks();
         serializedTasks = JSON.serialize(allTasks);
+        Map<String,Schema.RecordTypeInfo> ccRTMap = Schema.SObjectType.CallCard__c.getRecordTypeInfosByName();
         if(a.RecordType.Name == 'USA - Parents Off' || a.RecordType.Name == 'USA - Parents On'){
-            Map<String,Schema.RecordTypeInfo> ccRTMap = Schema.SObjectType.CallCard__c.getRecordTypeInfosByName();
             if(ccRTMap.containsKey('Call Card - US CMG')){
                 CCDCallCardRecordType = ccRTMap.get('Call Card - US CMG').getRecordTypeId();
             }
@@ -238,21 +243,26 @@ global with sharing class Account_Visit_Controller {
         String promoQueryString = 'SELECT Id, Name, Channel__c, Is_Active__c, Promotion_Start_Date__c, Promotion_End_Date__c, RecordTypeId, RecordType.Name, Market__c, Image_Attached__c ';
         if (this.a.Market__r.Name == 'Australia' || this.a.Market__r.Name == 'Czech Republic') {
             orderQueryString += ',Wholesalers__c, Wholesaler_Name__c ';
-            promoQueryString += ',Promotion_Activity_AUD__c, Promotion_Activity_AUD__r.Name ';
         } else {
             orderQueryString += ',Account_Wholesaler_Indirect__c, Wholesaler_Customer_Name__c ';
+        }
+        if (this.a.Market__r.Name == 'Australia') {
+            promoQueryString += ',Promotion_Activity_AUD__c, Promotion_Activity_AUD__r.Name ';
+        } else {
             promoQueryString += ',Promotion_Activity__c,Promotion_Activity__r.Name ';
         }
+
         orderQueryString += ' FROM Order__c WHERE Account__c = \'' + this.a.Id + '\'';
         orderQueryString += ' ORDER BY Order_Date__c DESC';
         
         String promoId = ApexPages.currentPage().getParameters().get('uploadToPromotionId');
-        //if (promoId != null && promoId.length() > 0) {
-        //    promoQueryString += ' FROM Promotion__c WHERE Id =:promoId';
-        //} else {
+        if (showHistoricalPromotions > 0) {
+            promoQueryString += ' FROM Promotion__c WHERE Is_Active__c = true AND Promotion_End_Date__c >= LAST_N_MONTHS:'+showHistoricalPromotions+' AND Account__c = \'' + this.a.Id + '\'';
+        } else {
             promoQueryString += ' FROM Promotion__c WHERE Is_Active__c = true AND Promotion_End_Date__c >= today AND Account__c = \'' + this.a.Id + '\'';
-            promoQueryString += ' ORDER BY Promotion_Start_Date__c DESC';            
-        //}
+
+        }
+        promoQueryString += ' ORDER BY Promotion_Start_Date__c DESC';            
         System.debug('promoQuery: ' + promoQueryString);
         List<Order__c> orders = Database.query(orderQueryString);
         List<PromotionWrapper> orderList = new List<PromotionWrapper>();
@@ -566,8 +576,42 @@ global with sharing class Account_Visit_Controller {
         return tasks;
     }
 
+    /*
     @RemoteAction
-    global static String postToChatter(String groupId, String groupName, String accountName, String promoId, String promoName, String managerId, String linkUrl, String chatterText, String urlPrefix, String contentVersionIdcha) {
+    global static void postAttachmentToChatter(String[] documentIds, String promoId, String promoName) {
+        System.debug('promoId: ' + promoId);
+        System.debug('promoName: ' + promoName);
+        System.debug('documentIds: ' + documentIds);
+        if (documentIds == null || documentIds.size() == 0) { return; }
+
+        FeedItem post = new FeedItem();
+        post.Body = promoName;
+        post.ParentId = promoId;
+        post.Title = promoName;
+        insert post;
+        
+        List<FeedAttachment> feedAttachments = new List<FeedAttachment>();        
+        FeedAttachment attachment;
+        
+        for(String documentId : documentIds) {
+            attachment = new FeedAttachment();
+            attachment.FeedEntityId = post.Id;
+            attachment.RecordId = documentId;
+            //attachment.Title = promoName;
+            attachment.Type = 'CONTENT';
+
+            feedAttachments.add(attachment);
+        }
+
+        if (!feedAttachments.isEmpty()) {
+            insert feedAttachments;
+        }    
+
+    }
+    */
+    
+    @RemoteAction
+    global static String postToChatter(String groupId, String groupName, String accountName, String promoId, String promoName, String managerId, String linkUrl, String chatterText, String urlPrefix, String contentVersionId) {
         ConnectApi.FeedItemInput feedInput = new ConnectApi.FeedItemInput();
         ConnectApi.MentionSegmentInput mentionSegmentInput = new ConnectApi.MentionSegmentInput();
         ConnectApi.MessageBodyInput messageBodyInput = new ConnectApi.MessageBodyInput();
@@ -606,12 +650,30 @@ global with sharing class Account_Visit_Controller {
         feedInput.feedElementType = ConnectApi.FeedElementType.FEEDITEM;
         feedInput.body = messageBodyInput;
         feedInput.subjectId = promoId;
+        //feedInput.subjectId = groupId;
+
+        if (contentVersionId != null && contentVersionId != '') {
+            List<ContentVersion> documents = [SELECT Id, ContentDocumentId FROM ContentVersion WHERE Id=:contentVersionId];
+            String documentId = documents.get(0).ContentDocumentId;
+            
+            ConnectApi.FilesCapabilityInput filesInput = new ConnectApi.FilesCapabilityInput();
+            filesInput.items = new List<ConnectApi.FileIdInput>();
+            ConnectApi.FileIdInput idInput = new ConnectApi.FileIdInput();
+            idInput.id = documentId;
+            filesInput.items.add(idInput);
+
+            ConnectApi.FeedElementCapabilitiesInput feedElementCapabilitiesInput = new ConnectApi.FeedElementCapabilitiesInput();
+            feedElementCapabilitiesInput.files = filesInput;
+
+            feedInput.capabilities = feedElementCapabilitiesInput;
+        }
+
 
         ConnectApi.Comment commentRep = null;
         ConnectApi.FeedElement feed = null;
         try {
             //commentRep = ConnectApi.ChatterFeeds.postCommentToFeedElement(null, feedItemId, commentInput, null);                    
-            feed = ConnectApi.ChatterFeeds.postFeedElement(Network.getNetworkId(), feedInput, null);
+            feed = ConnectApi.ChatterFeeds.postFeedElement(Network.getNetworkId(), feedInput);
         }catch(Exception ex) {
             System.debug('exception raised posting comment to feed item. ' + ex.getMessage());                    
         }
@@ -723,8 +785,12 @@ global with sharing class Account_Visit_Controller {
 			'  AND (Key_Task_Template__r.Actionable_Segment__c = \'' + this.a.Actionable_Segment__c + '\' OR Key_Task_Template__r.Actionable_Segment__c = \'\')' +
 			' AND ((Key_Task_Template__r.Key_Task_Start_Date__c <= today OR Key_Task_Template__r.Key_Task_Start_Date__c = null) ' + 
 			'  AND (Key_Task_Template__r.Key_Task_Date__c >= today OR Key_Task_Template__r.Key_Task_Date__c = null)) ';
-        if (this.a.Market__r.Name == 'Australia' && this.a.National_Banner_Group__c != null) {
-            soql += ' AND (Key_Task_Template__r.National_Banner_Group__c = \'' + this.a.National_Banner_Group__c + '\' OR Key_Task_Template__r.National_Banner_Group__c = null)';
+        if (this.a.Market__r.Name == 'Australia') {
+            if (this.a.Banner_Group__r != null && this.a.Banner_Group__r.National_Banner_Group__c != null) {
+                soql += ' AND (Key_Task_Template__r.National_Banner_Group__c = \'' + this.a.Banner_Group__r.National_Banner_Group__c + '\' OR Key_Task_Template__r.National_Banner_Group__c = null)';
+            } else {
+                soql += ' AND (Key_Task_Template__r.National_Banner_Group__c = \'\'';
+            }
         }
              
         soql += ' ORDER BY CreatedDate DESC';
@@ -743,8 +809,12 @@ global with sharing class Account_Visit_Controller {
             '   AND (Actionable_Segment__c = \'' + this.a.Actionable_Segment__c + '\' OR Actionable_Segment__c = \'\')' +
             '   AND ((Key_Task_Start_Date__c <= today OR Key_Task_Start_Date__c = null) ' +
             '   AND (Key_Task_Date__c >= today OR Key_Task_Date__c = null)) ';
-        if (this.a.Market__r.Name == 'Australia' && this.a.National_Banner_Group__c != null) {
-            soql += ' AND (National_Banner_Group__c = \'' + this.a.National_Banner_Group__c + '\' OR National_Banner_Group__c = null)';
+        if (this.a.Market__r.Name == 'Australia') {
+            if (this.a.Banner_Group__r != null && this.a.Banner_Group__r.National_Banner_Group__c != null) {
+                soql += ' AND (National_Banner_Group__c = \'' + this.a.Banner_Group__r.National_Banner_Group__c + '\' OR National_Banner_Group__c = null)';
+            } else {
+                soql += ' AND National_Banner_Group__c != \'\'';
+            }
         }
         System.debug('templats soql: ' + soql);
 		List<Key_Task_Template__c> l_Templates = Database.query(soql);

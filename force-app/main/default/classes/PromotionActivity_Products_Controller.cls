@@ -117,6 +117,11 @@ System.debug('fieldsetname: ' + fieldSetName);
             delete itemsToDelete;
         }
         
+        for(Promotion_Material_Item__c pmi : itemsToAdd) {
+            pmi.Remaining_Discount__c = pmi.Total_Plan_Discount__c;
+            pmi.Remaining_Volume__c = pmi.Target_Qty__c;
+            pmi.Remaining_Free_Bottle_Qty__c = pmi.Free_Bottle_Quantity__c;
+        }
     	upsert itemsToAdd;   
 
         if (updateActivityTotals) {
@@ -134,19 +139,35 @@ System.debug('fieldsetname: ' + fieldSetName);
 
         upsert itemsToAdd;
 
+        Promotion_Activity__c theActivity = [SELECT Id, Requires_Marketing_Approval__c, SalesProposal_Products_Updated__c, (SELECT Id, Remaining_A_P___c FROM Promotion_Material_Items__r) FROM Promotion_Activity__c WHERE Id =:activityId LIMIT 1];
         Boolean requiresMarketingApproval = false;
+        Map<Id, Decimal> pmis = new Map<Id, Decimal>();
+        Decimal remainingAP = 0;
         for(Promotion_Material_A_P__c ap : itemsToAdd) {
             if (ap.Budget_Type__c == 'Marketing') {
                 requiresMarketingApproval = true;
                 break;
             }
+
+            remainingAP = 0;
+            if (pmis.containsKey(ap.Promotion_Material_Item__c)) {
+                remainingAP = pmis.get(ap.Promotion_Material_Item__c);
+            }
+
+            remainingAP += ap.Quantity__c;
+            pmis.put(ap.Promotion_Material_Item__c, remainingAP);
         }
-        Promotion_Activity__c theActivity = [SELECT Id, Requires_Marketing_Approval__c, SalesProposal_Products_Updated__c FROM Promotion_Activity__c WHERE Id =:activityId LIMIT 1];
+
+        for(Promotion_Material_Item__c pmi : theActivity.Promotion_Material_Items__r) {
+            pmi.Remaining_A_P__c = pmis.get(pmi.Id);
+        }
+        update theActivity.Promotion_Material_A_P_Items__r;
+
         theActivity.Requires_Marketing_Approval__c = requiresMarketingApproval;
         theActivity.Is_Taking_From_Marketing_Budget__c = requiresMarketingApproval;
         theActivity.SalesProposal_Products_Updated__c = updateActivityTotals;
         update theActivity;
-
+        
         return itemsToAdd;
     }
 }

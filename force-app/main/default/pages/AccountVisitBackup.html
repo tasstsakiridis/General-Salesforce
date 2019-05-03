@@ -250,7 +250,6 @@
         var uploadToPromotionId = '{!$CurrentPage.Parameters.uploadToPromotionId}';
         var showProofOfConcept = '{!$CurrentPage.Parameters.showProofOfConcept}';
         var returnToPromotion = '{!$CurrentPage.Parameters.returnToPromotion}';
-        console.log('returnToPromotion', returnToPromotion);
         var myManagersName = "{!myManagersName}";
         var myManagersId = '{!myManagersId}';
         var contactRecordTypeId = '{!contactRecordTypeId}';  
@@ -302,8 +301,7 @@
         var sightAssetsReminderMessage = '{!$Label.SightAssetsReminder}';
         var createNewContactLabel     = '{!$Label.CreateNewContact}';
         var newContactRequiredFieldsMessage = '{!$Label.NewContactRequiredFieldsMessage}';
-        var returnToRecordLabel 	  = '{!$Label.Return_To_Record}';
-        var goToRecordLabel           = '{!$Label.GoToRecord}';
+		var returnToRecordLabel 	  = '{!$Label.Return_To_Record}';
         
         // Custom Permissions
         var hasAccessToCallCard       = '{!$Permission.AccountVisit_CallCard}';
@@ -759,15 +757,9 @@
                 j$.each(promotionList, function(key, value) {
                     if (value.id == uploadToPromotionId) {
                         promotion = value;
-                        console.log('[jump to camera] promotion', promotion);
+                        console.log('promotion', promotion);
 
                         j$('#btnSelectOtherPromotion').attr('disabled', 'disabled');
-                        j$('#fuPromotionActivityContainer').attr('data-promo-id', promotion.id)
-                        								   .attr('data-promo-name', promotion.linkName)
-                            							   .attr('data-promo-channel', promotion.promoChannel)
-                                                           .attr('data-promo-startdate', promotion.startDate)
-                                                           .attr('data-promo-enddate', promotion.endDate);
-                        
                         return false;
                     }
                 });
@@ -1290,14 +1282,12 @@
          * Begin Key Task functions
          */ 
         function buildTasksPage(){
-            let marginClass = (deviceType == 'desktop' ? '' : 'm-o');
-            var taskHTML = '<div class="card ' + marginClass + ' p-0">';
-
             // Create Sales Materials section if market is enabled
-            if (showSalesMaterials == true && allSalesMaterials.length > 0) {
+            if (showSalesMaterials == true) {
                 var materialsHTML = '<div id="SalesMaterialsContainer" class="card mb-3"><div class="card-header p-1"><h5><a class="accordion-toggle collapsed" style="color: inherit;" data-toggle="collapse" href="#collapseSalesMaterials" data-target="#collapseSalesMaterials">{!HTMLENCODE($ObjectType.Sales_Material__c.LabelPlural)}</a>';
 
                 // Build Sales Materials Header/Wrapper
+                if (allSalesMaterials.length > 0) {
                     materialsHTML += '<i class="fas fa-chevron-down float-right" style="margin-right: 10px;" /></h3></div>';
                 materialsHTML += '<div id="collapseSalesMaterials" class="card-body panel-collapse collapse"><ul class="list-group">';
                 j$.each(allSalesMaterials, function() {
@@ -1312,10 +1302,18 @@
                     }
                     materialsHTML += '</li>';
                 });
-                materialsHTML += '</ul></div></div>';
+                materialsHTML += '</ul></div>';
+                } else {
+                    materialsHTML += '<i class="fas fa-chevron-right float-right" style="margin-right: 10px;" /></h3></div>';
+                    materialsHTML += '<div id="collapseSalesMaterials" class="card-body panel-collapse collapse"><ul class="list-group"><li class="list-group-item text-center">{!$Label.No_Sales_Materials}</li></ul></div>';
+                }
+                materialsHTML += '</div>';
 
                 j$('#tasksContent').append(materialsHTML);
-                j$('#collapseSalesMaterials').collapse('show');
+                // Show panel if has content
+                if(allSalesMaterials.length > 0) {
+                    j$('#collapseSalesMaterials').collapse('show');
+                }
                 j$('#collapseSalesMaterials').on('show.bs.collapse', function() {
                     j$('#SalesMaterialsContainer i.fa-chevron-right').removeClass('fa-chevron-right')
                                                                         .addClass('fa-chevron-down');
@@ -1325,12 +1323,17 @@
                                                                         .addClass('fa-chevron-right');
                 });
 
-                taskHTML += '<div class="card-header p-1"><h5>{!HTMLENCODE($ObjectType.Key_Task__c.LabelPlural)}</h5></div>';
             }
 
             // build keys tasks
             allTasks = [{!serializedTasks}][0];
             
+            let marginClass = (deviceType == 'desktop' ? '' : 'm-o');
+            var taskHTML = '<div class="card ' + marginClass + ' p-0">';
+            console.log('allSalesMaterials', allSalesMaterials.length);
+            if (showSalesMaterials) {
+                taskHTML += '<div class="card-header p-1"><h5>{!$ObjectType.Key_Task__c.LabelPlural}</h3></div>';
+            }
             if (allTasks.length > 0) {
                 
                 //console.log('allTasks', allTasks);
@@ -1729,8 +1732,7 @@
         // promotions drop down in the file upload page
         */
         function parsePromotions(promotions) {
-            console.log('[parsePromotions] promotions', promotions);
-            console.log('[parsePromotions] promotionList', promotionList);
+            console.log('promotions', promotions);
             showCompletedMessage = false;
             if (promotionList.length > 0) { 
                 j$('#noPromotionsMessage').hide(); 
@@ -1781,7 +1783,9 @@
                 if (deviceType == 'phone') {
                     lHTML += '<div class="list-group-item list-group-item-action promotionRows m-0 p-0"><div class="card" id="' + promo.id + '">';
                     lHTML += '<div class="card-header">';
-                    lHTML += '<i id="' + promo.id + '" class="fas fa-2x gray mr-2 promotion fa-edit" title="{!$Label.Edit}" object="promotion"></i>';
+                    if (canEditOrders) { 
+                        lHTML += '<i id="' + promo.id + '" class="fas fa-2x gray mr-2 promotion fa-edit" title="{!$Label.Edit}" object="promotion"></i>';
+                    }
                     if (inSF1) {
                         lHTML += '<a href="javascript:sforce.one.navigateToURL(\'' + url + '\')">' + promo.linkName + '</a>';
                     } else {
@@ -1916,9 +1920,7 @@
 
         function returnToThePromotion() {
             try{
-                var promotionId = j$('#fuPromotionActivityContainer').attr('data-promo-id');
-
-                var newURL = urlPrefix+'/apex/Promotion?id='+promotionId+'&accountId='+account.Id;
+                var newURL = urlPrefix+'/apex/Promotion?id='+uploadToPromotionId+'&accountId='+account.Id;
                 if (inSF1) {
                     sforce.one.navigateToURL(newURL);
                 } else {
@@ -1990,11 +1992,10 @@
             } else {
                 j$('.browseButton').removeAttr('multiple');
             }
-            console.log('returnToPromotion', returnToPromotion);
-            //if (uploadToPromotionId != null && uploadToPromotionId != '') {
-                goToRecordLabel = goToRecordLabel.replace('{0}', promotionLabel);
-                j$('.returnToPromotion').text(goToRecordLabel)
-            //}
+            if (returnToPromotion == "true") {
+                returnToRecordLabel = returnToRecordLabel.replace('{0}', promotionLabel);
+                j$('.returnToPromotion').text(returnToRecordLabel)
+            }
             j$('#fuChatterGroupsDropDownButton').click(function(){
                 var pm = j$('#fuChatterGroupsDropDownButton');
                 var pmpos = pm.position();
@@ -2055,7 +2056,7 @@
             
             j$('#fuPromotionActivityList .promotionListContent').remove();
 
-            j$('#fuPromotionActivityContainer').attr('data-promo-id', '');
+            j$('#fuPromotionActivityContainer').attr('data-promotion-id', '');
             j$('#fileUploadContainer').hide();
             j$('#btnUploadAndAttachBadge').text('0');
             j$('#btnUploadAndAttach').hide();
@@ -2063,7 +2064,6 @@
             j$('#btnRestartUploadProcess').hide();
             j$('#fuPromotionActivityPromotionsListPanel').hide();
             j$('#fuPromotionActivityPromotionListTitle').text('');
-            j$('#ChatterContainer').hide();   
             j$('#fuSelectedPromotion').hide();
             j$('#btnSelectOtherPromotion').removeClass('disabled');
             j$('#uploadCompletedDiv').fadeOut(500, function() {
@@ -2219,7 +2219,7 @@
                             endDate: promotionEndDate,
                             linkUrl: promotionLinkUrl
                         };
-                        j$('#fuPromotionActivityContainer').attr('data-promo-id', promotionId);
+                        j$('#fuPromotionActivityContainer').attr('data-promotion-id', promotionId);
                         moveToUploadPage();
                     } else {
                         j$(this).text('{!$Label.Select}');
@@ -2276,7 +2276,7 @@
                 selector = '#tfuSelectedPromotionBody';
             }
             j$(selector).empty();
-            j$('#fuPromotionActivityContainer').attr('data-promo-id', '');
+            j$('#fuPromotionActivityContainer').attr('data-promotion-id', '');
 
         }
         function goBackAndSelectOtherPromotion() {
@@ -2318,11 +2318,10 @@
             
         }
         function postToChatter() {
-            console.log('[postToChatter] promotion', promotion);
             var chatterText = j$('#taChatterPost').val();
             var mentionManager = j$('#cbMentionManager').prop('checked');
-			var promotionId = j$('#fuPromotionActivityContainer').attr('data-promo-id');
-			var promotionName = j$('#fuPromotionActivityContainer').attr('data-promo-name');            
+            //var promoId = j$('#fuPromotionMenuText').attr('data-promo-id');
+            //var promoName = j$('#fuPromotionMenuText').val();
             var chatterGroupId = j$('#chatterGroupText').attr('data-group-id');
             var chatterGroupName = j$('#chatterGroupText').val();
             if (chatterGroupId == null) { chatterGroupId = ''; chatterGroupName = ''; }
@@ -2333,19 +2332,9 @@
             var managerId = myManagersId;
             if (mentionManager == false) { managerId = ''; }
 
-            console.log('[postToChatter] chatterGroupId', chatterGroupId);
-            console.log('[postToChatter] chatterGroupName', chatterGroupName);
-            console.log('[postToChatter] accountName', account.Name);
-            console.log('[postToChatter] promotionId', promotionId);
-            console.log('[postToChatter] promotionName', promotionName);
-            console.log('[postToChatter] managerId', managerId);
-            console.log('[postToChatter] linkUrl', linkUrl);
-            console.log('[postToChatter] chatterText', chatterText);
-            console.log('[postToChatter] urlPrefix', urlPrefix);
-            console.log('[postToChatter] feedItemid', feedItemId);
             Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.Account_Visit_Controller.postToChatter}',
-                chatterGroupId, chatterGroupName, account.Name, promotionId, promotionName, managerId, linkUrl, chatterText, urlPrefix, feedItemId,
+                chatterGroupId, chatterGroupName, account.Name, promotion.id, promotion.name, managerId, linkUrl, chatterText, urlPrefix, feedItemId,
                 function(result, event) {
                     j$('#busyDialog').modal('hide');
                     console.log('[posttochatter1] status: ' + event.status + ', message: ' + event.message);
@@ -2378,11 +2367,8 @@
             }
         }
         function moveToChatterPage() {
-            console.log('[moveToChatterPage] promotion', promotion);
-            console.log('[moveToChatterPage] promo.id', j$('#fuPromotionActivityContainer').attr('data-promo-id'));
-            var promoName = j$('#fuPromotionActivityContainer').attr('data-promo-name');
-            console.log('[moveToChatterPage] promoName', promoName);
-            j$('#sHashtagPromotion').text('#' + promoName);
+            //var promoName = j$('#fuPromotionMenuText').val();
+            j$('#sHashtagPromotion').text('#' + promotion.name);
             j$('#taChatterPost').val('');
             j$('#cbMentionManager').prop('checked', true);
             j$('#chatterGroupText').val('')
@@ -2402,7 +2388,7 @@
         function moveToUploadPage() {
             //j$('#fuPromotionActivityContainer').fadeOut("slow");
 
-            console.log('[moveToUploadPage] promotion', promotion);
+            console.log('promotion', promotion);
             /*
             var selectedPromo = j$('#fuPromotionMenuText');
             var promoId = selectedPromo.attr('data-promo-id');
@@ -2421,8 +2407,6 @@
                     'startDate': container.attr('data-promo-startdate'),
                     'endDate': container.attr('data-promo-enddate')
                 };
-
-                console.log('[moveToUploadPage] promotion', promotion);
 
             }
             var selector = '#fuSelectedPromotionContainer';
@@ -2584,7 +2568,7 @@
             if (attachments.length > 0) {
                 console.log(attachments);
                 try {
-                	sforce.connection.create(attachments, {onSuccess: attachmentSuccess, onFailure: attachmentFailed});
+                sforce.connection.create(attachments, {onSuccess: attachmentSuccess, onFailure: attachmentFailed});
                 } catch(ex) {
                     console.log('exception trying to create attachments', ex);
                 }
@@ -2708,8 +2692,6 @@
             if (result[0].getBoolean('success') == true) {                
                 console.log('[attachmentsuccess] result:', result); 
                 var promoId = j$('#fuPromotionActivityContainer').attr('data-promo-id');
-                let promoName = j$('#fuPromotionActivityContainer').attr('data-promo-name');
-                console.log('[attachmentsuccess] promoId', promoId);
                 
                 var tempResult = result;
                 delete tempResult[0].success;
@@ -2737,34 +2719,9 @@
                 j$('#btnUploadAndAttachBadge').text('0').hide();
                 j$('#btnMoveToChatter').show();
                 j$('#btnRestartUploadProcess').show();
-                //if (uploadToPromotionId != null && uploadToPromotionId != '') {
+                if (returnToPromotion == 'true') {
                     j$('.returnToPromotion').show();
-                //}
-
-                /*
-                var documentIds = [];
-                for(var i = 0; i < result.length; i++) {
-                    documentIds.push(result[i].id);
                 }
-
-                Visualforce.remoting.Manager.invokeAction(
-                    '{!$RemoteAction.Account_Visit_Controller.postAttachmentToChatter}',
-                    documentIds, promoId, promoName,
-                    function(result, event) {
-                        console.log('[postattachmentochatter] status: ' + event.status + ', message: ' + event.message);
-                        console.log('[postattacmenttochatter] result: ' + result);
-                        if (event.status) {
-                        } else if (event.type === 'exception') {
-                            console.log('postattachmenttochatter raised exception. ' + event.message);
-                            alert(event.message);
-                        } else {
-                            console.log(event.message);
-                        }
-                        
-                    },
-                    { escape:false }
-                );
-                */
             } else {
 	            j$('#btnSelectOtherPromotion').removeClass('disabled').show();
 
@@ -3164,8 +3121,8 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="orderRTModalLabel">{!$Label.Select_a_Record_Type}</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="orderRTModalLabel">{!$Label.Select_a_Record_Type}</h4>
                     </div>
                     <div class="modal-body">
                         <div id="orderRecordTypesList">
@@ -3183,8 +3140,8 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="promoRTModalLabel">{!$Label.Select_a_Record_Type}</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="promoRTModalLabel">{!$Label.Select_a_Record_Type}</h4>
                     </div>
                     <div class="modal-body">
                         <div id="promotionRecordTypesList">
@@ -3408,7 +3365,7 @@
                                 
                                 <div id="fileUploadActionsContainer">
                                     <button id="btnUploadAndAttach" type="button" class="btn btn-primary btn-lg center-block">
-                                        <span class="glyphicon glyphicon-upload" aria-hidden="true"></span>&nbsp;&nbsp;{!$Label.Upload}&nbsp;&nbsp;<span id="btnUploadAndAttachBadge" class="badge">0</span>
+                                        <span class="glyphicon glyphicon-upload" aria-hidden="true"></span>&nbsp;&nbsp;{!$Label.Upload_and_Post}&nbsp;&nbsp;<span id="btnUploadAndAttachBadge" class="badge">0</span>
                                     </button>
                                     <div class="center-block">
                                         
@@ -3420,15 +3377,14 @@
                                     </button>
                                 
                                     <button type="button" class="btn btn-primary btn-lg returnToPromotion" onclick="returnToThePromotion()">
-                                        {!$Label.GoToRecord}
+                                        {!$Label.Return_To_Record}
                                     </button>
                                     </div>
                                 </div>
                             </div>    
                             <div id="ChatterContainer" class="card m-3">
                                 <div class="card-header">
-                                    <span style="font-size: 1.75em;">{!$Label.LABS_SF_Chatter}</span>
-                                    <button type="button" id="btnChatterGroupRestartUpload" class="btn btn-secondary float-right" onclick="initialiseCameraPage()">{!$Label.Go_Back_Select_Other_Promotion}</button>
+                                    <h3>{!$Label.LABS_SF_Chatter}</h3>
                                 </div>
                                 
                                 <div id="ChatterDetailsContainer" class="card-body">
@@ -3489,7 +3445,7 @@
                                             {!$Label.View_Chatter_Post}
                                         </button>
                                         <button type="button" class="btn btn-primary btn-lg col-lg-4 col-md-4 col-sm-12 col-xs-12 returnToPromotion" style="margin: 10px;" onclick="returnToThePromotion()">
-                                            {!$Label.GoToRecord}
+                                            {!$Label.Return_To_Record}
                                         </button>
                                         <i class="fa fa-2x gray col-lg-2 col-md-2 text-center tab" title="spacer"></i>                                
                                     </div>
@@ -3542,4 +3498,4 @@
             </nav>
         </div>
     </div>    
-</apex:page>
+</apex:page>    

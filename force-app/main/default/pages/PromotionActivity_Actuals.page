@@ -1,0 +1,819 @@
+<apex:page title="Sales Proposal Actuals" standardController="Promotion_Activity__c" extensions="SalesProposal_Actuals_Controller" tabStyle="Promotion_Activity__c" sidebar="false" docType="html-5.0" standardStylesheets="false" showHeader="false">
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="" />
+        <meta name="author" content="" />
+        
+        <script src='https://ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js'></script>        
+        <script src="https://www.b-fonline.com/salesforceresources/SFA/js/fastclick/lib/fastclick.js"></script>
+        <script src="https://www.b-fonline.com/salesforceresources/SFA/lib/tokenize/Tokenize-2.4/jquery.tokenize.js"></script>
+        
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SFA/css/font-awesome.min.css" />
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SFA/css/accountSurvey.css" />
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SFA/lib/tokenize/Tokenize-2.4/jquery.tokenize.css" />
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/BootstrapModernPages/css/bootstrap.min.css" />
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/BootstrapModernPages/css/bootstrap-theme.min.css" />
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SLDS091/assets/styles/salesforce-lightning-design-system-ltng.min.css" />
+
+    </head>
+    <style>
+        input.slds-input-clone {
+            background-color: white;
+            color: #16325c;
+            border: 1px solid #d8dde6;
+            border-radius: 0.25rem;
+            -webkit-transition: border 0.1s linear, background-color 0.1s linear;
+            transition: border 0.1s linear, background-color 0.1s linear;
+            display: inline-block;
+            padding: 0 1rem 0 0.75rem;
+            line-height: 2.125rem;
+            min-height: calc(2.125rem + 2px); 
+            margin-bottom: 0.5rem;
+        }
+        .productName {
+            min-width: 25%;
+        }
+        .sf-font {
+            font: 100%/1.5 "Salesforce Sans", Arial, sans-serif;
+        }
+        .jplist-pagination-info{
+            margin: 15px 15px 0 40px;
+        }
+        
+        .jplist-items-per-page{
+            margin: 15px 10px 0 0;
+        }
+        
+        .jplist-pagination{
+            margin: 10px 10px 0 30px;
+        }
+        .jplist-panel {
+            border-style: none;
+        }
+        .jplist-checkbox-dropdown {
+            width: 180px;
+            margin: 20px 0 0 10px;
+        }
+        .jplist-checkbox-dropdown ul {
+            width: 400px;
+        }
+        i.fa-plus:hover {
+            cursor: pointer;
+        }
+        /*
+        .center-block{
+            width: 100%; 
+            margin: 20px auto;
+            background: #fff;               
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        */
+        .disabled {
+            cursor: not-allowed;
+            pointer-events: none;
+            disabled: true;
+            background-color: 'transparent';
+            box-shadow: none;
+            -webkit-box-shadow: none;
+        }
+        .input-group-label {
+            text-align: right;
+            width: 140px;
+        }
+    </style>            
+    <script src="{!urlPrefix}/soap/ajax/35.0/connection.js" type="text/javascript"></script>
+    <script>
+        var j$ = jQuery.noConflict();
+
+        //Initialize sforce Connection for MetaDataApi calls
+        sforce.connection.sessionId = '{!$Api.Session_ID}';
+        var urlPrefix = '{!urlPrefix}';
+        if(urlPrefix == '/sales'){
+            UserContext.siteUrlPrefix = urlPrefix;
+            sforce.connection.serverUrl = urlPrefix + sforce.connection.serverUrl;
+        }
+        
+        var filterRowsPerPage = 10;
+        
+        var thisProposal = [{!serializedProposal}][0];
+        var theActuals = [{!serializedItems}][0];
+        var returnURL = "{!URLFOR($Action.Promotion_Activity__c.View, thisProposal.Id)}";
+        var marketName = "{!marketName}";
+        var deviceType;
+        var redirect = false;
+        var inSF1 = false;
+        var isDesktop = true;
+        var dept = "{!$CurrentPage.Parameters.dept}";
+        var actualDateErrorMessage = "{!$Label.ActualDateErrorMessage}";        
+        var picklistValuesMap = {};
+        var obj_PMI = [{!serializedPMIActualsDescribe}][0];
+console.log('obj_PMI', obj_PMI);
+        var monthNames = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
+        var monthLabels = ['{!$Label.JANUARY}','{!$Label.FEBRUARY}','{!$Label.MARCH}','{!$Label.APRIL}','{!$Label.MAY}','{!$Label.JUNE}','{!$Label.JULY}','{!$Label.AUGUST}','{!$Label.SEPTEMBER}','{!$Label.OCTOBER}','{!$Label.NOVEMBER}','{!$Label.DECEMBER}'];
+        
+        //map to create corresponding HTML input type for Salesforce field type
+        var inputTypeMap = {
+            'boolean':  'checkbox',
+            'double':   'number',
+            'currency': 'number',
+            'picklist': 'select',
+            'reference':'link',
+            'date':     'date',
+            'percent':  'number',
+            'textarea': 'text',
+            'string':   'text'
+        }
+
+        j$(document).ready(function() {
+            j$(function() {
+                FastClick.attach(document.body);
+            });
+            
+            if( (typeof sforce != 'undefined') && (sforce.one != null) ) {
+                inSF1 = true;
+            }else{
+                inSF1 = false;
+            }
+                        
+            //get window width to determine whether or not to use tokenize, 768 = tablet
+            //sniff user agent to figure out if it's an iPad because screen resolution varies
+            var IS_IPAD = navigator.userAgent.match(/iPad/i) != null;
+            if(j$(window).width() >= 992 && !IS_IPAD){
+                deviceType = 'desktop';
+            }else{
+                j$('#expandButton').show();             //for cards layout
+                if(j$(window).width() >= 768){
+                    deviceType = 'tablet';
+                }else{
+                    deviceType = 'phone';
+                }
+            }
+            isDesktop = deviceType == 'desktop';
+            
+            buildHeaderSection();
+            
+            j$.when(getPicklistValuesForRecordType('PMI_Actual__c')).then(buildCollapsibleSections());            
+           
+            bindEvents(isDesktop);
+        });
+        
+        function bindEvents(buildTokenize){       
+            console.log('[bindEvents]');
+            j$('.save').click(function() {
+                //redirect to returnURL on click of save and close
+                if(j$(this).hasClass('saveAndClose')){
+                    redirect = true;
+                }
+                //check for connection, if offline display modal warning
+                //alert(navigator.onLine);
+                if(navigator.onLine){
+                    j$('.save').button('loading');
+                    buildItemsToSave();
+                }else{
+                    j$('#offlineModal').modal();
+                }                           
+            });
+            j$('.cancel').click(function(){
+                if(inSF1) {
+                    sforce.one.back(false);
+                }else{
+                    window.location.href = returnURL;
+                }
+            });
+            
+            j$('div.rowHeader').off("click");
+            j$('div.rowHeader').click(function(){
+                if(j$(this).siblings('.fields').hasClass('expanded')){
+                    j$(this).removeClass('headerShadow').siblings('.fields').removeClass('expanded fieldsShadow').slideUp();
+                }else{
+                    j$(this).addClass('headerShadow').siblings('.fields').addClass('expanded fieldsShadow').slideDown();
+                }
+            });
+            
+        }
+        
+        function buildHeaderSection(){
+            //build header info 
+            //always add account link
+            var accountNavUrl = urlPrefix + '\\' + thisPromotion.Account__c;
+            var promotionNavUrl = urlPrefix + '\\' + thisPromotion.Id;
+            
+            headerHTML = thisPromotion.AccountName__c + ' - ' + thisPromotion.Name + ' (' + thisPromotion.RecordType.Name + ')';
+            j$('#promotionHeader').html(headerHTML);            
+
+        }
+        
+        function buildCollapsibleSections() {
+            var ctr = 0;
+            var collapsedStyle = 'in';
+            var sectionId = ''; 
+            var sectionHTML = '<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">';
+            j$.each(theActuals, function(key, value) {
+                if (ctr > 0) { collapsedStyle = ''; }
+                sectionId = 'Section' + value.id;
+                // PMI Actuals
+                sectionHTML += '<div class="panel panel-default">';
+                sectionHTML += '<div class="panel-heading" role="tab" id="' + value.id + '">';
+                sectionHTML += '<h4 class="panel-title">';
+                sectionHTML += '<a role="button" data-toggle="collapse" data-target="#' + sectionId + '" data-parent="#accordion" aria-expanded="true" aria-controls="' + sectionId + '">' + value.productName + '</a>';
+                sectionHTML += '</h4>';
+                sectionHTML += '</div>';
+                sectionHTML += '<div id="' + sectionId + '" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="' + value.id + '">';
+                sectionHTML += '<div class="panel-body" id="' + sectionId + 'Body">';
+                sectionHTML += buildPanelBodyForItem(value);
+                sectionHTML += '</div>'; // End-Div panel-body section
+                sectionHTML += '</div>'; // End-Div collapsible section
+                sectionHTML += '</div>'; // End-Div panel-heading
+                sectionHTML += '</div>'; // End-Div panel
+                
+                ctr++;
+            });
+            sectionHTML += '</div>';
+            
+            j$('div#content').append(sectionHTML); 
+            if(marketName == 'China') {
+                j$("input[field='Act_Date__c']").change(function() {
+                    var thisVal = j$(this).val();
+                    if (thisVal != '') {
+                        var d = new Date(thisVal);
+                        if (d.getTime() < today.getTime()) {
+                            // error
+                            alert(actualDateErrorMessage);
+                            j$(this).val('');
+                        }
+                    }
+                });
+            }
+        }
+             
+        function buildPanelBodyForItem(pmi) {
+            var panelBodyHTML = '';
+            var periodBodyHTML = '';
+            var pma;
+            var startDate = new Date(thisPromotion.Promotion_Start_Date__c);
+            var periodId = '';
+            j$.each(pmi.periods, function(key, value) {                
+                periodId = 'Section-' + pmi.Id + '-Period-' + value.id;
+                sectionHTML += '<div class="panel panel-default">';
+                sectionHTML += '<div class="panel-heading" role="tab" id="' + periodId + '">';
+                sectionHTML += '<h4 class="panel-title">';
+                sectionHTML += '<a role="button" data-toggle="collapse" data-target="#' + periodId + '" data-parent="#accordion" aria-expanded="true" aria-controls="' + periodId + '">' + value.month + ', ' + value.year + '</a>';
+                sectionHTML += '</h4>';
+                sectionHTML += '</div>';
+                sectionHTML += '<div id="' + periodId + '" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="' + periodId + '">';
+                sectionHTML += '<div class="panel-body" id="' + periodId + 'Body">';
+                
+                if (deviceType == 'desktop') {
+                    var tableId = 'pmiTable' + periodId;
+                    panelBodyHTML = '<div class="table-responsive col-md-12"><table id="' + tableId + '" class="pmiTable table table-striped"><thead class="headers">';
+                    panelBodyHTML += '<th class="headerRow" data-column-id="period" scope="col" colspan="2"><div class="text-left">{!$ObjectType.PMI_Actual__c.Fields.Period__c.Label}</div></th>';
+                    j$.each(pmaFS, function(key, value) {
+                        panelBodyHTML += '<th class="headerRow" data-column-id="' + value.fieldPath + '" scope="col" colspan="1"><div>' + value.label + '</div></th>';
+                    });
+                    panelBodyHTML += '</thead><tbody class="tableBody">';
+
+                    j$.each(value.accounts, function(key, value) {
+                        var selector = (deviceType == 'desktop' ? 'tr' : 'div');
+                        var rowId = "pma." + value.id;
+                        var pmaHTML = '';
+                        if (deviceType == 'desktop') {
+                            pmaHTML = '<tr id="' + rowId + '" data-pma-id="' + value.id + '" >';
+                            pmaHTML += '<td class="periodName" colspan="2"><span class="text-left">' + value.accountName + '</span></td>';
+                        } else {
+                            pmaHTML += '<div class="row" id="' + rowId + '" data-pma-id="' + value.id + '" >';
+                            pmaHTML += '<div class="rowHeader headerShadow"><span class="periodName lead">' + value.accountName + '</span></div>';
+                            pmaHTML += '<div class="fields mandatory fieldsShadow">';
+                            
+                        }
+                        
+                        var elementTag = 'div';
+                        var section = 'cards';
+                        var cssClass = ' col-xs-12 col-sm-6';
+                        if (deviceType == 'desktop') { 
+                            elementTag = 'td'; 
+                            cssClass = '';
+                            section = 'table';
+                        }
+                        j$.each(pmaFS, function(key, value) {
+                            pmaHTML += '<' + elementTag + ' class="' + value.type + cssClass + '">' + buildInput(value, true, pma, pmi, section) + '</' + elementTag + '>';
+                        });
+                        if (deviceType == 'desktop') {
+                            pmaHTML += '</tr>';
+                        } else {
+                            pmaHTML += '</div></div>';
+                        }
+
+                        panelBodyHTML += pmaHTML;
+
+                    });
+                }
+
+                sectionHTML += '</div>'; // End-Div panel-body section
+                sectionHTML += '</div>'; // End-Div collapsible section
+                sectionHTML += '</div>'; // End-Div panel-heading
+                sectionHTML += '</div>'; // End-Div panel
+            })
+
+
+            j$.each(pmi.periods, function(key, value) {
+                    var newDate, month, year;
+                    j$.each(value.pmaList, function(pmaKey, pma) {
+                        var rowId = "pma." + pmi.Id + "." + pma.Period__c;
+                        var pmaHTML = '';
+                        if (deviceType == 'desktop') {
+                            pmaHTML = '<tr id="' + rowId + '" data-pma-id="' + pma.Id + '" data-pmi-id="' + pmi.Id + '" data-external-key="' + pma.External_Key__c + '" data-period-idx="' + pma.Period__c + '">';
+                            pmaHTML += '<td class="periodName" colspan="2"><span class="text-left">' + pma.Month_Name__c + ' ' + pma.Year__c + '</span></td>';
+                        } else {
+                            pmaHTML += '<div class="row" id="' + rowId + '" data-pma-id="' + pma.Id + '" data-pmi-id="' + pmi.Id + '" data-external-key="' + pma.External_Key__c + '" data-period-idx="' + pma.Period__c + '">';
+                            pmaHTML += '<div class="rowHeader headerShadow"><span class="periodName lead">' + pma.Month_Name__c + ' ' + pma.Year__c + '</span></div>';
+                            pmaHTML += '<div class="fields mandatory fieldsShadow">';
+                            
+                        }
+                        var elementTag = 'div';
+                        var section = 'cards';
+                        var cssClass = ' col-xs-12 col-sm-6';
+                        if (deviceType == 'desktop') { 
+                            elementTag = 'td'; 
+                            cssClass = '';
+                            section = 'table';
+                        }
+                        j$.each(pmaFS, function(key, value) {
+                            pmaHTML += '<' + elementTag + ' class="' + value.type + cssClass + '">' + buildInput(value, true, pma, pmi, section) + '</' + elementTag + '>';
+                        });
+                        if (deviceType == 'desktop') {
+                            pmaHTML += '</tr>';
+                        } else {
+                            pmaHTML += '</div></div>';
+                        }
+
+                        panelBodyHTML += pmaHTML;
+                    });                
+            });
+            
+            if (deviceType == 'desktop') {
+                panelBodyHTML += '</tbody></table></div>';
+                //j$('div#content').append(headerHTML);
+            }
+            
+            return panelBodyHTML;
+        }
+        //build out the actual input tags for each type
+        function buildInput(obj, isNewRow, pma, pmi, section){
+            var html = '';
+            var value = '';
+            if (pma != null) {
+                value = pma[obj.fieldPath];
+            }
+            var objectName = 'PMI_Actual__c';
+
+            if(value == undefined){
+                value = '';
+            }
+            if (section == 'cards') {
+                html += '<label for=pma-"' + pma.Id + '-' + pma.Period__c + '" class="fieldLabel">' + obj.label + '</label>';
+            }
+            var isReadOnly = false;
+            var pos = readOnlyFields.indexOf(obj.fieldPath);            
+            if (pos >= 0) {
+                isReadOnly = true;
+            } else {
+                console.log('[buildInput] checking objPMI ' + obj.fieldPath, obj_PMI.fields[obj.fieldPath]);
+                if (obj_PMI && obj_PMI.fields && obj_PMI.fields[obj.fieldPath]) {
+                    isReadOnly = (obj_PMI.fields[obj.fieldPath].isUpdateable == false);
+                }
+            }
+            
+            //build the correct HTML input type, read only in Account Info section if not required on field set
+            switch(inputTypeMap[obj.type]){                             
+                case 'number':
+                    if (isReadOnly == true) {
+                        html += '<span style="margin-bottom: 0.5rem;">'+value+'</span>';
+                    } else {
+                        html += '<input id="'+obj.fieldPath+pma.Id+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" step="any" value="'+value+'" class="fieldInput slds-input" ' + (isReadOnly ? 'disabled' : '') + ' />';
+                    }
+                    break;
+                case 'select':
+                    if(isReadOnly == true){
+                        html += '<span style="margin-bottom: 0.5rem;">'+value+'</span>';
+                    }else{
+                        html += '<select id="'+obj.fieldPath+'-'+pma.Id+'" field="'+obj.fieldPath+'" class="fieldInput slds-select  "><option value=""></option>';
+                        var options = getSelectOptions(obj.fieldPath, objectName);
+                        if (options != null) {
+                            for(var i=0;i<options.length;i++){
+                                if(value == options[i]){
+                                    html+= '<option value="'+options[i]+'" selected>'+options[i]+'</option>';
+                                }else{
+                                    html+= '<option value="'+options[i]+'">'+options[i]+'</option>';
+                                }
+                            }
+                        }
+                        html += '</select>';
+                    }
+                    break;
+                case 'checkbox':
+                    if(isReadOnly == true){
+                        html += '<input id="'+obj.fieldPath+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" disabled="disabled" class="fieldInput cmn-toggle cmn-toggle-round-flat"/>';
+                        html += '<label for="'+obj.fieldPath+'" class="'+section+'Checkbox"></label>';
+                    }else{
+                        if(value == true){
+                            html += '<input id="'+obj.fieldPath+pma.Id+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" checked="checked" class="fieldInput cmn-toggle cmn-toggle-round-flat"/>';
+                        }else{
+                            html += '<input id="'+obj.fieldPath+pma.Id+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" class="fieldInput btn cmn-toggle cmn-toggle-round-flat"/>';
+                        }
+                        html += '<label for="'+obj.fieldPath+pma.Id+'" class="'+section+'Checkbox"></label>';
+                    }                    
+                    break;
+                case 'link':
+                    
+                    var relationshipName = obj.fieldPath.replace('__c', '__r');
+                    var infoField = eval("pmiList." + relationshipName);
+                    var relatedValue = '';
+                    if (infoField != null && infoField != undefined) {
+                        relatedValue = infoField.Name;
+                    }
+                    var lookupField;
+                    for(var i = 0; i < relationships.length; i++) {
+                        if (relationships[i].name == obj.fieldPath) {
+                            lookupField = relationships[i];
+                            break;
+                        }
+                    }
+                                        
+                    if (lookupField) {                            
+                        html += '<div id="' + obj.fieldPath + '">';
+
+                        $Lightning.use("c:CustomLookup", function() {
+                            $Lightning.createComponent(
+                                "c:lookupComponent",
+                                { searchString: relatedValue, recordId: value, label:obj.fieldPath, pluralLabel: '', sObjectAPIName: lookupField.objectName, filterClause: lookupField.filter, listIconSVGPath:"/resource/SLDS091/assets/icons/standard-sprite/svg/symbols.svg#account", listIconClass:"slds-icon-standard-account"},
+                                obj.fieldPath,
+                                function(cmp) {
+                                }
+                            );
+                        });
+                    }
+                    break;
+                case 'date':
+                    if (isReadOnly == true) {
+                        html += '<span style="margin-bottom: 0.5rem;">'+value+'</span>';
+                    } else {
+                        html += '<input id="'+obj.fieldPath+pma.Id+'" field="'+obj.fieldPath+'" class="'+inputTypeMap[obj.type]+'Input slds-input-clone" type="'+inputTypeMap[obj.type]+'" value="'+value+'" ' + (isReadOnly == true ? 'disabled' : '') + ' />';
+                    }
+                    break;
+                default:
+                    if (obj.type == 'textarea') {
+                        html += '<textarea id="'+obj.fieldPath+pma.Id+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" value="'+value+'" class="fieldInput slds-textarea" row="4" ' + (isReadOnly == true ? 'disabled' : '') + '/>';
+                    } else {
+                        html += '<input id="'+obj.fieldPath+pma.Id+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" value="'+value+'" class="fieldInput slds-input" ' + (isReadOnly == true ? 'disabled' : '') + '/>';
+                    }
+            } 
+            return html;               
+        }
+        
+        function buildPanelBodyForItem_OnlyActuals(pmi) {
+            var panelBodyHTML = '';
+            var pma;
+            var startDate = new Date(thisPromotion.Promotion_Start_Date__c);
+            j$.each(pmaList, function(key, value) {
+                if (value.pmiId == pmi.Id) {
+                    var newDate, month, year;
+                    j$.each(value.pmaList, function(pmaKey, pma) {
+                        newDate = new Date();
+                        newDate.setMonth(startDate.getMonth() + pma.Period__c);
+                        month = monthLabels[newDate.getMonth()];
+                        year = newDate.getFullYear();
+                        
+                        panelBodyHTML += '<div class="col-xs-12 col-md-4 col-sm-4">';
+                        panelBodyHTML += '<div class="input-group">';
+                        panelBodyHTML += '<span class="input-group-addon input-group-label" id="' + pma.Id + '">' + month + ' ' + year + '</span>';
+                        panelBodyHTML += '<input type="text" step="any" value="' + pma.Actual__c +'" class="form-control pmi-actual" data-pma-id="' + pma.Id + '" data-external-key="' + pma.External_Key__c + '" data-pmi-id="' + pma.Promotion_Material_Item__c + '" data-period-idx="' + pma.Period__c + '" placeholder="Actual" aria-describedby="' + pma.Id + '" />'
+                        panelBodyHTML += '</div>';
+                        panelBodyHTML += '</div>';
+                    });
+                }
+            });
+            
+            return panelBodyHTML;
+        }
+        function buildPMITableHeader() {
+            if (deviceType == 'desktop') {
+                var headerHTML = '<div class="table-responsive col-md-12"><table id="pmiTable" class="pmiTable table table-striped"><thead class="headers">';
+                headerHTML += '<th class="headerRow" data-column-id="selected" scope="col" colspan="1"><div>&nbsp;</div></th>';
+                headerHTML += '<th class="headerRow" data-column-id="product" scope="col" colspan="2"><div class="text-left">{!$ObjectType.Product__c.Label}</div></th>';
+                headerHTML += '<th class="headerRow" data-column-id="planqty" scope="col" colspan="1"><div>{!$ObjectType.Promotion_Material_Item__c.Fields.Plan_Qty__c.Label}</div></th>';
+                headerHTML += '<th class="headerRow" data-column-id="monthlyhighqty" scope="col" colspan="1"><div>{!$ObjectType.Promotion_Material_Item__c.Fields.Monthly_Bottle_High__c.Label}</div></th>';
+                headerHTML += '<th class="headerRow" data-column-id="monthlyhighdiscount" scope="col" colspan="1"><div>{!$ObjectType.Promotion_Material_Item__c.Fields.Per_Bottle_Discount_High__c.Label}</div></th>';
+                headerHTML += '<th class="headerRow" data-column-id="monthlylowqty" scope="col" colspan="1"><div>{!$ObjectType.Promotion_Material_Item__c.Fields.Monthly_Bottle_Low__c.Label}</div></th>';
+                headerHTML += '<th class="headerRow" data-column-id="monthlylowdiscount" scope="col" colspan="1"><div>{!$ObjectType.Promotion_Material_Item__c.Fields.Per_Bottle_Discount_Low__c.Label}</div></th>';            
+                headerHTML += '</thead><tbody class="tableBody"></tbody></table></div>';
+                j$('div#content').append(headerHTML);
+            }
+        }                    
+
+        //get all picklist values for this market's recordtype
+        function getPicklistValuesForRecordType (objectName) {
+            var bigString = [];
+            var masterBigString = [];
+            var recordTypeName = thisPromotion.RecordType.Name;
+
+            var recordTypeMappings = sforce.connection.describeLayout(objectName).recordTypeMappings;
+            console.log('recordtypemappings.length: ' + recordTypeMappings.length);
+            for(var p in recordTypeMappings) {
+                console.log(p + ' : ' + recordTypeMappings[p]);
+            }
+            if(recordTypeMappings.length == undefined){
+                console.log('recordtypemappings.picklistsforrecordtype: ' + recordTypeMappings.picklistsForRecordType.length);
+                if (recordTypeMappings.picklistsForRecordType.length == undefined) {
+                    var field = {
+                        name: recordTypeMappings.picklistsForRecordType.picklistName,
+                        values: returnPickListValue(recordTypeMappings.picklistsForRecordType)
+                    };
+                    bigString.push(field);
+                } else {
+                    for(var x=0; x<recordTypeMappings.picklistsForRecordType.length; x++){
+                       var field = {
+                        name: recordTypeMappings.picklistsForRecordType[x].picklistName,
+                        values: returnPickListValue(recordTypeMappings.picklistsForRecordType[x])                        
+                       };                           
+                       bigString.push(field);
+                   }
+               }
+            }else{
+                for (var i=0; i <recordTypeMappings.length; i++) {
+                    console.log('recordtypemappings.name: ' + recordTypeMappings[i].name);
+                    if (recordTypeMappings[i].name == recordTypeName){
+                        for(var x=0; x<recordTypeMappings[i].picklistsForRecordType.length; x++){
+                            var field = {
+                                name: recordTypeMappings[i].picklistsForRecordType[x].picklistName,
+                                values: returnPickListValue(recordTypeMappings[i].picklistsForRecordType[x])                        
+                            };                          
+                            bigString.push(field);
+                        }
+                    } else if (recordTypeMappings[i].name == 'Master') {
+                        for(var x=0; x<recordTypeMappings[i].picklistsForRecordType.length; x++){
+                            var field = {
+                                name: recordTypeMappings[i].picklistsForRecordType[x].picklistName,
+                                values: returnPickListValue(recordTypeMappings[i].picklistsForRecordType[x])                        
+                            };                          
+                            masterBigString.push(field);
+                        }
+                    }
+                }
+            }
+            
+            console.log('masterbigstring: ' + masterBigString);
+            console.log('bigstring: ' + bigString);
+            if (bigString.length == 0) {
+                picklistValuesMap[objectName] = masterBigString;
+            } else {
+                picklistValuesMap[objectName] = bigString;
+            }
+        }
+    
+        //get the individual values
+        function returnPickListValue (obj) {
+            var values = [];
+            if (obj.picklistValues) {
+                if (obj.picklistValues.label == undefined) {
+                    for (var y=0; y <obj.picklistValues.length; y++) {
+                        values.push(obj.picklistValues[y].label);
+                        }
+                } else {
+                    values.push(obj.picklistValues.label);
+                }
+            }
+            return values;
+        }
+        
+        //toggle loading gif and saved message
+        function loading(val) {
+            if (val) {
+                j$(".loadingImage").fadeIn(100).css("display","inline").css('visibility','visible');
+            }
+            else {
+                j$(".loadingImage").css('visibility', 'hidden');    
+                j$(".savedMessage").fadeIn(100).css("display","inline").delay(3000).fadeOut();    
+            }
+        }
+        //find the picklist values for this field
+        function getSelectOptions(fieldName, objectName){
+            console.log('[getselectoptions] fieldname: ' + fieldName + ', objectName: ' + objectName);
+            console.log('[getselectoptions] # of picklist values for object: ' + picklistValuesMap[objectName].length);
+            for(var i=0;i<picklistValuesMap[objectName].length;i++){
+                if(picklistValuesMap[objectName][i].name == fieldName){
+                    return picklistValuesMap[objectName][i].values;
+                }
+            }
+        }
+        
+        function buildItemsToSave() {
+            var selector = '.panel-body .row';   
+            if (deviceType == 'desktop') {
+                selector = '.pmiTable tbody tr';
+            }
+            var isOKToSave = true;
+            var items = [];
+            var tt = j$(selector);
+            console.log('# of items selected: ' + tt.length);
+            j$(selector).each(function() {
+                var pma = {};
+                var row = j$(this);
+                var pmaId = this.getAttribute('data-pma-id');
+                var pmiId = this.getAttribute('data-pmi-id');
+                var externalKey = this.getAttribute('data-external-key');
+                var period = this.getAttribute('data-period-idx');
+                
+                pma['Id'] = pmaId == '' ? null : pmaId;
+                pma['Promotion_Material_Item__c'] = pmiId;
+                pma['Promotion__c'] = thisPromotion.Id;
+                pma['Period__c'] = period;
+                pma['External_Key__c'] = externalKey;
+                
+                j$(row).find('input,select,textarea').each(function() {
+                    var fld = j$(this);
+                    var fldName = fld.attr('field');
+                    if (fld.is('input')) {
+                        if (fld.is(':checkbox')) {
+                            pma[fldName] = fld.is(':checked');
+                        } else if (fld.prop('type') == 'date') {
+                            if (fld.val() != null && fld.val().length > 0) {
+                               var d = new Date(fld.val());
+                               var dd = ('00' + d.getDate()).slice(-2);
+                               var mm = ('00' + (d.getMonth()+1)).slice(-2);
+                                pma[fldName] = d.getFullYear() + '-' + mm + '-' + dd;
+                            }
+                        } else {
+                            pma[fldName] = fld.val();
+                        }
+                    } else if (fld.is('textarea')) {
+                        pma[fldName] = fld.val();
+                    } else if (fld.is('select')){
+                        pma[fldName] = fld.find(':selected').text();
+                    }
+                }); 
+                if (parseFloat(pma['Act_Qty__c']) > 0 && (pma['Act_Date__c'] == '' || pma['Act_Date__c'] == null)) {
+                    isOKToSave = false;
+                    msg = 'Periods with an actual quantity must have the Actual Date set';
+                    return false;
+                }
+                
+                items.push(pma);
+                
+                for(var p in pma) {
+                    console.log(p + ' : ' + pma[p]);
+                }
+            });
+            
+            /*
+            j$(selector).each(function() {
+                var pma = {};
+                var row = j$(this);
+                var pmiId = this.getAttribute('data-pmi-id');
+                var pmaId = this.getAttribute('data-pma-id');
+                var externalKey = this.getAttribute('data-external-key');
+                var period = this.getAttribute('data-period-idx');
+
+                pma['Id'] = pmaId == '' ? null : pmaId;
+                pma['Promotion_Material_Item__c'] = pmiId;
+                pma['Promotion__c'] = thisPromotion.Id;
+                pma['Period__c'] = period;
+                pma['External_Key__c'] = externalKey;
+                pma['Actual__c'] = row.val();
+                                            
+                items.push(pma);
+            });
+*/
+            if (isOKToSave) {
+                PromotionMaterialItemActuals_Controller.savePMIActuals(JSON.stringify(items), thisPromotion.Id, function(result, event) {
+                    j$('.save').button('reset');
+                    if (event.status) {
+                        //if save and close is clicked, redirect to returnURL
+                        loading(false);
+                        if(redirect){
+                            if(inSF1) {
+                                sforce.one.back(false);
+                            }else{
+                                window.location.href = returnURL;
+                            }
+                        } else {
+                            // rebuild rows with returned data
+                            //j$(selector).remove();
+                            //pmaList = result;
+                            //buildCollapsibleSections();
+                        }
+                    } else {
+                        //handling errors.
+                        j$(".loadingImage").css('visibility', 'hidden');    
+                        j$(".savedMessage").fadeOut();    
+                        
+                        alert(event.message);
+                    }
+                });
+            } else {
+                j$(".loadingImage").css('visibility', 'hidden');    
+                j$(".savedMessage").fadeOut();                                                          
+                j$('.save').button('reset');
+                
+                alert(msg);
+            }
+        }
+        
+    </script>
+    <div class="bootstrap" style="height:100%">
+        <div class="container-fluid theme-showcase" role="main">            
+            <div id="headerSection" class="section">
+                <div id="promotionHeader" class="header btn-info">{!UPPER(promotionType)}</div>
+            </div>
+            <div class="clear"></div>
+            <div id="topButtonDiv" class="buttonDiv text-center">
+                <button type="button" value="{!$Label.Save}" class="btn button save bg-primary" data-role="none" data-loading-text="{!$Label.Saving}">{!$Label.Save}</button>
+                <button type="button" value="{!$Label.Save_and_Close}" class="btn button save saveAndClose bg-primary" data-role="none" data-loading-text="{!$Label.Saving}">{!$Label.Save_and_Close}</button>
+                <button type="button" value="{!$Label.Cancel}" class="btn button cancel bg-primary" data-role="none">{!$Label.Cancel}</button>
+                <div id="loadingImage" class="loadingImage" style="display:none">
+                    <!--<img src="{!URLFOR($Resource.SFA, '/img/transparentLoading.gif')}"/>-->
+                    <img src="https://www.b-fonline.com/salesforceresources/SFA/img/transparentLoading.gif" />
+                </div>
+                <div id="savedMessage" class="savedMessage" style="display:none">
+                    {!$Label.Saved}
+                    <apex:pagemessages id="messages"/>
+                </div>
+            </div>
+            <div id="content" class="content section">
+                <div id="contentHeader" class="header btn-info">{!UPPER($ObjectType.Promotion_Material_Item__c.LabelPlural)}</div>
+                <div class="clear"></div>
+                <div class="rowButtons text-center">
+                    <button id="expandButton" class="btn rowButton expandBtn bg-primary" type="button" value="{!$Label.Expand_All}">{!$Label.Expand_All}</button>               
+                </div>
+                <!-- <div class="clear"></div> -->
+                <!--
+                <table id='pmiTable' class="pmiTable table table-striped" border="0" cellpadding="5px" cellspacing="0">
+                    <thead class="rich-table-thead">
+                        <tr class="headerRow">
+                        </tr>
+                    </thead>
+                    <tbody id="pmiTableBody">
+                    </tbody>
+                </table>  
+-->
+            </div>
+            <div id="bottomButtonDiv" class="buttonDiv text-center">
+                <button type="button" value="{!$Label.Save}" class="btn button save bg-primary" data-loading-text="{!$Label.Saving}">{!$Label.Save}</button>
+                <button type="button" value="{!$Label.Save_and_Close}" class="btn button save saveAndClose bg-primary" data-loading-text="{!$Label.Saving}">{!$Label.Save_and_Close}</button>
+                <button type="button" value="{!$Label.Cancel}" class="btn button cancel bg-primary">{!$Label.Cancel}</button>
+                <div class="loadingImage" style="display:none">
+                    <!--<img src="{!URLFOR($Resource.SFA, '/img/transparentLoading.gif')}"/>-->
+                    <img src="https://www.b-fonline.com/salesforceresources/SFA/img/transparentLoading.gif" />
+                </div>
+                <div class="savedMessage" style="display:none">
+                    {!$Label.Saved}
+                </div>
+            </div>
+            <div id="offlineModal" class="modal fade" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title">{!$Label.No_Connection}</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>{!$Label.Find_Connection}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">{!$Label.Close}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="clearFormModal" class="modal fade" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <h4 class="modal-title">{!$Label.Clear_Form}</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>{!$Label.Clear_Form_Confirm}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">{!$Label.Cancel}</button>
+                            <button id="clearFormConfirm" type="button" value="{!$Label.Clear_Form}" class="btn button clearForm btn-danger" data-dismiss="modal" onclick="clearForm()" >{!$Label.Clear_Form}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--<script src="{!URLFOR($Resource.bootstrapmodernp, '/startbootstrap-modern-business-gh-pages/js/bootstrap.min.js')}"></script>-->
+    <script src="https://www.b-fonline.com/salesforceresources/BootstrapModernPages/js/bootstrap.min.js"></script>
+    <script> 
+        (function(){try{var a=navigator.userAgent; 
+        if((a.indexOf('Salesforce')!=-1)&&(a.indexOf('iPhone')!=-1||a.indexOf('iPad')!=-1)&&(a.indexOf('OS/8')!=-1||a.indexOf('OS 8')!=-1||a.indexOf('OS/9')!=-1||a.indexOf('OS 9')!=-1)&&(a.indexOf('Safari')==-1)){ 
+        var s=document.createElement('style'); 
+        s.innerHTML="html,html body{overflow: auto;-webkit-overflow-scrolling:touch;}body{position:absolute;left:0;right:0;top:0;bottom:0;}"; 
+        document.getElementsByTagName('head')[0].appendChild(s);}}catch(e){}})(); 
+        window.onkeydown=function(){window.focus();}
+    </script> 
+</apex:page>

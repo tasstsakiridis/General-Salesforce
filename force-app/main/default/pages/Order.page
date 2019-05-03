@@ -503,6 +503,7 @@
                 }
             }
             console.log('bonusQty', bonusQty);
+            console.log('requiresApproval', requiresApproval);
 		}
         Order_Controller.processOrder(orderId, requiresApproval, function(result, event) {
             if (event.status) {

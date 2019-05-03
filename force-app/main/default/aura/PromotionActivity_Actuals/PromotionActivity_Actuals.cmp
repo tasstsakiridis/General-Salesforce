@@ -1,0 +1,76 @@
+<aura:component implements="force:lightningQuickActionWithoutHeader,force:hasRecordId" controller="PromotionActivity_Actuals_Controller">
+    <ltng:require styles="{!$Resource.WideQuickActionCSS}" />
+
+    <!-- String attributes -->
+    <aura:attribute name="recordId" type="String" required="true" default=""/>
+
+    <!-- Boolean attributes -->
+    <aura:attribute name="isFinanceUser" type="Boolean" default="false" />
+
+    <!-- List & Object Attributes -->
+    <aura:attribute name="theProposal" type="Promotion_Activity__c" />
+    <aura:attribute name="theActuals" type="List" default="[]" />
+    <aura:attribute name="activeSections" type="List" default="[]" />
+    <aura:attribute name="periodSections" type="List" default="[]" />
+
+    <!-- Component Events -->
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+
+    <lightning:card title="{!v.theProposal.Name}" class="slds-m-around_small">
+        <aura:set attribute="actions">
+            <lightning:button label="{!$Label.c.Save}" />
+            <lightning:button label="{!$Label.c.Close}" />
+        </aura:set>
+
+        <lightning:accordion aura:id="products" allowMultipleSectionsOpen="true" activeSectionName="{!v.activeSections}">
+            <aura:iteration items="{!v.theActuals}" var="pmi">
+                <lightning:accordionSection name="{!pmi.id}" label="{!pmi.productName}">
+                    <aura:set attribute="body">                        
+                        <lightning:accordion allowMultipleSectionsOpen="true" activeSectionName="{!v.periodSections}">
+                        <aura:iteration items="{!pmi.periods}" var="period">
+                            <lightning:accordionSection name="{!period.title}" label="{!period.title}">
+                            <p class="slds-p-around_small">{!period.month} - {!period.year}</p>
+                            <aura:iteration items="{!period.accounts}" var="account">
+                                <lightning:layout>
+                                    <lightning:layoutItem padding="around-small">
+                                        <div class="header-column">
+                                            <p class="field-title" title="Account">Account</p>
+                                            <p>{!account.accountName}</p>
+                                        </div>                                        
+                                    </lightning:layoutItem>
+                                    <lightning:layoutItem padding="around-small">
+                                        <div class="header-column">
+                                            <p class="field-title" title="Act Qty">Act Qty</p>
+                                            <p>{!account.actQty}</p>
+                                        </div>                                        
+                                    </lightning:layoutItem>
+                                    <lightning:layoutItem padding="around-small">
+                                        <div class="header-column">
+                                            <p class="field-title" title="Free Qty">Act Free Qty</p>
+                                            <p>{!account.freeBottleQty}</p>
+                                        </div>                                        
+                                    </lightning:layoutItem>
+                                    <lightning:layoutItem padding="around-small">
+                                        <div class="header-column">
+                                            <p class="field-title" title="Act A&amp;P">Act A&amp;P</p>
+                                            <p>{!account.actAP}</p>
+                                        </div>                                        
+                                    </lightning:layoutItem>
+                                    <lightning:layoutItem padding="around-small">
+                                        <div class="header-column">
+                                            <p class="field-title" title="Payment Date">Payment Date</p>
+                                            <p>{!account.paymentDate}</p>
+                                        </div>                                        
+                                    </lightning:layoutItem>
+                                </lightning:layout>
+                            </aura:iteration>
+                            </lightning:accordionSection>                            
+                        </aura:iteration>
+                        </lightning:accordion>
+                    </aura:set>
+
+                </lightning:accordionSection>
+            </aura:iteration>
+        </lightning:accordion>
+    </lightning:card>
+</aura:component>	
