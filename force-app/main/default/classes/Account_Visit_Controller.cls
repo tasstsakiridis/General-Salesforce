@@ -609,7 +609,7 @@ global with sharing class Account_Visit_Controller {
 
     }
     */
-    
+
     @RemoteAction
     global static String postToChatter(String groupId, String groupName, String accountName, String promoId, String promoName, String managerId, String linkUrl, String chatterText, String urlPrefix, String contentVersionId) {
         ConnectApi.FeedItemInput feedInput = new ConnectApi.FeedItemInput();
@@ -789,7 +789,7 @@ global with sharing class Account_Visit_Controller {
             if (this.a.Banner_Group__r != null && this.a.Banner_Group__r.National_Banner_Group__c != null) {
                 soql += ' AND (Key_Task_Template__r.National_Banner_Group__c = \'' + this.a.Banner_Group__r.National_Banner_Group__c + '\' OR Key_Task_Template__r.National_Banner_Group__c = null)';
             } else {
-                soql += ' AND (Key_Task_Template__r.National_Banner_Group__c = \'\'';
+                soql += ' AND (Key_Task_Template__r.National_Banner_Group__c = \'\')';
             }
         }
              
@@ -813,7 +813,7 @@ global with sharing class Account_Visit_Controller {
             if (this.a.Banner_Group__r != null && this.a.Banner_Group__r.National_Banner_Group__c != null) {
                 soql += ' AND (National_Banner_Group__c = \'' + this.a.Banner_Group__r.National_Banner_Group__c + '\' OR National_Banner_Group__c = null)';
             } else {
-                soql += ' AND National_Banner_Group__c != \'\'';
+                soql += ' AND National_Banner_Group__c = \'\'';
             }
         }
         System.debug('templats soql: ' + soql);

@@ -2741,30 +2741,6 @@
                     j$('.returnToPromotion').show();
                 //}
 
-                /*
-                var documentIds = [];
-                for(var i = 0; i < result.length; i++) {
-                    documentIds.push(result[i].id);
-                }
-
-                Visualforce.remoting.Manager.invokeAction(
-                    '{!$RemoteAction.Account_Visit_Controller.postAttachmentToChatter}',
-                    documentIds, promoId, promoName,
-                    function(result, event) {
-                        console.log('[postattachmentochatter] status: ' + event.status + ', message: ' + event.message);
-                        console.log('[postattacmenttochatter] result: ' + result);
-                        if (event.status) {
-                        } else if (event.type === 'exception') {
-                            console.log('postattachmenttochatter raised exception. ' + event.message);
-                            alert(event.message);
-                        } else {
-                            console.log(event.message);
-                        }
-                        
-                    },
-                    { escape:false }
-                );
-                */
             } else {
 	            j$('#btnSelectOtherPromotion').removeClass('disabled').show();
 

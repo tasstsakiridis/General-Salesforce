@@ -6,16 +6,17 @@
         <meta name="description" content="" />
         <meta name="author" content="" />
         
-        <script src='https://ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js'></script>        
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>        
+        <script src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js'></script>
+        <script src="https://www.b-fonline.com/salesforceresources/moment-with-locales.min.js"></script>
         <script src="https://www.b-fonline.com/salesforceresources/SFA/js/fastclick/lib/fastclick.js"></script>
         <script src="https://www.b-fonline.com/salesforceresources/SFA/lib/tokenize/Tokenize-2.4/jquery.tokenize.js"></script>
         
-        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SFA/css/font-awesome.min.css" />
-        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SFA/css/accountSurvey.css" />
-        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SFA/lib/tokenize/Tokenize-2.4/jquery.tokenize.css" />
-        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/BootstrapModernPages/css/bootstrap.min.css" />
-        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/BootstrapModernPages/css/bootstrap-theme.min.css" />
-        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SLDS091/assets/styles/salesforce-lightning-design-system-ltng.min.css" />
+        <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css" />
+        <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/fontawesome-5.5.0-web/css/all.min.css" />
+        <!--<link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SFA/css/accountSurvey.css" />-->
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous" />
 
     </head>
     <style>
@@ -83,6 +84,22 @@
             text-align: right;
             width: 140px;
         }
+        .section {
+            background-color: #f3f2f2;
+            margin: 20px 0;
+            padding: 10px 0;
+        }
+        .section-header {
+            font-weight: bold;
+            text-align: center;
+            width: 100%;
+        }
+        .panel-title {
+            margin: 5px 15px;
+        }
+        .content {
+            margin: 10px 0;
+        }
     </style>            
     <script src="{!urlPrefix}/soap/ajax/35.0/connection.js" type="text/javascript"></script>
     <script>
@@ -98,10 +115,13 @@
         
         var filterRowsPerPage = 10;
         
-        var thisProposal = [{!serializedProposal}][0];
+        let thisProposal = [{!serializedProposal}][0];
         var theActuals = [{!serializedItems}][0];
+        let pmaFS = [{!serializedPMAFS}][0];
+        let readOnlyFields = [{!serializedReadOnlyFieldList}][0];
         var returnURL = "{!URLFOR($Action.Promotion_Activity__c.View, thisProposal.Id)}";
         var marketName = "{!marketName}";
+        var dept = '{!$CurrentPage.Parameters.dept}';
         var deviceType;
         var redirect = false;
         var inSF1 = false;
@@ -111,6 +131,7 @@
         var picklistValuesMap = {};
         var obj_PMI = [{!serializedPMIActualsDescribe}][0];
 console.log('obj_PMI', obj_PMI);
+console.log('pmaFS', pmaFS);
         var monthNames = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
         var monthLabels = ['{!$Label.JANUARY}','{!$Label.FEBRUARY}','{!$Label.MARCH}','{!$Label.APRIL}','{!$Label.MAY}','{!$Label.JUNE}','{!$Label.JULY}','{!$Label.AUGUST}','{!$Label.SEPTEMBER}','{!$Label.OCTOBER}','{!$Label.NOVEMBER}','{!$Label.DECEMBER}'];
         
@@ -153,10 +174,7 @@ console.log('obj_PMI', obj_PMI);
             }
             isDesktop = deviceType == 'desktop';
             
-            buildHeaderSection();
-            
-            j$.when(getPicklistValuesForRecordType('PMI_Actual__c')).then(buildCollapsibleSections());            
-           
+            j$.when(getPicklistValuesForRecordType('PMI_Actual__c')).then(buildCollapsibleSections());
             bindEvents(isDesktop);
         });
         
@@ -170,7 +188,8 @@ console.log('obj_PMI', obj_PMI);
                 //check for connection, if offline display modal warning
                 //alert(navigator.onLine);
                 if(navigator.onLine){
-                    j$('.save').button('loading');
+                    //j$('.save').button('loading');
+                    loading(true);
                     buildItemsToSave();
                 }else{
                     j$('#offlineModal').modal();
@@ -194,48 +213,57 @@ console.log('obj_PMI', obj_PMI);
             });
             
         }
-        
-        function buildHeaderSection(){
-            //build header info 
-            //always add account link
-            var accountNavUrl = urlPrefix + '\\' + thisPromotion.Account__c;
-            var promotionNavUrl = urlPrefix + '\\' + thisPromotion.Id;
-            
-            headerHTML = thisPromotion.AccountName__c + ' - ' + thisPromotion.Name + ' (' + thisPromotion.RecordType.Name + ')';
-            j$('#promotionHeader').html(headerHTML);            
-
-        }
-        
+                
         function buildCollapsibleSections() {
             var ctr = 0;
             var collapsedStyle = 'in';
             var sectionId = ''; 
-            var sectionHTML = '<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">';
+            var sectionHTML = '<div class="accordion" id="accordion" role="tablist" aria-multiselectable="true">';
+                console.log('theActuals', theActuals);
+                console.log('theProposal', thisProposal);
             j$.each(theActuals, function(key, value) {
                 if (ctr > 0) { collapsedStyle = ''; }
                 sectionId = 'Section' + value.id;
                 // PMI Actuals
-                sectionHTML += '<div class="panel panel-default">';
-                sectionHTML += '<div class="panel-heading" role="tab" id="' + value.id + '">';
-                sectionHTML += '<h4 class="panel-title">';
+                sectionHTML += '<div class="card">';
+                sectionHTML += '<div class="card-header" role="tab" id="' + value.id + '">';
+                sectionHTML += '<h4>';
                 sectionHTML += '<a role="button" data-toggle="collapse" data-target="#' + sectionId + '" data-parent="#accordion" aria-expanded="true" aria-controls="' + sectionId + '">' + value.productName + '</a>';
                 sectionHTML += '</h4>';
-                sectionHTML += '</div>';
-                sectionHTML += '<div id="' + sectionId + '" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="' + value.id + '">';
-                sectionHTML += '<div class="panel-body" id="' + sectionId + 'Body">';
+                sectionHTML += '</div>'; // End-DIV card-header
+                sectionHTML += '<div id="' + sectionId + '" class="collapse ' + (ctr == 0 ? 'show' : '') + ' p2" role="tabpanel" aria-labelledby="' + value.id + '">';
+                sectionHTML += '<div class="card-body p-1">';
                 sectionHTML += buildPanelBodyForItem(value);
-                sectionHTML += '</div>'; // End-Div panel-body section
+                sectionHTML += '</div>'; // End-Div card-body section
                 sectionHTML += '</div>'; // End-Div collapsible section
-                sectionHTML += '</div>'; // End-Div panel-heading
-                sectionHTML += '</div>'; // End-Div panel
+                sectionHTML += '</div>'; // End-Div card
                 
                 ctr++;
             });
-            sectionHTML += '</div>';
+            sectionHTML += '</div>';  // End-Div Accordion
             
             j$('div#content').append(sectionHTML); 
-            if(marketName == 'China') {
-                j$("input[field='Act_Date__c']").change(function() {
+            if(marketName == 'Korea') {
+                j$("input[field='Act_Qty__c']").change(function() {
+                    var actualDiscount = 0;
+                    let thisVal = j$(this).val();
+                    let pmaId = j$(this).attr('data-pma-id');
+                    let discount = j$(this).attr('data-proposed-discount');
+                    console.log('[act qty changed] proposed discount', discount);
+                    console.log('[act qty changed] actqty', thisVal);
+                    if (thisVal != '') {
+                        actualDiscount = thisVal * discount;
+                    }
+                    let selector = '#Actual_Discount__c'+pmaId;
+                    console.log('selector', selector);
+                    console.log('actualDiscount', actualDiscount);
+                    if (actualDiscount == 0) {
+                        j$(selector).text("");
+                    } else {
+                        j$(selector).text(actualDiscount.toFixed(2));
+                    }
+                });
+                j$("input[field='Payment_Date__c']").change(function() {
                     var thisVal = j$(this).val();
                     if (thisVal != '') {
                         var d = new Date(thisVal);
@@ -246,6 +274,20 @@ console.log('obj_PMI', obj_PMI);
                         }
                     }
                 });
+                console.log('bind korea events');
+                j$("select[field='Approval_Status__c']").change(function() {
+                    console.log('approval status change event');
+                    let thisVal = j$(this).val();
+                    let pmaId = j$(this).attr('data-pma-id');
+                    let selector = '#Payment_Date__c'+pmaId;
+                    console.log('thisVal', thisVal);
+                    console.log('selector', selector);
+                    if (thisVal == 'Approved') {
+                        j$(selector).text(moment().format('DD-MM-YYYY'));
+                    } else {
+                        j$(selector).text("");
+                    }
+                });
             }
         }
              
@@ -253,127 +295,97 @@ console.log('obj_PMI', obj_PMI);
             var panelBodyHTML = '';
             var periodBodyHTML = '';
             var pma;
-            var startDate = new Date(thisPromotion.Promotion_Start_Date__c);
+            var startDate = new Date(thisProposal.Promotion_Start_Date__c);
             var periodId = '';
+            var periodHTML = '';
             j$.each(pmi.periods, function(key, value) {                
-                periodId = 'Section-' + pmi.Id + '-Period-' + value.id;
-                sectionHTML += '<div class="panel panel-default">';
-                sectionHTML += '<div class="panel-heading" role="tab" id="' + periodId + '">';
-                sectionHTML += '<h4 class="panel-title">';
-                sectionHTML += '<a role="button" data-toggle="collapse" data-target="#' + periodId + '" data-parent="#accordion" aria-expanded="true" aria-controls="' + periodId + '">' + value.month + ', ' + value.year + '</a>';
-                sectionHTML += '</h4>';
-                sectionHTML += '</div>';
-                sectionHTML += '<div id="' + periodId + '" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="' + periodId + '">';
-                sectionHTML += '<div class="panel-body" id="' + periodId + 'Body">';
+                periodId = 'Section-' + pmi.id + '-Period-' + value.period;
+                periodHTML += '<div class="card mt-1">';
+                periodHTML += '<div class="card-header p-1" role="tab" id="' + periodId + '">';
+                periodHTML += '<h5 class="panel-title">' + value.month + ', ' + value.year + '</h5>';
+                periodHTML += '</div>';  // End-Div card-header
+                periodHTML += '<div class="card-body m-0 p-0" id="' + periodId + 'Body">';
                 
                 if (deviceType == 'desktop') {
                     var tableId = 'pmiTable' + periodId;
-                    panelBodyHTML = '<div class="table-responsive col-md-12"><table id="' + tableId + '" class="pmiTable table table-striped"><thead class="headers">';
-                    panelBodyHTML += '<th class="headerRow" data-column-id="period" scope="col" colspan="2"><div class="text-left">{!$ObjectType.PMI_Actual__c.Fields.Period__c.Label}</div></th>';
+                    panelBodyHTML = '<div class="table-responsive col-md-12"><table id="' + tableId + '" class="pmiTable table table-striped"><thead class="headers"><tr>';
+                    panelBodyHTML += '<th class="headerRow" data-column-id="period" scope="col" colspan="2"><div class="text-left">{!$ObjectType.PMI_Actual__c.Fields.Account__c.Label}</div></th>';
                     j$.each(pmaFS, function(key, value) {
                         panelBodyHTML += '<th class="headerRow" data-column-id="' + value.fieldPath + '" scope="col" colspan="1"><div>' + value.label + '</div></th>';
                     });
-                    panelBodyHTML += '</thead><tbody class="tableBody">';
-
-                    j$.each(value.accounts, function(key, value) {
-                        var selector = (deviceType == 'desktop' ? 'tr' : 'div');
-                        var rowId = "pma." + value.id;
-                        var pmaHTML = '';
-                        if (deviceType == 'desktop') {
-                            pmaHTML = '<tr id="' + rowId + '" data-pma-id="' + value.id + '" >';
-                            pmaHTML += '<td class="periodName" colspan="2"><span class="text-left">' + value.accountName + '</span></td>';
-                        } else {
-                            pmaHTML += '<div class="row" id="' + rowId + '" data-pma-id="' + value.id + '" >';
-                            pmaHTML += '<div class="rowHeader headerShadow"><span class="periodName lead">' + value.accountName + '</span></div>';
-                            pmaHTML += '<div class="fields mandatory fieldsShadow">';
-                            
-                        }
+                    panelBodyHTML += '</tr></thead><tbody class="tableBody">';
+                }
+                    
+                j$.each(value.accounts, function(key, value) {
+                    pma = value;
+                    var selector = (deviceType == 'desktop' ? 'tr' : 'div');
+                    var rowId = "pma." + value.id;
+                    var pmaHTML = '';
+                    if (deviceType == 'desktop') {
+                        pmaHTML = '<tr id="' + rowId + '" data-pma-id="' + value.id + '" >';
+                        pmaHTML += '<td class="accountName" colspan="2"><span class="text-left">' + value.accountName + '</span></td>';
+                    } else {
+                        pmaHTML += '<div class="row" id="' + rowId + '" data-pma-id="' + value.id + '" >';
+                        pmaHTML += '<div class="rowHeader headerShadow"><span class="accountName lead">' + value.accountName + '</span></div>';
+                        pmaHTML += '<div class="fields mandatory fieldsShadow">';
                         
-                        var elementTag = 'div';
-                        var section = 'cards';
-                        var cssClass = ' col-xs-12 col-sm-6';
-                        if (deviceType == 'desktop') { 
-                            elementTag = 'td'; 
-                            cssClass = '';
-                            section = 'table';
-                        }
-                        j$.each(pmaFS, function(key, value) {
-                            pmaHTML += '<' + elementTag + ' class="' + value.type + cssClass + '">' + buildInput(value, true, pma, pmi, section) + '</' + elementTag + '>';
-                        });
-                        if (deviceType == 'desktop') {
-                            pmaHTML += '</tr>';
-                        } else {
-                            pmaHTML += '</div></div>';
-                        }
-
-                        panelBodyHTML += pmaHTML;
-
+                    }
+                    
+                    var elementTag = 'div';
+                    var section = 'cards';
+                    var cssClass = ' col-xs-12 col-sm-6';
+                    if (deviceType == 'desktop') { 
+                        elementTag = 'td'; 
+                        cssClass = '';
+                        section = 'table';
+                    }
+                    j$.each(pmaFS, function(key, value) {
+                        pmaHTML += '<' + elementTag + ' class="' + value.type + cssClass + '">' + buildInput(value, true, pma, pmi, section) + '</' + elementTag + '>';
                     });
+                    if (deviceType == 'desktop') {
+                        pmaHTML += '</tr>';
+                    } else {
+                        pmaHTML += '</div></div>';
+                    }
+
+                    panelBodyHTML += pmaHTML;
+
+                });
+                if (deviceType == 'desktop') {
+                    panelBodyHTML += '</tbody></table></div>';
+                    //j$('div#content').append(headerHTML);
                 }
 
-                sectionHTML += '</div>'; // End-Div panel-body section
-                sectionHTML += '</div>'; // End-Div collapsible section
-                sectionHTML += '</div>'; // End-Div panel-heading
-                sectionHTML += '</div>'; // End-Div panel
-            })
+                
 
-
-            j$.each(pmi.periods, function(key, value) {
-                    var newDate, month, year;
-                    j$.each(value.pmaList, function(pmaKey, pma) {
-                        var rowId = "pma." + pmi.Id + "." + pma.Period__c;
-                        var pmaHTML = '';
-                        if (deviceType == 'desktop') {
-                            pmaHTML = '<tr id="' + rowId + '" data-pma-id="' + pma.Id + '" data-pmi-id="' + pmi.Id + '" data-external-key="' + pma.External_Key__c + '" data-period-idx="' + pma.Period__c + '">';
-                            pmaHTML += '<td class="periodName" colspan="2"><span class="text-left">' + pma.Month_Name__c + ' ' + pma.Year__c + '</span></td>';
-                        } else {
-                            pmaHTML += '<div class="row" id="' + rowId + '" data-pma-id="' + pma.Id + '" data-pmi-id="' + pmi.Id + '" data-external-key="' + pma.External_Key__c + '" data-period-idx="' + pma.Period__c + '">';
-                            pmaHTML += '<div class="rowHeader headerShadow"><span class="periodName lead">' + pma.Month_Name__c + ' ' + pma.Year__c + '</span></div>';
-                            pmaHTML += '<div class="fields mandatory fieldsShadow">';
-                            
-                        }
-                        var elementTag = 'div';
-                        var section = 'cards';
-                        var cssClass = ' col-xs-12 col-sm-6';
-                        if (deviceType == 'desktop') { 
-                            elementTag = 'td'; 
-                            cssClass = '';
-                            section = 'table';
-                        }
-                        j$.each(pmaFS, function(key, value) {
-                            pmaHTML += '<' + elementTag + ' class="' + value.type + cssClass + '">' + buildInput(value, true, pma, pmi, section) + '</' + elementTag + '>';
-                        });
-                        if (deviceType == 'desktop') {
-                            pmaHTML += '</tr>';
-                        } else {
-                            pmaHTML += '</div></div>';
-                        }
-
-                        panelBodyHTML += pmaHTML;
-                    });                
+                periodHTML += panelBodyHTML;
+                periodHTML += '</div>'; // End-Div card-body
+                periodHTML += '</div>'; // End-Div card
             });
-            
-            if (deviceType == 'desktop') {
-                panelBodyHTML += '</tbody></table></div>';
-                //j$('div#content').append(headerHTML);
-            }
-            
-            return panelBodyHTML;
+
+            return periodHTML;
         }
         //build out the actual input tags for each type
         function buildInput(obj, isNewRow, pma, pmi, section){
             var html = '';
             var value = '';
             if (pma != null) {
-                value = pma[obj.fieldPath];
+                value = pma.pmia[obj.fieldPath];
             }
             var objectName = 'PMI_Actual__c';
 
-            if(value == undefined){
+            if(value == undefined || value == 0){
                 value = '';
             }
+            if (obj.fieldPath == 'Actual_Discount__c' && value != '') {
+                value = value.toFixed(2);
+            }
+            console.log('obj', obj);
+            console.log('pma', pma);
+            console.log('pmi', pmi);
+            console.log('value', value);
             if (section == 'cards') {
-                html += '<label for=pma-"' + pma.Id + '-' + pma.Period__c + '" class="fieldLabel">' + obj.label + '</label>';
+                html += '<label for=pma-"' + pma.id + '-' + pma.period + '" class="fieldLabel">' + obj.label + '</label>';
             }
             var isReadOnly = false;
             var pos = readOnlyFields.indexOf(obj.fieldPath);            
@@ -385,28 +397,41 @@ console.log('obj_PMI', obj_PMI);
                     isReadOnly = (obj_PMI.fields[obj.fieldPath].isUpdateable == false);
                 }
             }
+            console.log('isReadOnly', isReadOnly);
+            console.log('dept', dept);
+            if (dept == 'Finance') {
+                let qty = parseInt(pma.pmia.Act_Qty__c) || 0;
+                if (qty == 0) { isReadOnly = true; }
+            } else {
+                if (pma.pmia.Payment_Date__c != undefined && pma.pmia.Payment_Date__c != '') {
+                    isReadOnly = true;
+                }
+            }
             
             //build the correct HTML input type, read only in Account Info section if not required on field set
+            console.log('input type', inputTypeMap[obj.type]);
+            console.log('isReadOnly', isReadOnly);
             switch(inputTypeMap[obj.type]){                             
                 case 'number':
                     if (isReadOnly == true) {
-                        html += '<span style="margin-bottom: 0.5rem;">'+value+'</span>';
+                        html += '<span id="'+obj.fieldPath+pma.id+'" style="margin-bottom: 0.5rem; text-align: right;">'+value+'</span>';
                     } else {
-                        html += '<input id="'+obj.fieldPath+pma.Id+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" step="any" value="'+value+'" class="fieldInput slds-input" ' + (isReadOnly ? 'disabled' : '') + ' />';
+                        html += '<input id="'+obj.fieldPath+pma.id+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" data-pma-id="'+pma.id+'" step="any" data-proposed-discount="'+pma.pmia.Proposed_Discount__c+'" value="'+value+'" class="fieldInput slds-input" ' + (isReadOnly ? 'disabled' : '') + ' />';
                     }
                     break;
                 case 'select':
                     if(isReadOnly == true){
-                        html += '<span style="margin-bottom: 0.5rem;">'+value+'</span>';
+                        html += '<span id="'+obj.fieldPath+pma.id+'" style="margin-bottom: 0.5rem;">'+value+'</span>';
                     }else{
-                        html += '<select id="'+obj.fieldPath+'-'+pma.Id+'" field="'+obj.fieldPath+'" class="fieldInput slds-select  "><option value=""></option>';
+                        html += '<select id="'+obj.fieldPath+'-'+pma.id+'" data-pma-id="'+pma.id+'" field="'+obj.fieldPath+'" class="fieldInput slds-select  "><option value=""></option>';
                         var options = getSelectOptions(obj.fieldPath, objectName);
+                        console.log('options', options);
                         if (options != null) {
-                            for(var i=0;i<options.length;i++){
-                                if(value == options[i]){
-                                    html+= '<option value="'+options[i]+'" selected>'+options[i]+'</option>';
+                            for(var i=0;i<options.values.length;i++){
+                                if(value == options.values[i]){
+                                    html+= '<option value="'+options.values[i]+'" selected>'+options.labels[i]+'</option>';
                                 }else{
-                                    html+= '<option value="'+options[i]+'">'+options[i]+'</option>';
+                                    html+= '<option value="'+options.values[i]+'">'+options.labels[i]+'</option>';
                                 }
                             }
                         }
@@ -419,11 +444,11 @@ console.log('obj_PMI', obj_PMI);
                         html += '<label for="'+obj.fieldPath+'" class="'+section+'Checkbox"></label>';
                     }else{
                         if(value == true){
-                            html += '<input id="'+obj.fieldPath+pma.Id+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" checked="checked" class="fieldInput cmn-toggle cmn-toggle-round-flat"/>';
+                            html += '<input id="'+obj.fieldPath+pma.id+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" checked="checked" class="fieldInput cmn-toggle cmn-toggle-round-flat"/>';
                         }else{
-                            html += '<input id="'+obj.fieldPath+pma.Id+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" class="fieldInput btn cmn-toggle cmn-toggle-round-flat"/>';
+                            html += '<input id="'+obj.fieldPath+pma.id+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" class="fieldInput btn cmn-toggle cmn-toggle-round-flat"/>';
                         }
-                        html += '<label for="'+obj.fieldPath+pma.Id+'" class="'+section+'Checkbox"></label>';
+                        html += '<label for="'+obj.fieldPath+pma.id+'" class="'+section+'Checkbox"></label>';
                     }                    
                     break;
                 case 'link':
@@ -458,154 +483,29 @@ console.log('obj_PMI', obj_PMI);
                     break;
                 case 'date':
                     if (isReadOnly == true) {
-                        html += '<span style="margin-bottom: 0.5rem;">'+value+'</span>';
+                        html += '<span id="'+obj.fieldPath+pma.id+'" style="margin-bottom: 0.5rem;">'+value+'</span>';
                     } else {
-                        html += '<input id="'+obj.fieldPath+pma.Id+'" field="'+obj.fieldPath+'" class="'+inputTypeMap[obj.type]+'Input slds-input-clone" type="'+inputTypeMap[obj.type]+'" value="'+value+'" ' + (isReadOnly == true ? 'disabled' : '') + ' />';
+                        html += '<input id="'+obj.fieldPath+pma.id+'" field="'+obj.fieldPath+'" class="'+inputTypeMap[obj.type]+'Input slds-input-clone" type="'+inputTypeMap[obj.type]+'" value="'+value+'" ' + (isReadOnly == true ? 'disabled' : '') + ' />';
                     }
                     break;
                 default:
                     if (obj.type == 'textarea') {
-                        html += '<textarea id="'+obj.fieldPath+pma.Id+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" value="'+value+'" class="fieldInput slds-textarea" row="4" ' + (isReadOnly == true ? 'disabled' : '') + '/>';
+                        html += '<textarea id="'+obj.fieldPath+pma.id+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" value="'+value+'" class="fieldInput slds-textarea" row="4" ' + (isReadOnly == true ? 'disabled' : '') + '/>';
                     } else {
-                        html += '<input id="'+obj.fieldPath+pma.Id+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" value="'+value+'" class="fieldInput slds-input" ' + (isReadOnly == true ? 'disabled' : '') + '/>';
+                        html += '<input id="'+obj.fieldPath+pma.id+'" field="'+obj.fieldPath+'" type="'+inputTypeMap[obj.type]+'" value="'+value+'" class="fieldInput slds-input" ' + (isReadOnly == true ? 'disabled' : '') + '/>';
                     }
             } 
             return html;               
         }
-        
-        function buildPanelBodyForItem_OnlyActuals(pmi) {
-            var panelBodyHTML = '';
-            var pma;
-            var startDate = new Date(thisPromotion.Promotion_Start_Date__c);
-            j$.each(pmaList, function(key, value) {
-                if (value.pmiId == pmi.Id) {
-                    var newDate, month, year;
-                    j$.each(value.pmaList, function(pmaKey, pma) {
-                        newDate = new Date();
-                        newDate.setMonth(startDate.getMonth() + pma.Period__c);
-                        month = monthLabels[newDate.getMonth()];
-                        year = newDate.getFullYear();
-                        
-                        panelBodyHTML += '<div class="col-xs-12 col-md-4 col-sm-4">';
-                        panelBodyHTML += '<div class="input-group">';
-                        panelBodyHTML += '<span class="input-group-addon input-group-label" id="' + pma.Id + '">' + month + ' ' + year + '</span>';
-                        panelBodyHTML += '<input type="text" step="any" value="' + pma.Actual__c +'" class="form-control pmi-actual" data-pma-id="' + pma.Id + '" data-external-key="' + pma.External_Key__c + '" data-pmi-id="' + pma.Promotion_Material_Item__c + '" data-period-idx="' + pma.Period__c + '" placeholder="Actual" aria-describedby="' + pma.Id + '" />'
-                        panelBodyHTML += '</div>';
-                        panelBodyHTML += '</div>';
-                    });
-                }
-            });
-            
-            return panelBodyHTML;
-        }
-        function buildPMITableHeader() {
-            if (deviceType == 'desktop') {
-                var headerHTML = '<div class="table-responsive col-md-12"><table id="pmiTable" class="pmiTable table table-striped"><thead class="headers">';
-                headerHTML += '<th class="headerRow" data-column-id="selected" scope="col" colspan="1"><div>&nbsp;</div></th>';
-                headerHTML += '<th class="headerRow" data-column-id="product" scope="col" colspan="2"><div class="text-left">{!$ObjectType.Product__c.Label}</div></th>';
-                headerHTML += '<th class="headerRow" data-column-id="planqty" scope="col" colspan="1"><div>{!$ObjectType.Promotion_Material_Item__c.Fields.Plan_Qty__c.Label}</div></th>';
-                headerHTML += '<th class="headerRow" data-column-id="monthlyhighqty" scope="col" colspan="1"><div>{!$ObjectType.Promotion_Material_Item__c.Fields.Monthly_Bottle_High__c.Label}</div></th>';
-                headerHTML += '<th class="headerRow" data-column-id="monthlyhighdiscount" scope="col" colspan="1"><div>{!$ObjectType.Promotion_Material_Item__c.Fields.Per_Bottle_Discount_High__c.Label}</div></th>';
-                headerHTML += '<th class="headerRow" data-column-id="monthlylowqty" scope="col" colspan="1"><div>{!$ObjectType.Promotion_Material_Item__c.Fields.Monthly_Bottle_Low__c.Label}</div></th>';
-                headerHTML += '<th class="headerRow" data-column-id="monthlylowdiscount" scope="col" colspan="1"><div>{!$ObjectType.Promotion_Material_Item__c.Fields.Per_Bottle_Discount_Low__c.Label}</div></th>';            
-                headerHTML += '</thead><tbody class="tableBody"></tbody></table></div>';
-                j$('div#content').append(headerHTML);
-            }
-        }                    
-
-        //get all picklist values for this market's recordtype
-        function getPicklistValuesForRecordType (objectName) {
-            var bigString = [];
-            var masterBigString = [];
-            var recordTypeName = thisPromotion.RecordType.Name;
-
-            var recordTypeMappings = sforce.connection.describeLayout(objectName).recordTypeMappings;
-            console.log('recordtypemappings.length: ' + recordTypeMappings.length);
-            for(var p in recordTypeMappings) {
-                console.log(p + ' : ' + recordTypeMappings[p]);
-            }
-            if(recordTypeMappings.length == undefined){
-                console.log('recordtypemappings.picklistsforrecordtype: ' + recordTypeMappings.picklistsForRecordType.length);
-                if (recordTypeMappings.picklistsForRecordType.length == undefined) {
-                    var field = {
-                        name: recordTypeMappings.picklistsForRecordType.picklistName,
-                        values: returnPickListValue(recordTypeMappings.picklistsForRecordType)
-                    };
-                    bigString.push(field);
-                } else {
-                    for(var x=0; x<recordTypeMappings.picklistsForRecordType.length; x++){
-                       var field = {
-                        name: recordTypeMappings.picklistsForRecordType[x].picklistName,
-                        values: returnPickListValue(recordTypeMappings.picklistsForRecordType[x])                        
-                       };                           
-                       bigString.push(field);
-                   }
-               }
-            }else{
-                for (var i=0; i <recordTypeMappings.length; i++) {
-                    console.log('recordtypemappings.name: ' + recordTypeMappings[i].name);
-                    if (recordTypeMappings[i].name == recordTypeName){
-                        for(var x=0; x<recordTypeMappings[i].picklistsForRecordType.length; x++){
-                            var field = {
-                                name: recordTypeMappings[i].picklistsForRecordType[x].picklistName,
-                                values: returnPickListValue(recordTypeMappings[i].picklistsForRecordType[x])                        
-                            };                          
-                            bigString.push(field);
-                        }
-                    } else if (recordTypeMappings[i].name == 'Master') {
-                        for(var x=0; x<recordTypeMappings[i].picklistsForRecordType.length; x++){
-                            var field = {
-                                name: recordTypeMappings[i].picklistsForRecordType[x].picklistName,
-                                values: returnPickListValue(recordTypeMappings[i].picklistsForRecordType[x])                        
-                            };                          
-                            masterBigString.push(field);
-                        }
-                    }
-                }
-            }
-            
-            console.log('masterbigstring: ' + masterBigString);
-            console.log('bigstring: ' + bigString);
-            if (bigString.length == 0) {
-                picklistValuesMap[objectName] = masterBigString;
-            } else {
-                picklistValuesMap[objectName] = bigString;
-            }
-        }
-    
-        //get the individual values
-        function returnPickListValue (obj) {
-            var values = [];
-            if (obj.picklistValues) {
-                if (obj.picklistValues.label == undefined) {
-                    for (var y=0; y <obj.picklistValues.length; y++) {
-                        values.push(obj.picklistValues[y].label);
-                        }
-                } else {
-                    values.push(obj.picklistValues.label);
-                }
-            }
-            return values;
-        }
-        
+                
         //toggle loading gif and saved message
         function loading(val) {
             if (val) {
-                j$(".loadingImage").fadeIn(100).css("display","inline").css('visibility','visible');
-            }
-            else {
-                j$(".loadingImage").css('visibility', 'hidden');    
-                j$(".savedMessage").fadeIn(100).css("display","inline").delay(3000).fadeOut();    
-            }
-        }
-        //find the picklist values for this field
-        function getSelectOptions(fieldName, objectName){
-            console.log('[getselectoptions] fieldname: ' + fieldName + ', objectName: ' + objectName);
-            console.log('[getselectoptions] # of picklist values for object: ' + picklistValuesMap[objectName].length);
-            for(var i=0;i<picklistValuesMap[objectName].length;i++){
-                if(picklistValuesMap[objectName][i].name == fieldName){
-                    return picklistValuesMap[objectName][i].values;
-                }
+                j$('.spinner-border').removeClass('d-none');
+                j$('.btn').prop('disabled', true);
+            } else {
+                j$('.spinner-border').addClass('d-none');
+                j$('.btn').prop('disabled', false);
             }
         }
         
@@ -627,10 +527,6 @@ console.log('obj_PMI', obj_PMI);
                 var period = this.getAttribute('data-period-idx');
                 
                 pma['Id'] = pmaId == '' ? null : pmaId;
-                pma['Promotion_Material_Item__c'] = pmiId;
-                pma['Promotion__c'] = thisPromotion.Id;
-                pma['Period__c'] = period;
-                pma['External_Key__c'] = externalKey;
                 
                 j$(row).find('input,select,textarea').each(function() {
                     var fld = j$(this);
@@ -654,41 +550,29 @@ console.log('obj_PMI', obj_PMI);
                         pma[fldName] = fld.find(':selected').text();
                     }
                 }); 
-                if (parseFloat(pma['Act_Qty__c']) > 0 && (pma['Act_Date__c'] == '' || pma['Act_Date__c'] == null)) {
-                    isOKToSave = false;
-                    msg = 'Periods with an actual quantity must have the Actual Date set';
-                    return false;
-                }
                 
-                items.push(pma);
+                if (pma.Act_Qty__c == "") { pma.Act_Qty__c = 0; }
+                if (pma.Actual_A_P__c == "") { pma.Actual_A_P__c = 0; }
+                if (pma.Actual_Free_Bottle_Qty__c == "") { pma.Actual_Free_Bottle_Qty__c = 0; }
+                let actQty = parseInt(pma.Act_Qty__c) || 0;
+                let actAP = parseInt(pma.Actual_A_P__c) || 0;
+                let actFreeQty = parseInt(pma.Actual_Free_Bottle_Qty__c) || 0; 
+                console.log('actQty: ', actQty);
+                console.log('actAP', actAP);
+                console.log('actFreeQty', actFreeQty);
+                if (actQty + actAP + actFreeQty > 0) {
+                    items.push(pma);
+                }
                 
                 for(var p in pma) {
                     console.log(p + ' : ' + pma[p]);
                 }
             });
-            
-            /*
-            j$(selector).each(function() {
-                var pma = {};
-                var row = j$(this);
-                var pmiId = this.getAttribute('data-pmi-id');
-                var pmaId = this.getAttribute('data-pma-id');
-                var externalKey = this.getAttribute('data-external-key');
-                var period = this.getAttribute('data-period-idx');
 
-                pma['Id'] = pmaId == '' ? null : pmaId;
-                pma['Promotion_Material_Item__c'] = pmiId;
-                pma['Promotion__c'] = thisPromotion.Id;
-                pma['Period__c'] = period;
-                pma['External_Key__c'] = externalKey;
-                pma['Actual__c'] = row.val();
-                                            
-                items.push(pma);
-            });
-*/
+            console.log('[buildItemsToSave] items', items);
             if (isOKToSave) {
-                PromotionMaterialItemActuals_Controller.savePMIActuals(JSON.stringify(items), thisPromotion.Id, function(result, event) {
-                    j$('.save').button('reset');
+                SalesProposal_Actuals_Controller.save(JSON.stringify(items), thisProposal.Id, redirect, function(result, event) {
+                    loading(false);
                     if (event.status) {
                         //if save and close is clicked, redirect to returnURL
                         loading(false);
@@ -713,64 +597,142 @@ console.log('obj_PMI', obj_PMI);
                     }
                 });
             } else {
-                j$(".loadingImage").css('visibility', 'hidden');    
-                j$(".savedMessage").fadeOut();                                                          
-                j$('.save').button('reset');
-                
-                alert(msg);
+                loading(false);                
             }
         }
         
+        //get all picklist values for this market's recordtype
+        function getPicklistValuesForRecordType (objectName) {
+            var bigString = [];
+            var recordTypeId = "{!proposalRecordTypeId}";
+
+            var vl = {};
+            var recordTypeMappings = sforce.connection.describeLayout(objectName).recordTypeMappings;
+            console.log('recordTypeMappings', recordTypeMappings);
+            console.log('recordTypeId', recordTypeId);
+            
+            try {
+                console.log('recordTypeMappings.length', recordTypeMappings.length);
+                if(recordTypeMappings.length == undefined){
+                    for(var x=0; x<recordTypeMappings.picklistsForRecordType.length; x++){
+                        vl = returnPickListValue(recordTypeMappings.picklistsForRecordType[x]);
+                    var field = {
+                            name: recordTypeMappings.picklistsForRecordType[x].picklistName,
+                        //values: returnPickListValue(recordTypeMappings.picklistsForRecordType[x])                        
+                        values: vl.values,
+                        labels: vl.labels
+                    };                           
+                    bigString.push(field);
+                }
+                }else{
+                    for (var i=0; i <recordTypeMappings.length; i++) {
+                        if (recordTypeMappings[i].recordTypeId == recordTypeId){
+                            console.log('picklistsforrecordtype', recordTypeMappings[i].picklistsForRecordType);
+                            if (recordTypeMappings[i].picklistsForRecordType.length == undefined) {
+                                vl = returnPickListValue(recordTypeMappings[i].picklistsForRecordType);
+                                var field = {
+                                    name: recordTypeMappings[i].picklistsForRecordType.picklistName,
+                                    values: vl.values,
+                                    labels: vl.labels
+                                };                          
+                                bigString.push(field);
+                                console.log('vl', vl);
+                                console.log('field', field);
+                            } else {                            
+                                for(var x=0; x<recordTypeMappings[i].picklistsForRecordType.length; x++){
+                                    vl = returnPickListValue(recordTypeMappings[i].picklistsForRecordType[x]);
+                                    var field = {
+                                        name: recordTypeMappings[i].picklistsForRecordType[x].picklistName,
+                                        //values: returnPickListValue(recordTypeMappings[i].picklistsForRecordType[x])                        
+                                        values: vl.values,
+                                        labels: vl.labels
+                                    };                          
+                                    bigString.push(field);
+                                }
+                            }
+                        }
+                    }
+                }
+            }catch(ex) {
+                console.log('ex', ex);
+            }
+
+            picklistValuesMap[objectName] = bigString;
+            console.log('picklistValuesMaps', picklistValuesMap);
+            
+        }
+        
+        //get the individual values        
+        function returnPickListValue (obj) {
+            var values = [];
+            var labels = [];
+            if (obj.picklistValues) {
+                if (obj.picklistValues.label == undefined) {
+                    for (var y=0; y <obj.picklistValues.length; y++) {
+                        values.push(obj.picklistValues[y].value);
+                        labels.push(obj.picklistValues[y].label);
+                        }
+                } else {
+                    values.push(obj.picklistValues.value);
+                    labels.push(obj.picklistValues.label);
+                }
+            }
+            return {values: values, labels: labels};
+        }
+        
+        //find the picklist values for this field
+        function getSelectOptions(fieldName, objectName){
+            for(var i=0;i<picklistValuesMap[objectName].length;i++){
+                if(picklistValuesMap[objectName][i].name == fieldName){
+                    return picklistValuesMap[objectName][i];
+                }
+            }
+            return {values:[], labels:[]};
+        }        
+
     </script>
     <div class="bootstrap" style="height:100%">
-        <div class="container-fluid theme-showcase" role="main">            
-            <div id="headerSection" class="section">
-                <div id="promotionHeader" class="header btn-info">{!UPPER(promotionType)}</div>
-            </div>
-            <div class="clear"></div>
-            <div id="topButtonDiv" class="buttonDiv text-center">
-                <button type="button" value="{!$Label.Save}" class="btn button save bg-primary" data-role="none" data-loading-text="{!$Label.Saving}">{!$Label.Save}</button>
-                <button type="button" value="{!$Label.Save_and_Close}" class="btn button save saveAndClose bg-primary" data-role="none" data-loading-text="{!$Label.Saving}">{!$Label.Save_and_Close}</button>
-                <button type="button" value="{!$Label.Cancel}" class="btn button cancel bg-primary" data-role="none">{!$Label.Cancel}</button>
-                <div id="loadingImage" class="loadingImage" style="display:none">
-                    <!--<img src="{!URLFOR($Resource.SFA, '/img/transparentLoading.gif')}"/>-->
-                    <img src="https://www.b-fonline.com/salesforceresources/SFA/img/transparentLoading.gif" />
+        <div class="container-fluid theme-showcase" role="main">  
+            <div class="card border-0">
+                <div id="header" class="card-header border-0">
+                    <h4 style="display: inline;">{!thisProposal.Name}</h4>
+                    <div class="btn-group float-right" role="group" aria-label="Page buttons">
+                        <button type="button" value="{!$Label.Save}" class="btn btn-secondary save" data-role="none" data-loading-text="{!$Label.Saving}">
+                            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                            <span class="btn-label">{!$Label.Save}</span>
+                        </button>
+                        <button type="button" value="{!$Label.Save_and_Close}" class="btn btn-secondary save saveAndClose" data-role="none" data-loading-text="{!$Label.Saving}">
+                            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                            <span class="btn-label">{!$Label.Save_and_Close}</span>
+                        </button>
+                        <button type="button" value="{!$Label.Cancel}" class="btn btn-secondary cancel" data-role="none">
+                            <span>{!$Label.Cancel}</span>
+                        </button>
+                    </div>
+                </div>  
+                <div class="card-body">
+                    <div class="clear"></div>
+                    <div id="content" class="content">
+                    </div>
+                </div>              
+                <div class="card-footer text-center">
+                    <div class="btn-group" role="group" aria-label="Page buttons">
+                        <button type="button" value="{!$Label.Save}" class="btn btn-secondary save" data-role="none" data-loading-text="{!$Label.Saving}">
+                            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                            <span class="btn-label">{!$Label.Save}</span>
+                        </button>
+                        <button type="button" value="{!$Label.Save_and_Close}" class="btn btn-secondary save saveAndClose" data-role="none" data-loading-text="{!$Label.Saving}">
+                            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                            <span class="btn-label">{!$Label.Save_and_Close}</span>
+                        </button>
+                        <button type="button" value="{!$Label.Cancel}" class="btn btn-secondary cancel" data-role="none">
+                            <span>{!$Label.Cancel}</span>
+                        </button>
+                    </div>
                 </div>
-                <div id="savedMessage" class="savedMessage" style="display:none">
-                    {!$Label.Saved}
-                    <apex:pagemessages id="messages"/>
-                </div>
-            </div>
-            <div id="content" class="content section">
-                <div id="contentHeader" class="header btn-info">{!UPPER($ObjectType.Promotion_Material_Item__c.LabelPlural)}</div>
-                <div class="clear"></div>
-                <div class="rowButtons text-center">
-                    <button id="expandButton" class="btn rowButton expandBtn bg-primary" type="button" value="{!$Label.Expand_All}">{!$Label.Expand_All}</button>               
-                </div>
-                <!-- <div class="clear"></div> -->
-                <!--
-                <table id='pmiTable' class="pmiTable table table-striped" border="0" cellpadding="5px" cellspacing="0">
-                    <thead class="rich-table-thead">
-                        <tr class="headerRow">
-                        </tr>
-                    </thead>
-                    <tbody id="pmiTableBody">
-                    </tbody>
-                </table>  
--->
-            </div>
-            <div id="bottomButtonDiv" class="buttonDiv text-center">
-                <button type="button" value="{!$Label.Save}" class="btn button save bg-primary" data-loading-text="{!$Label.Saving}">{!$Label.Save}</button>
-                <button type="button" value="{!$Label.Save_and_Close}" class="btn button save saveAndClose bg-primary" data-loading-text="{!$Label.Saving}">{!$Label.Save_and_Close}</button>
-                <button type="button" value="{!$Label.Cancel}" class="btn button cancel bg-primary">{!$Label.Cancel}</button>
-                <div class="loadingImage" style="display:none">
-                    <!--<img src="{!URLFOR($Resource.SFA, '/img/transparentLoading.gif')}"/>-->
-                    <img src="https://www.b-fonline.com/salesforceresources/SFA/img/transparentLoading.gif" />
-                </div>
-                <div class="savedMessage" style="display:none">
-                    {!$Label.Saved}
-                </div>
-            </div>
+            </div>          
+
+            
             <div id="offlineModal" class="modal fade" role="dialog">
                 <div class="modal-dialog">
                     <div class="modal-content">
@@ -806,8 +768,6 @@ console.log('obj_PMI', obj_PMI);
             </div>
         </div>
     </div>
-    <!--<script src="{!URLFOR($Resource.bootstrapmodernp, '/startbootstrap-modern-business-gh-pages/js/bootstrap.min.js')}"></script>-->
-    <script src="https://www.b-fonline.com/salesforceresources/BootstrapModernPages/js/bootstrap.min.js"></script>
     <script> 
         (function(){try{var a=navigator.userAgent; 
         if((a.indexOf('Salesforce')!=-1)&&(a.indexOf('iPhone')!=-1||a.indexOf('iPad')!=-1)&&(a.indexOf('OS/8')!=-1||a.indexOf('OS 8')!=-1||a.indexOf('OS/9')!=-1||a.indexOf('OS 9')!=-1)&&(a.indexOf('Safari')==-1)){ 

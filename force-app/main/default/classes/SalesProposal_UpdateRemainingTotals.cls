@@ -33,10 +33,18 @@ public class SalesProposal_UpdateRemainingTotals {
 
                     for(Promotion_Material_Item__c pmi : theActivity.Promotion_Material_Items__r) {
                         if (pmi.Id == pmia.Promotion_Material_Item__c) {
-                            pmi.Remaining_A_P__c -= pmia.Actual_A_P__c == null ? 0 : pmia.Actual_A_P__c;
-                            pmi.Remaining_Discount__c -= pmia.Actual_Discount__c == null ? 0 : pmia.Actual_Discount__c;
-                            pmi.Remaining_Volume__c -= pmia.Act_Qty__c == null ? 0 : pmia.Act_Qty__c;
-                            pmi.Remaining_Free_Bottle_Qty__c -= pmia.Actual_Free_Bottle_Qty__c == null ? 0 : pmia.Actual_Free_Bottle_Qty__c;
+                            if (pmi.Remaining_A_P__c != null && pmi.Remaining_A_P__c > 0) {
+                                pmi.Remaining_A_P__c -= pmia.Actual_A_P__c == null ? 0 : pmia.Actual_A_P__c;
+                            }
+                            if (pmi.Remaining_Discount__c != null && pmi.Remaining_Discount__c > 0) {
+                                pmi.Remaining_Discount__c -= pmia.Actual_Discount__c == null ? 0 : pmia.Actual_Discount__c;
+                            }
+                            if (pmi.Remaining_Volume__c != null && pmi.Remaining_Volume__c > 0) {
+                                pmi.Remaining_Volume__c -= pmia.Act_Qty__c == null ? 0 : pmia.Act_Qty__c;                                
+                            }
+                            if (pmi.Remaining_Free_Bottle_Qty__c != null && pmi.Remaining_Free_Bottle_Qty__c > 0) {
+                                pmi.Remaining_Free_Bottle_Qty__c -= pmia.Actual_Free_Bottle_Qty__c == null ? 0 : pmia.Actual_Free_Bottle_Qty__c;
+                            }
                         }
                     }
                 }
