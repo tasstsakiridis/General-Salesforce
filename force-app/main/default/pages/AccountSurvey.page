@@ -78,6 +78,8 @@
         var headerFS = [{!serializedAccSurveyFS}][0];           //field set
         var contentInfo = [{!serializedProdList}][0];           //values
         var contentFS = [{!serializedASIFS}][0];                //field set
+        var contentROFFS = [{!serializedASIROFFS}][0];          // Read Only Fields field set
+        console.log('contentROFFS', contentROFFS);
         var accSurveyDIVFS = [{!serializedAccSurveyDIVFS}][0];  //  Do not persist values for the fields in this fieldset
         var callCardInfo = [{!serializedCallCard}][0];
         var asiDIVFS = [];
@@ -86,6 +88,7 @@
         var marketName = ['{!marketName}'][0];
         var recordTypeName = ['{!recordTypeName}'][0];      
         var asiRecordTypeId = ['{!asiRecordTypeId}'][0];
+        var accountCurrencyISOCode = '{!accountCurrencyISOCode}';
         var surveyId;
         var headerHTML = '';
         var filterHTML = '';
@@ -703,8 +706,12 @@
                     value = headerInfo[obj.fieldPath];
                 } else {
                     //set values in Account Info section
-                    if(eval("productIndex." + obj.fieldPath) != undefined){
-                        value = eval("productIndex." + obj.fieldPath);
+                    //if(eval("productIndex." + obj.fieldPath) != undefined){
+                    if(obj.fieldPath){
+                        try {
+                            value = eval("productIndex." + obj.fieldPath);
+                        } catch(error) {
+                        }
                     }
                 }
             }
@@ -717,6 +724,14 @@
             if(section == 'cards'){
                 html += '<label for="'+prodId+'" class="fieldLabel">'+obj.label+'</label>';
             }
+            if (contentROFFS != null) {
+                for(var i = 0; i < contentROFFS.length; i++) {
+                    if (contentROFFS[i].fieldPath == obj.fieldPath) {
+                        section = 'readonly'; break;
+                    }
+                }
+            }
+
             //build the correct HTML input type, read only in Account Info section if not required on field set
             switch(inputTypeMap[obj.type]){                             
                 case 'number':
@@ -992,7 +1007,17 @@
                             }
                         }else{
                             if(delisted){
-                                asi[j$(this).attr('field')] = '';
+                                if (j$(this).hasClass('dateInput')) {
+                                    asi[j$(this).attr('field')] = 0;
+                                } else {
+                                    asi[j$(this).attr('field')] =  '';
+                                }
+                            } else if (j$(this).hasClass('dateInput')) {
+                                var formattedDate = new Date(j$(this).val()).getTime();
+                                console.log('product: ' + asi['Product__c'] + ', formattedDate', formattedDate);
+                                if (!isNaN(formattedDate) && formattedDate != '' && formattedDate != null) {
+                                    asi[j$(this).attr('field')] = formattedDate;
+                                }
                             }else{
                                 asi[j$(this).attr('field')] = j$(this).val();
                             }
@@ -1010,8 +1035,18 @@
                         }else{
                             if(j$(this).val() != '' && j$(this).is(':checkbox') == false){
                                 if(delisted){
-                                    asi[j$(this).attr('field')] =  '';
-                                }else{
+                                    if (j$(this).hasClass('dateInput')) {
+                                        asi[j$(this).attr('field')] = 0;
+                                    } else {
+                                        asi[j$(this).attr('field')] =  '';
+                                    }
+                                } else if (j$(this).hasClass('dateInput')) {
+                                    var formattedDate = new Date(j$(this).val()).getTime();
+                                    console.log('product: ' + asi['Product__c'] + ', formattedDate', formattedDate);
+                                    if (!isNaN(formattedDate) && formattedDate != '' && formattedDate != null) {
+                                        asi[j$(this).attr('field')] = formattedDate;
+                                    }
+                                } else {
                                     asi[j$(this).attr('field')] = j$(this).val();
                                     hasData = true;
                                 }
@@ -1078,6 +1113,7 @@
             for(var i = 0; i < surveyItems.length; i++) {
                 surveyItems[i].RecordTypeId = asiRecordTypeId;
                 surveyItems[i].Account_Survey__c = surveyId;
+                surveyItems[i].CurrencyISOCode = accountCurrencyISOCode;
             }
             console.log('[saveSurveyItems] surveyItems', surveyItems);
             AccountSurvey_Controller.saveASI(surveyItems, function(result, event) {

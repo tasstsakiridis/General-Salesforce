@@ -105,7 +105,7 @@ global with sharing class PromotionMaterialItemHTML_Controller {
 	            productList = [SELECT Id, Name, ProductCode__c, Pack_Quantity__c, RecordType.Name, Channel__c, Brand__r.Name, Brand__r.Spirit_Type__c, Supplier__c, Unit_Size__c, Used_For__c, Unit_Cost__c FROM Product__c WHERE IsActive__c = true AND Market__c =: thisPromotion.Account__r.Market__c AND (Channel__c =:productChannel OR Channel__c = 'Both') AND (RecordType.Name =:productRecordType OR Used_For__c INCLUDES ('Fee','Incentive')) ORDER BY Name ASC];                            
             }
 
-        } else if (marketName == 'Poland') {
+        } else if (marketName == 'Poland' || marketName == 'Mexico') {
 	        productList = [SELECT Id, Name, ProductCode__c, Pack_Quantity__c, RecordType.Name, Channel__c, Brand__r.Name, Brand__r.Spirit_Type__c, Supplier__c, Unit_Size__c, Used_For__c FROM Product__c WHERE IsActive__c = true AND Market__c =: thisPromotion.Account__r.Market__c AND (Channel__c =:productChannel OR Channel__c = 'Both') AND Used_For__c INCLUDES ('Promotion') ORDER BY Name ASC];            
         } else {
 	        productList = [SELECT Id, Name, ProductCode__c, Pack_Quantity__c, RecordType.Name, Channel__c, Brand__r.Name, Brand__r.Spirit_Type__c, Supplier__c, Unit_Size__c, Used_For__c FROM Product__c WHERE IsActive__c = true AND Market__c =: thisPromotion.Account__r.Market__c AND (Channel__c =:productChannel OR Channel__c = 'Both') ORDER BY Name ASC];            

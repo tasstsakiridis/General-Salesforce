@@ -1,22 +1,22 @@
 <apex:page standardController="Account" extensions="Account_Visit_Controller" title="Account Visit New" sidebar="false" showHeader="false" docType="html-5.0" standardStylesheets="false">
-
+    <apex:includeLightning />
     <head>
         <meta charset="utf-8" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="description" content="" />
         <meta name="author" content="" />
-        
+
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
         <!--<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>-->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>        
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
         <script src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js'></script>
         <script src="https://www.b-fonline.com/salesforceresources/SFA/js/imageResizer/ExifRestorer.js"></script>
         <script src="https://www.b-fonline.com/salesforceresources/SFA/js/imageResizer/ImageResizer.js"></script>
         <script src="https://www.b-fonline.com/salesforceresources/SFA/js/js.cookie.js"></script>
         <script src="https://www.b-fonline.com/salesforceresources/moment-with-locales.min.js"></script>
-        
+
         <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css" />
         <link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/fontawesome-5.5.0-web/css/all.min.css" />
         <!--<link rel="stylesheet" href="https://www.b-fonline.com/salesforceresources/SFA/css/accountSurvey.css" />-->
@@ -25,7 +25,7 @@
         <script type="text/javascript">
 	    	var __sfdcSessionId = '{!GETSESSIONID()}';
 	    </script>
-            
+
         <script src="{!urlPrefix}/soap/ajax/35.0/connection.js" type="text/javascript" />
 
     <style>
@@ -67,7 +67,7 @@
         .object-content_container {
             margin-bottom: 40px;
             overflow: auto;
-            
+
         }
         @media screen and (max-width: 768px) {
             .object-content_container {
@@ -91,10 +91,10 @@
         }
         .requiredField:after {
             content: '*';
-            color: #c23934;  
+            color: #c23934;
             margin-left: 10px;
         }
-    
+
         .labelMargin-top {
             margin-top: 10px;
         }
@@ -129,7 +129,7 @@
             background: white;
             cursor: inherit;
             display: block;
-        }        
+        }
         .cmn-toggle {
             position: absolute;
             margin-left: -9999px;
@@ -225,8 +225,8 @@
 
     </style>
     </head>
-    
-    <script>        
+
+    <script>
         var j$ = jQuery.noConflict();
         var account;
         var urlPrefix = '{!urlPrefix}';
@@ -240,7 +240,7 @@
             //console.log('prefix not blank');
             sforce.connection.serverUrl = "{!urlPrefix}"+sforce.connection.serverUrl;
         }
-        
+
         //survey variables
         var survey;
         var skipCallCard = '{!$CurrentPage.Parameters.skip}';
@@ -253,7 +253,7 @@
         console.log('returnToPromotion', returnToPromotion);
         var myManagersName = "{!myManagersName}";
         var myManagersId = '{!myManagersId}';
-        var contactRecordTypeId = '{!contactRecordTypeId}';  
+        var contactRecordTypeId = '{!contactRecordTypeId}';
         var contactRecordTypeName = '{!contactRecordTypeName}';
         var hasAccessToTitlePicklist = '{!hasAccessToTitlePicklist}';
         var pricingSurveyURL;
@@ -281,8 +281,9 @@
 		var imageResizeRatio = {!imageResizeRatio};
     	var isSaving = false;
         var hasAssets = false;
-        
-        /*  Remove below line when ready to allow markets to be able to select multiple items to attach */       
+        var hasStartedNewAccountSurvey = false;
+
+        /*  Remove below line when ready to allow markets to be able to select multiple items to attach */
 		//canUploadMultipleItems = false;
 
         // Custom Labels
@@ -304,7 +305,7 @@
         var newContactRequiredFieldsMessage = '{!$Label.NewContactRequiredFieldsMessage}';
         var returnToRecordLabel 	  = '{!$Label.Return_To_Record}';
         var goToRecordLabel           = '{!$Label.GoToRecord}';
-        
+
         // Custom Permissions
         var hasAccessToCallCard       = '{!$Permission.AccountVisit_CallCard}';
         var hasAccessToKeyTask        = '{!$Permission.AccountVisit_KeyTask}';
@@ -313,7 +314,7 @@
         var hasAccessToPromotion      = '{!$Permission.AccountVisit_Promotion}';
         var hasAccessToOrder	  	  = '{!$Permission.AccountVisit_Order}';
 		var hasAccessToAccountSurvey  = {!$Permission.AccountVisit_AccountSurvey};
-                
+
         //task variables
         var allTasks;
 
@@ -332,15 +333,17 @@
 
     	//Order variables
     	var order;
-		var canEditOrders = {!canEditOrders};       
+		var canEditOrders = {!canEditOrders};
     	var orderList = [];
-    
+
         // Flow variables
         var flowTaskId;
-        var flowObject = 'keytask'; 
-        
+        var flowObject = 'keytask';
+
 	    var picklistValuesMap = {};
     	var recordTypesForObject = {};
+        var keyTaskLWComponent;
+        var useKeyTaskLWComponent = {!usePhotoKeyTaskComponent};
 
         j$(document).ready(function() {
             if( (typeof sforce != 'undefined') && (sforce.one != null) ) {
@@ -348,7 +351,7 @@
             }else{
                 inSF1 = false;
             }
-            
+
             var IS_IPAD = navigator.userAgent.match(/iPad/i) != null;
             if (j$(window).width() >= 992 && !IS_IPAD) {
                 deviceType = 'desktop';
@@ -383,34 +386,35 @@
                 j$(".main").css("margin-bottom", marginBottom + "px");
                 //j$('.object-content').css('height', mainHeight + 'px');
             });
-            
+
             j$('#callCardContainer').removeClass('object-content_hidden');
 
             /*
             j$(function() {
                 FastClick.attach(document.body);
             });
-            */ 
+            */
 
             if(communityUser){
                 j$('.bfOnly').hide();
             }
 
+            hasStartedNewAccountSurvey = false;
 
             account = [{!serializedAccount}][0];
             callCard = [{!serializedCC}][0];
 
             delete callCard['attributes'];
-            
+
             survey = [{!serializedSurvey}][0];
             accountSurveys = [{!serializedAccountSurveys}][0];
             delete callCard['Account_Surveys__r'];
-            
+
             promotionActivitiesList = [{!serializedPromotionActivities}][0];
             promotionList = [{!serializedPromotions}][0];
             chatterGroups = [{!serializedChatterGroups}][0];
             orderList = [{!serializedOrders}][0];
-            
+
             var recordTypeList = [];
             if (hasAccessToCallCard == 'true') {
                 recordTypeList.push({"objectName": 'CallCard__c', "recordTypeName":ccRecordTypeName});
@@ -418,8 +422,8 @@
             if (hasAccessToOrder == 'true' ) {
                 recordTypeList.push({"objectName":'Order__c',"recordTypeName":""});
             }
-            recordTypeList.push({"objectName":'Contact',"recordTypeName":contactRecordTypeName});    
-            
+            recordTypeList.push({"objectName":'Contact',"recordTypeName":contactRecordTypeName});
+
             if (enableCheckInService == 'true') {
                 if (deviceType == 'phone') {
                     j$('#checkInBtnText').hide();
@@ -444,7 +448,7 @@
         /**
          * Begin Page and Configuration functions
          */
-        
+
         function buildPage() {
             buildCallCardPage();
             buildTasksPage();
@@ -462,14 +466,14 @@
             configureForLightning();
             configureHeaders();
         }
-        
-       
+
+
         function bindEvents() {
             /** TABS - switch between tabs */
             j$('.tab').click(function(){
                 console.log('tab clicked');
                 document.activeElement.blur();
-                
+
                 j$('.highlighted').removeClass('highlighted');
                 j$(this).addClass('highlighted');
 
@@ -484,10 +488,10 @@
                                   .hide();
                 }else{
                     j$('#saveBtn').attr('data-object',object)
-                                  .show();                    
+                                  .show();
                 }
-            });    
-            /** End TABS */        
+            });
+            /** End TABS */
 
             /** Begin DIALOG button events */
             j$("#orderRecordTypeDialog").modal({
@@ -523,7 +527,7 @@
                     console.log("click. saveCallCard");
                     saveCallCard();
                 } else if (object == 'tasks') {
-                    if (callCard == null || callCard.Id == null) { 
+                    if (callCard == null || callCard.Id == null) {
                         console.log("click. saveCallCard then saveKeyTasks");
                         saveCallCard(true);
                     } else {
@@ -555,9 +559,9 @@
 
             /** Begin New Contact Dialog events */
             j$('#createNewContactButton').click(function() {
-                j$("#newContactDialog").modal("show");                
+                j$("#newContactDialog").modal("show");
             });
-            j$('#newContactSaveButton').click(function() {                
+            j$('#newContactSaveButton').click(function() {
                 var firstName = j$('#newContactFirstName').val();
                 var lastName = j$('#newContactLastName').val();
                 var phone = j$('#newContactPhone').val();
@@ -587,7 +591,7 @@
                                 var ccHTML = '<option label="'+newContactName + '" value="' + result.Id + '">'+newContactName+'</option>';
                                 j$('#Contact__c').append(ccHTML)
                                                  .removeClass('disabled');
-                                
+
                             } else if (event.type === 'exception') {
                                 console.log(event);
                             } else {
@@ -595,7 +599,7 @@
                             }
                             j$('#newContactSaveButton.spinner-border').hide();
 
-                            j$("#newContactDialog").modal("hide");                
+                            j$("#newContactDialog").modal("hide");
                         },
                         {escape: false}
                     );
@@ -642,37 +646,37 @@
                 });
             }
         }
-        
+
         function configureTabs() {
             var tabsAvailable = [];
             var defaultPageSet = false;
             console.log('[configureTabs] defaultLandingPage', defaultLandingPage);
-            if (hasAccessToSurvey == 'false') { 
-                j$('#tabSurvey').hide(); 
-            } else { 
-                defaultPageSet = true; 
-                tabsAvailable.push('tabSurvey'); 
-                j$('.fixed-bottom .surveys').click(); 
+            if (hasAccessToSurvey == 'false') {
+                j$('#tabSurvey').hide();
+            } else {
+                defaultPageSet = true;
+                tabsAvailable.push('tabSurvey');
+                j$('.fixed-bottom .surveys').click();
             }
-            if (hasAccessToCallCard == 'false') { 
-                j$('#navCallCard').hide(); 
-            } else { 
+            if (hasAccessToCallCard == 'false') {
+                j$('#navCallCard').hide();
+            } else {
                 tabsAvailable.push('tabCallCard');
                 if (defaultLandingPage == 'Call Card' || defaultPageSet == false || jumpToView == 'callcard') {
                     console.log('[configureTabs] triggering callcard tab click');
-                    j$('.fixed-bottom .callcard').click(); 
-                    defaultPageSet = true; 
+                    j$('.fixed-bottom .callcard').click();
+                    defaultPageSet = true;
                 }
             }
-            if (hasAccessToKeyTask == 'false') { 
-                j$('#navKeyTasks').hide(); 
-            } else { 
+            if (hasAccessToKeyTask == 'false') {
+                j$('#navKeyTasks').hide();
+            } else {
                 tabsAvailable.push('tabKeyTask');
                 if (defaultLandingPage == 'Key Task' || defaultPageSet == false || jumpToView == 'keytask') {
-                    j$('.fixed-bottom .tasks').click(); 
-                    defaultPageSet = true; 
+                    j$('.fixed-bottom .tasks').click();
+                    defaultPageSet = true;
                 }
-            } 
+            }
             console.log('hasAccessToOrder', hasAccessToOrder);
             if (hasAccessToOrder == 'false') {
                 j$('#navOrders').hide();
@@ -683,26 +687,26 @@
                     defaultPageSet = true;
                 }
             }
-            if (hasAccessToPromotion == 'false') { 
-                j$('#navPromotions').hide(); 
+            if (hasAccessToPromotion == 'false') {
+                j$('#navPromotions').hide();
             } else {
                 tabsAvailable.push('tabPromotion');
                 console.log('defaultpageset: ' + defaultPageSet);
                 if (defaultPageSet == false || jumpToView == 'promotion') {
-                    j$('.fixed-bottom .promotions').click(); 
-                    defaultPageSet = true; 
+                    j$('.fixed-bottom .promotions').click();
+                    defaultPageSet = true;
                 }
             }
-            if (hasAccessToCamera == 'false') { 
-                j$('#navCamera').hide(); 
+            if (hasAccessToCamera == 'false') {
+                j$('#navCamera').hide();
             } else {
                 tabsAvailable.push('tabCamera');
                 if (defaultPageSet == false || jumpToView == 'camera') {
-                    j$('.fixed-bottom .camera').click(); 
-                    defaultPageSet = true; 
+                    j$('.fixed-bottom .camera').click();
+                    defaultPageSet = true;
                 }
             }
-            
+
             console.log('defaultpageset: ' + defaultPageSet);
             if (defaultPageSet == false) {
                 j$('.content').hide();
@@ -710,9 +714,9 @@
                                         .show();
             } else {
                 j$('#messagesContainer').hide();
-                j$('.fixed-bottom').show();                
+                j$('.fixed-bottom').show();
             }
-            
+
             var numberOfTabs = tabsAvailable.length;
             if (numberOfTabs < 6) {
                 if (numberOfTabs == 5) {
@@ -725,7 +729,7 @@
                     }
                 }
             }
-            
+
         }
 
         function configureHeaders() {
@@ -739,7 +743,7 @@
                         window.location = '/'+account.Id;
                 }
             });
-            if (hasAccessToTitlePicklist == 'true') {                
+            if (hasAccessToTitlePicklist == 'true') {
                 var titles = getSelectOptions('Title__c', 'Contact');
                 console.log('titles', titles);
                 var titleOptionsHTML = '';
@@ -767,19 +771,19 @@
                             							   .attr('data-promo-channel', promotion.promoChannel)
                                                            .attr('data-promo-startdate', promotion.startDate)
                                                            .attr('data-promo-enddate', promotion.endDate);
-                        
+
                         return false;
                     }
                 });
-                
+
                 moveToUploadPage();
-                
+
             j$('.fixed-bottom .camera').click();
             }
-            
+
 
         }
-        
+
         function configureForLightning() {
             if (isUsingLightningTheme == true) {
                 j$('#fileUploadInputGroupControls').addClass('display-inline');
@@ -788,7 +792,7 @@
             } else {
                 j$('#fileUploadInputGroupControls').removeClass('display-inline');
                 j$('#fileUploadSpan').show();
-                j$('#browseButton1Span').hide();                
+                j$('#browseButton1Span').hide();
             }
 
         }
@@ -816,11 +820,11 @@
                     j$('.singleChannelLink').show();
                 }
             }
-            
+
             console.log('[buildSurveyPage] accountSurveys', accountSurveys);
             for(var i = 0; i < accountSurveys.length; i++) {
                 survey = accountSurveys[i];
-                console.log('[buildSurveyPage] survey', survey);                
+                console.log('[buildSurveyPage] survey', survey);
                 if (survey.Survey_Type__c != undefined){
                     if (survey.Survey_Type__c.indexOf('Account') != -1){
                         if (survey.Survey_Channel__c != undefined) {
@@ -849,7 +853,7 @@
                 skipCallCard = true;
                 j$('.cptLink').css('display', 'table-row');
             }
-            
+
             if (hasAccessToAccountSurvey) {
                 j$('#account_survey_link').show();
             } else {
@@ -860,7 +864,7 @@
         function buildAdHocSurveys(){
             Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.Account_Visit_Controller.buildSurveys}',
-                account.Id,
+                account.Id, account.Market__r.Name,
                 function(result, event) {
                     if (event.status) {
                         console.log(result);
@@ -892,7 +896,7 @@
                 if (j$(this)[0].repeatable) {
                     url += '&asNewSurvey=true';
                 }
-                
+
                 var surveyRow = '<tr class="dataRow surveyRows">';
                 if (inSF1) {
                     surveyRow += '<td class="dataCell" colspan="1" width="34%"><a href="javascript:sforce.one.navigateToURL(\'' + url + '\')">' + j$(this)[0].linkName + '</a></td>';
@@ -913,14 +917,17 @@
         }
 
         function startNewAccountSurvey(surveyType, surveyChannel, el) {
+            if (hasStartedNewAccountSurvey || isSaving) { return; }
+            hasStartedNewAccountSurvey = true;
+
             let surveyId = j$(el).attr('data-survey-id');
             console.log('surveyid', surveyId);
             if (account.Market__r.Name == 'Australia') {
                 if (callCard == null || callCard.Id == null) {
-                    saveCallCard(false, function() { startNewAccountSurvey(surveyType, surveyChannel, surveyId); });
+                    saveCallCard(false, function() { newAccountSurvey(surveyType, surveyChannel, surveyId); });
                 } else {
                     newAccountSurvey(surveyType, surveyChannel, surveyId);
-                }                    
+                }
             } else {
                 newAccountSurvey(surveyType, '', surveyId);
             }
@@ -978,10 +985,11 @@
 
         /**
          * Begin Call Card functions
-         */ 
+         */
         function buildCallCardPage() {
             ccFields = [{!serializedCCFieldSet}][0];
 
+            console.log('callcard', callCard);
             j$('#newContactAccount').text(account.Name);
             j$('#newContactDialogMessagesContainer').hide();
             var rawValue = '';
@@ -997,13 +1005,15 @@
                 var isReadOnly = false;
                 var pos = -1;
                 if (ccReadOnlyFields != null) {
-                    pos = ccReadOnlyFields.indexOf(value.fieldPath);            
+                    pos = ccReadOnlyFields.indexOf(value.fieldPath);
                 }
                 if (pos >= 0) {
                     isReadOnly = true;
                 }
-                
+
                 var value = callCard[ccFields[key].fieldPath] == null ? '' : callCard[ccFields[key].fieldPath];
+                console.log('key', key);
+                console.log('fields', ccFields[key].fieldPath);
                 switch(ccFields[key].type) {
                     case 'textarea':
                         callCardHTML += '<label for="' + ccFields[key].fieldPath + '" class="col-12 ' + requiredHTML + ' mt-4 mb-1">' + ccFields[key].label + '</label>';
@@ -1011,10 +1021,13 @@
                             value = account.Objectives__c;
                         } else if (ccFields[key].fieldPath == 'Objectives__c' && account.Call_Card_Objectives__c != undefined){
                             value = account.Call_Card_Objectives__c;
+                            if (callCard.Last_Visit__c && callCard.Follow_Up__c != undefined) {
+                                value = value.replace(callCard.Follow_Up__c, '');
+                            }
                         } else if(callCard[ccFields[key].fieldPath] != undefined){
                             value = callCard[ccFields[key].fieldPath];
                         }
-                                                
+
                         callCardHTML += '<textarea id="' + ccFields[key].fieldPath + '" rows="5" class="form-control col-12 ' + ccFields[key].type + '" placeholder="' + ccFields[key].label + '" ' + (isReadOnly ? 'disabled' : '') + '>' + value + '</textarea>';
                         break;
                     case 'reference':
@@ -1037,7 +1050,7 @@
                         } else {
                             callCardHTML += '</label>';
                         }
-                        
+
                         break;
                     case 'picklist':
                         callCardHTML += '<label for="' + ccFields[key].fieldPath + '" class="col-12 ' + requiredHTML + ' mt-4 mb-1">' + ccFields[key].label + '</label>';
@@ -1052,7 +1065,7 @@
                             }
                         }
                         callCardHTML += '</select>';
-                        break;                        
+                        break;
                     case 'boolean':
                         callCardHTML += '<div class="col-12 mt-4 mb-1"><dl>';
                         callCardHTML += '<dt>' + ccFields[key].label + '</dt><dd>';
@@ -1066,7 +1079,7 @@
                                 callCardHTML += '<input id="' + ccFields[key].fieldPath + '" field="' + ccFields[key].fieldPath + '" type="checkbox" class="fieldInput btn cmn-toggle cmn-toggle-round-flat"/>';
                             }
                             callCardHTML += '<label for="' + ccFields[key].fieldPath + '"></label>';
-                        }                    
+                        }
                         callCardHTML += '</dd></div>';
                         break;
 
@@ -1103,10 +1116,10 @@
                 callCard['Check_In__c'] = checkInDate;
             }
             if (doSave == undefined) { doSave = true; }
-            
+
             j$('#Check_In__c').val(checkInDate.toLocaleTimeString())
                             .attr('data-time', checkInDate);
-            
+
             j$('#checkInBtnText').text(checkInDate.toLocaleTimeString());
             j$('#checkInBtn').removeClass('btn-primary')
                             .addClass('btn-success')
@@ -1114,7 +1127,7 @@
 
             j$('#checkOutBtn').removeAttr('disabled')
                             .removeClass('disabled');
-            
+
             if (doSave == true) { saveCallCard(); }
         }
 
@@ -1133,13 +1146,13 @@
             j$('#checkOutBtn').removeClass('btn-primary')
                             .addClass('btn-success')
                             .attr('date-time', checkOutDate);
-            
+
             if (doSave == true) { saveCallCard(); }
         }
 
         function saveCallCard(shouldSaveKeyTasks, callback) {
             loading(true);
-            
+
             // If geolocation save enabled
             if (storeCallCardGeolocation && typeof callCard['Location__Longitude__s'] == 'undefined') {
                 var location = Cookies.get('locationData'); // Try to get stored location data
@@ -1153,6 +1166,7 @@
                         // Save with call card data
                         callCard['Location__Latitude__s'] = location.latitude;
                         callCard['Location__Longitude__s'] = location.longitude;
+                        //callCard['Location_Error__c'] = location.error;
                         console.log("Saving call card with valid location data: " + JSON.stringify(location));
                     } else {
                         // Refresh location data and try save again
@@ -1169,7 +1183,7 @@
                     });
                 }
             }
-            
+
             //call card save
             callCard['Account__c'] = account.Id;
             callCard['RecordTypeId'] = ccRecordTypeId;
@@ -1196,7 +1210,7 @@
                         callCard[elId] = el.val();
                     }
                 }
-                
+
             });
             if (enableCheckInService == 'true') {
                 var checkInTime = j$('#checkInBtn').attr('date-time');
@@ -1214,7 +1228,7 @@
                 if (callCard[requiredFields[i].fieldPath] == null || callCard[requiredFields[i].fieldPath] == '') {
                     errormessage += requiredFields[i].label + ', ';
                     okToSave = false;
-                }                                
+                }
             }
             if (errormessage.length > 0) {
                 j$('#btn-save .spinner-border').hide();
@@ -1226,7 +1240,7 @@
                 showMessage(errormessage);
             } else {
                 j$('#pageMessages').empty();
-                if (okToSave) {              
+                if (okToSave) {
                     console.log('[save] callcard', callCard);
                     Account_Visit_Controller.saveCallCard(callCard, CCDCallCardRecordType, function(result, event) {
                         if (event.status) {
@@ -1256,9 +1270,10 @@
             var locationData = {
                 timestamp: new Date().getTime(),
                 latitude: 0,
-                longitude: 0
+                longitude: 0,
+                error: ''
             };
-            
+
             //Try to get location and store locationData
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function(position) {
@@ -1270,153 +1285,162 @@
                     callback();
                 }, function(error) {
                     console.log("Geolocation request failed: " + error.code);
+                    locationData.error = error.code;
                     Cookies.set('locationData', JSON.stringify(locationData));
                     callback();
                 });
             } else {
                 console.log("Geolocation is not supported by this browser.");
+                locationData.error = 'Geolocation is not supported';
                 Cookies.set('locationData', JSON.stringify(locationData));
                 callback();
             }
-            
+
             return false;
         }
 
          /**
          * Begin Call Card functions
-         */ 
+         */
 
         /**
          * Begin Key Task functions
-         */ 
+         */
         function buildTasksPage(){
             let marginClass = (deviceType == 'desktop' ? '' : 'm-o');
-            var taskHTML = '<div class="card ' + marginClass + ' p-0">';
+            var taskHTML = '<div id="key-tasks-go-here" class="card ' + marginClass + ' p-0">';
 
-            // Create Sales Materials section if market is enabled
-            if (showSalesMaterials == true && allSalesMaterials.length > 0) {
-                var materialsHTML = '<div id="SalesMaterialsContainer" class="card mb-3"><div class="card-header p-1"><h5><a class="accordion-toggle collapsed" style="color: inherit;" data-toggle="collapse" href="#collapseSalesMaterials" data-target="#collapseSalesMaterials">{!HTMLENCODE($ObjectType.Sales_Material__c.LabelPlural)}</a>';
+            if(useKeyTaskLWComponent) {
+                taskHTML += '</div>';
+            } else {
+                // Create Sales Materials section if market is enabled
+                if (showSalesMaterials == true && allSalesMaterials.length > 0) {
+                    var materialsHTML = '<div id="SalesMaterialsContainer" class="card mb-3"><div class="card-header p-1"><h5><a class="accordion-toggle collapsed" style="color: inherit;" data-toggle="collapse" href="#collapseSalesMaterials" data-target="#collapseSalesMaterials">{!HTMLENCODE($ObjectType.Sales_Material__c.LabelPlural)}</a>';
 
-                // Build Sales Materials Header/Wrapper
+                    // Build Sales Materials Header/Wrapper
                     materialsHTML += '<i class="fas fa-chevron-down float-right" style="margin-right: 10px;" /></h3></div>';
-                materialsHTML += '<div id="collapseSalesMaterials" class="card-body panel-collapse collapse"><ul class="list-group">';
-                j$.each(allSalesMaterials, function() {
-                    materialsHTML += '<li class="list-group-item text-center">';
-                    // If iOS, open in Google apps
-                    if (inSF1 && iOS) {
-                        materialsHTML += '<a href="javascript:sforce.one.navigateToURL(\'https://public.b-f.com/sfdc/iOSAppOpen/?link=' + encodeURIComponent(this.Sales_Material__r.Attachment_URL__c) + '\')">' +  this.Sales_Material_Description__c + '</a>';
-                    } else if (inSF1) {
-                        materialsHTML += '<a href="javascript:sforce.one.navigateToURL(\'' + this.Sales_Material__r.Attachment_URL__c + '\')">' +  this.Sales_Material_Description__c + '</a>';
-                    } else {
-                        materialsHTML += '<a href="' +  this.Sales_Material__r.Attachment_URL__c + '" target="_blank">' +  this.Sales_Material_Description__c + '</a>';
-                    }
-                    materialsHTML += '</li>';
-                });
-                materialsHTML += '</ul></div></div>';
-
-                j$('#tasksContent').append(materialsHTML);
-                j$('#collapseSalesMaterials').collapse('show');
-                j$('#collapseSalesMaterials').on('show.bs.collapse', function() {
-                    j$('#SalesMaterialsContainer i.fa-chevron-right').removeClass('fa-chevron-right')
-                                                                        .addClass('fa-chevron-down');
-                });
-                j$('#collapseSalesMaterials').on('hide.bs.collapse', function() {
-                    j$('#SalesMaterialsContainer i.fa-chevron-down').removeClass('fa-chevron-down')
-                                                                        .addClass('fa-chevron-right');
-                });
-
-                taskHTML += '<div class="card-header p-1"><h5>{!HTMLENCODE($ObjectType.Key_Task__c.LabelPlural)}</h5></div>';
-            }
-
-            // build keys tasks
-            allTasks = [{!serializedTasks}][0];
-            
-            if (allTasks.length > 0) {
-                
-                //console.log('allTasks', allTasks);
-                taskHTML += '<div class="card-body ' + marginClass + ' p-0"><div class="list-group list-group-flush ' + marginClass + ' p-0">';
-                var mToday = moment();
-                //console.log('saveAllKeyTasks', saveAllKeyTasks);
-                j$.each(allTasks, function(key, value) {
-                    console.log('[tasks] value', value);
-                    var taskId = value.taskId;
-                    var taskDate = new Date(value.lastCompleted); 
-                    //var todaysDate = new Date();
-                    var mTaskDate = moment({year:taskDate.getFullYear(),month:taskDate.getMonth(),day:taskDate.getDate()});
-                    var mDaysDiff = mToday.diff(mTaskDate, 'days');
-                    //var taskCompletedToday = (taskDate.toDateString() == todaysDate.toDateString())
-                    var taskCompletedToday = mDaysDiff == 0;
-                    //console.log('value.name: ' + value.name + ', today: ' + mToday.toString() + ', taskDate: ' + mTaskDate.toString() + ', diff: ' + mDaysDiff);                    
-                    if (taskCompletedToday == false && saveAllKeyTasks == "true") {
-                        taskId = null;
-                    }
-                    //if (isToday) { taskId = value.taskId; }
-                    
-                    if (deviceType == 'phone') {
-                        taskHTML += '<div id="task_' + value.templateId + '" class="list-group-item task m-0 p-0" data-task-id="' + taskId + '" data-template-id="' + value.templateId + '" data-task-name="' + value.name + '" data-complete="' + value.complete + '">';
-                        taskHTML += '<div class="d-flex justify-content-between">';
-                        taskHTML += '<span>';
-                        if (value.description == null) {
-                            taskHTML += value.name;
+                    materialsHTML += '<div id="collapseSalesMaterials" class="card-body panel-collapse collapse"><ul class="list-group">';
+                    j$.each(allSalesMaterials, function () {
+                        materialsHTML += '<li class="list-group-item text-center">';
+                        // If iOS, open in Google apps
+                        if (inSF1 && iOS) {
+                            materialsHTML += '<a href="javascript:sforce.one.navigateToURL(\'https://public.b-f.com/sfdc/iOSAppOpen/?link=' + encodeURIComponent(this.Sales_Material__r.Attachment_URL__c) + '\')">' + this.Sales_Material_Description__c + '</a>';
+                        } else if (inSF1) {
+                            materialsHTML += '<a href="javascript:sforce.one.navigateToURL(\'' + this.Sales_Material__r.Attachment_URL__c + '\')">' + this.Sales_Material_Description__c + '</a>';
                         } else {
-                            taskHTML += value.description;
+                            materialsHTML += '<a href="' + this.Sales_Material__r.Attachment_URL__c + '" target="_blank">' + this.Sales_Material_Description__c + '</a>';
                         }
-                        taskHTML += '</span>';
+                        materialsHTML += '</li>';
+                    });
+                    materialsHTML += '</ul></div></div>';
 
-                        if (value.complete && (saveAllKeyTasks == "false" || taskCompletedToday)) {
-                            //taskHTML += value.displayDate;
-                            taskHTML += '<span class="card-title">'+moment(taskDate).format('LLL') + '</span>';
-                        }
-                        taskHTML += '<div class="taskData toggle float-right">';
-                        if (value.complete && (saveAllKeyTasks == "false" || taskCompletedToday)) {
-                            taskHTML += '<input type="checkbox" id="' + value.templateId + '" class="cmn-toggle cmn-toggle-round-flat" checked/>';
-                        }else{
-                            taskHTML += '<input type="checkbox" id="' + value.templateId + '" class="cmn-toggle cmn-toggle-round-flat"/>';
-                            //taskHTML += '<div class="custom-control custom-switch"><input type="checkbox" class="custom-control-input" /></div>';
-                        }
-                        taskHTML += '<label class="toggle" for="' + value.templateId + '"></label>';
-                        
-                        taskHTML += '</div></div></div>'; // d-flex - toggle - list-group-item
-                        /*    
-                        taskHTML += '<div class="card text-center"><div class="card-body">';
-                        if (value.complete && (saveAllKeyTasks == "false" || taskCompletedToday)) {
-                            //taskHTML += value.displayDate;
-                            taskHTML += '<p class="card-title">'+moment(taskDate).format('LLL') + '</p>';
-                        }
-                        taskHTML += '<h5 class="card-text">';
-                        if (value.description == null) {
-                            taskHTML += value.name;
-                        } else {
-                            taskHTML += value.description;
-                        }
-                        taskHTML += '</h5>'; // card-text
-                        taskHTML += '</div><div class="card-footer"><div class="taskData toggle float-right">';
-                        if (value.complete && (saveAllKeyTasks == "false" || taskCompletedToday)) {
-                            taskHTML += '<input type="checkbox" id="' + value.templateId + '" class="cmn-toggle cmn-toggle-round-flat" checked/>';
-                        }else{
-                            taskHTML += '<input type="checkbox" id="' + value.templateId + '" class="cmn-toggle cmn-toggle-round-flat"/>';
-                            //taskHTML += '<div class="custom-control custom-switch"><input type="checkbox" class="custom-control-input" /></div>';
-                        }
-                        taskHTML += '<label class="toggle" for="' + value.templateId + '"></label>';
+                    j$('#tasksContent').append(materialsHTML);
+                    j$('#collapseSalesMaterials').collapse('show');
+                    j$('#collapseSalesMaterials').on('show.bs.collapse', function () {
+                        j$('#SalesMaterialsContainer i.fa-chevron-right').removeClass('fa-chevron-right')
+                            .addClass('fa-chevron-down');
+                    });
+                    j$('#collapseSalesMaterials').on('hide.bs.collapse', function () {
+                        j$('#SalesMaterialsContainer i.fa-chevron-down').removeClass('fa-chevron-down')
+                            .addClass('fa-chevron-right');
+                    });
 
-                        taskHTML += '</div></div></div></div>'; // toggle - card-footer - card - list-group-item
-                        */
-                    } else {
-                        taskHTML += '<div id="task_' + value.templateId + '" class="list-group-item task m-0 p-0" data-task-id="' + taskId + '" data-template-id="' + value.templateId + '" data-task-name="' + value.name + '" data-complete="' + value.complete + '">';
-                        taskHTML += '<div class="container mt-2"><div class="row">';
-                        taskHTML += '<div class="col-6 taskData taskName">';
-                        if (value.description == null) {
-                            taskHTML += value.name;
+                    taskHTML += '<div class="card-header p-1"><h5>{!HTMLENCODE($ObjectType.Key_Task__c.LabelPlural)}</h5></div>';
+                }
+
+                // build keys tasks
+                allTasks = [{!serializedTasks}][0];
+
+                if (allTasks.length > 0) {
+
+                    //console.log('allTasks', allTasks);
+                    taskHTML += '<div class="card-body ' + marginClass + ' p-0"><div class="list-group list-group-flush ' + marginClass + ' p-0">';
+                    var mToday = moment();
+                    //console.log('saveAllKeyTasks', saveAllKeyTasks);
+                    j$.each(allTasks, function (key, value) {
+                        console.log('[tasks] value', value);
+                        var taskId = value.taskId;
+                        var taskDate = new Date(value.lastCompleted);
+                        //var todaysDate = new Date();
+                        var mTaskDate = moment({
+                            year: taskDate.getFullYear(),
+                            month: taskDate.getMonth(),
+                            day: taskDate.getDate()
+                        });
+                        var mDaysDiff = mToday.diff(mTaskDate, 'days');
+                        //var taskCompletedToday = (taskDate.toDateString() == todaysDate.toDateString())
+                        var taskCompletedToday = mDaysDiff == 0;
+                        //console.log('value.name: ' + value.name + ', today: ' + mToday.toString() + ', taskDate: ' + mTaskDate.toString() + ', diff: ' + mDaysDiff);
+                        if (taskCompletedToday == false && saveAllKeyTasks == "true") {
+                            taskId = null;
+                        }
+                        //if (isToday) { taskId = value.taskId; }
+
+                        if (deviceType == 'phone') {
+                            taskHTML += '<div id="task_' + value.templateId + '" class="list-group-item task m-0 p-0" data-task-id="' + taskId + '" data-template-id="' + value.templateId + '" data-task-name="' + value.name + '" data-complete="' + value.complete + '">';
+                            taskHTML += '<div class="d-flex justify-content-between">';
+                            taskHTML += '<span>';
+                            if (value.description == null) {
+                                taskHTML += value.name;
+                            } else {
+                                taskHTML += value.description;
+                            }
+                            taskHTML += '</span>';
+
+                            if (value.complete && (saveAllKeyTasks == "false" || taskCompletedToday)) {
+                                //taskHTML += value.displayDate;
+                                taskHTML += '<span class="card-title">' + moment(taskDate).format('LLL') + '</span>';
+                            }
+                            taskHTML += '<div class="taskData toggle float-right">';
+                            if (value.complete && (saveAllKeyTasks == "false" || taskCompletedToday)) {
+                                taskHTML += '<input type="checkbox" id="' + value.templateId + '" class="cmn-toggle cmn-toggle-round-flat" checked/>';
+                            } else {
+                                taskHTML += '<input type="checkbox" id="' + value.templateId + '" class="cmn-toggle cmn-toggle-round-flat"/>';
+                                //taskHTML += '<div class="custom-control custom-switch"><input type="checkbox" class="custom-control-input" /></div>';
+                            }
+                            taskHTML += '<label class="toggle" for="' + value.templateId + '"></label>';
+
+                            taskHTML += '</div></div></div>'; // d-flex - toggle - list-group-item
+                            /*
+                            taskHTML += '<div class="card text-center"><div class="card-body">';
+                            if (value.complete && (saveAllKeyTasks == "false" || taskCompletedToday)) {
+                                //taskHTML += value.displayDate;
+                                taskHTML += '<p class="card-title">'+moment(taskDate).format('LLL') + '</p>';
+                            }
+                            taskHTML += '<h5 class="card-text">';
+                            if (value.description == null) {
+                                taskHTML += value.name;
+                            } else {
+                                taskHTML += value.description;
+                            }
+                            taskHTML += '</h5>'; // card-text
+                            taskHTML += '</div><div class="card-footer"><div class="taskData toggle float-right">';
+                            if (value.complete && (saveAllKeyTasks == "false" || taskCompletedToday)) {
+                                taskHTML += '<input type="checkbox" id="' + value.templateId + '" class="cmn-toggle cmn-toggle-round-flat" checked/>';
+                            }else{
+                                taskHTML += '<input type="checkbox" id="' + value.templateId + '" class="cmn-toggle cmn-toggle-round-flat"/>';
+                                //taskHTML += '<div class="custom-control custom-switch"><input type="checkbox" class="custom-control-input" /></div>';
+                            }
+                            taskHTML += '<label class="toggle" for="' + value.templateId + '"></label>';
+
+                            taskHTML += '</div></div></div></div>'; // toggle - card-footer - card - list-group-item
+                            */
                         } else {
-                            taskHTML += value.description;
-                        }
-                        
-                        taskHTML += '</div><div class="col taskData lastCompletedDate">';
-                        if (value.complete && (saveAllKeyTasks == "false" || taskCompletedToday)) {
-                            //taskHTML += value.displayDate;
-                            taskHTML += moment(taskDate).format('LLL');
-                        }
-                        taskHTML += '</div><div class="col taskData toggle">';
+                            taskHTML += '<div id="task_' + value.templateId + '" class="list-group-item task m-0 p-0" data-task-id="' + taskId + '" data-template-id="' + value.templateId + '" data-task-name="' + value.name + '" data-complete="' + value.complete + '">';
+                            taskHTML += '<div class="container mt-2"><div class="row">';
+                            taskHTML += '<div class="col-6 taskData taskName">';
+                            if (value.description == null) {
+                                taskHTML += value.name;
+                            } else {
+                                taskHTML += value.description;
+                            }
+
+                            taskHTML += '</div><div class="col taskData lastCompletedDate">';
+                            if (value.complete && (saveAllKeyTasks == "false" || taskCompletedToday)) {
+                                //taskHTML += value.displayDate;
+                                taskHTML += moment(taskDate).format('LLL');
+                            }
+                            taskHTML += '</div><div class="col taskData toggle">';
                             /*
                         if (isUsingLightningTheme) {
                             if (taskId == null) {
@@ -1427,84 +1451,109 @@
                             taskHTML += '</div><div class="col-1 taskData"><a href="javascript:uploadFiles('+taskId+', '+value.templateId+')"><i class="fa fa-upload fa-2x" /></a></div><div class="col-2 taskData toggle">';
                         }
                         */
-                        if (value.complete && (saveAllKeyTasks == "false" || taskCompletedToday)) {
-                            taskHTML += '<input type="checkbox" id="' + value.templateId + '" class="cmn-toggle cmn-toggle-round-flat" checked/>';
-                        }else{
-                            taskHTML += '<input type="checkbox" id="' + value.templateId + '" class="cmn-toggle cmn-toggle-round-flat"/>';
-                            //taskHTML += '<div class="custom-control custom-switch"><input type="checkbox" class="custom-control-input" /></div>';
+                            if (value.complete && (saveAllKeyTasks == "false" || taskCompletedToday)) {
+                                taskHTML += '<input type="checkbox" id="' + value.templateId + '" class="cmn-toggle cmn-toggle-round-flat" checked/>';
+                            } else {
+                                taskHTML += '<input type="checkbox" id="' + value.templateId + '" class="cmn-toggle cmn-toggle-round-flat"/>';
+                                //taskHTML += '<div class="custom-control custom-switch"><input type="checkbox" class="custom-control-input" /></div>';
+                            }
+                            taskHTML += '<label class="toggle" for="' + value.templateId + '"></label>';
+                            taskHTML += '</div></div></div></div>'; // toggle - row - container - list-group-item
                         }
-                        taskHTML += '<label class="toggle" for="' + value.templateId + '"></label>';
-                        taskHTML += '</div></div></div></div>'; // toggle - row - container - list-group-item
-                    }
 
-                });
-                taskHTML += '</div></div></div>'; // list-group - card-body - card
-            } else {
-                taskHTML +='<div id="noKeyTasksMessage" class="myMessage col-12 alert alert-warning">{!$Label.No_KeyTasks_Found}</div>';
+                    });
+                    taskHTML += '</div></div></div>'; // list-group - card-body - card
+                } else {
+                    taskHTML += '<div id="noKeyTasksMessage" class="myMessage col-12 alert alert-warning">{!$Label.No_KeyTasks_Found}</div>';
+                }
             }
-            
+
             // Append the HTML
             j$('#tasksContent').append(taskHTML);
+
+            if(useKeyTaskLWComponent) {
+                $Lightning.use('c:LightningWebComponentFromVisualForce', function () {
+                    $Lightning.createComponent('c:callcardGrid',
+                        {
+                            'recordId': '{!$CurrentPage.Parameters.Id}',
+                            'imageScaleRatio': imageResizeRatio,
+                            'saveAllKeyTasksPerAccountVisit': saveAllKeyTasks
+                        },
+                        'key-tasks-go-here', function (cmp) {
+                            console.log('Component created');
+                            keyTaskLWComponent = cmp;
+                        });
+                });
+            }
         }
 
         function saveKeyTasks(callCardId) {
-            //task save
-            loading(true);
-            
-            console.log('[saveKeyTasks] saveAllKeyTasks', saveAllKeyTasks);
-            console.log('[saveKeyTasks] callcard', callCard);
-            if (callCardId == undefined && callCard.Id != undefined) { callCardId = callCard.Id; }
-            var tasksToSave = [];
-            j$('.task').find(':checkbox').each(function() {
-                var complete = j$(this).prop('checked');
-                console.log('[saveKeyTasks] data-task-id', j$(this).parents('.task').attr('data-task-id'));
-                console.log('[saveKeyTasks] complete', complete);
-                if (j$(this).parents('.task').attr('data-task-id') != 'null') {
-                    var task = {};
-                    task['Id'] = j$(this).parents('.task').attr('data-task-id');
-                    task['Key_Task_Template__c'] = j$(this).parents('.task').attr('data-template-id');
-                    task['Complete__c'] = complete;
-                    task['Call_Card__c'] = callCardId;                        
-                    tasksToSave.push(task);
-                } else {
-                    if (complete || saveAllKeyTasks == 'true') {
+            if(useKeyTaskLWComponent) {
+                if (callCardId == undefined && callCard.Id != undefined) { callCardId = callCard.Id; }
+                keyTaskLWComponent.save(callCardId);
+                loading(false);
+                isSaving = false;
+            } else {
+                //task save
+                loading(true);
+
+                console.log('[saveKeyTasks] saveAllKeyTasks', saveAllKeyTasks);
+                console.log('[saveKeyTasks] callcard', callCard);
+                if (callCardId == undefined && callCard.Id != undefined) {
+                    callCardId = callCard.Id;
+                }
+                var tasksToSave = [];
+                j$('.task').find(':checkbox').each(function () {
+                    var complete = j$(this).prop('checked');
+                    console.log('[saveKeyTasks] data-task-id', j$(this).parents('.task').attr('data-task-id'));
+                    console.log('[saveKeyTasks] complete', complete);
+                    if (j$(this).parents('.task').attr('data-task-id') != 'null') {
                         var task = {};
-                        //console.log(j$(this).parents('.task').attr('data-template-id'));
+                        task['Id'] = j$(this).parents('.task').attr('data-task-id');
                         task['Key_Task_Template__c'] = j$(this).parents('.task').attr('data-template-id');
-                        task['Account__c'] = account.Id;
-                        task['Name'] = j$(this).parents('.task').attr('data-task-name');
-                        task['Description__c'] = j$(this).parents('.task').find('.taskName').html();
                         task['Complete__c'] = complete;
                         task['Call_Card__c'] = callCardId;
                         tasksToSave.push(task);
-                    }
-                }
-            });
-            console.log(tasksToSave);
-            
-            if (tasksToSave.length > 0) {
-                Account_Visit_Controller.saveTasks(tasksToSave, function(result, event) {
-                    if (event.status) {
-                        j$.each(result, function(key,value){
-                            j$('#task_'+result[key].Key_Task_Template__c).attr('data-task-id', result[key].Id);
-                            j$('#task_'+result[key].Key_Task_Template__c).attr('data-complete', result[key].Complete__c);
-                        });
-                        loading(false);
                     } else {
-                        //handling errors.
-                        alert(event.message);
+                        if (complete || saveAllKeyTasks == 'true') {
+                            var task = {};
+                            //console.log(j$(this).parents('.task').attr('data-template-id'));
+                            task['Key_Task_Template__c'] = j$(this).parents('.task').attr('data-template-id');
+                            task['Account__c'] = account.Id;
+                            task['Name'] = j$(this).parents('.task').attr('data-task-name');
+                            task['Description__c'] = j$(this).parents('.task').find('.taskName').html();
+                            task['Complete__c'] = complete;
+                            task['Call_Card__c'] = callCardId;
+                            tasksToSave.push(task);
+                        }
                     }
-                    isSaving = false;
                 });
-            } else {
-                loading(false);
-                isSaving = false;
+                console.log(tasksToSave);
+
+                if (tasksToSave.length > 0) {
+                    Account_Visit_Controller.saveTasks(tasksToSave, function (result, event) {
+                        if (event.status) {
+                            j$.each(result, function (key, value) {
+                                j$('#task_' + result[key].Key_Task_Template__c).attr('data-task-id', result[key].Id);
+                                j$('#task_' + result[key].Key_Task_Template__c).attr('data-complete', result[key].Complete__c);
+                            });
+                            loading(false);
+                        } else {
+                            //handling errors.
+                            alert(event.message);
+                        }
+                        isSaving = false;
+                    });
+                } else {
+                    loading(false);
+                    isSaving = false;
+                }
             }
         }
 
         /**
          * End Key Task functions
-         */ 
+         */
 
          /**
          * Begin Order functions
@@ -1516,17 +1565,17 @@
 
         function buildOrderRecordTypeSelection() {
             Visualforce.remoting.Manager.invokeAction(
-                '{!$RemoteAction.Account_Visit_Controller.getAvailableRecordTypesForObject}','Order__c', 
+                '{!$RemoteAction.Account_Visit_Controller.getAvailableRecordTypesForObject}','Order__c',
                 function(result, event) {
                     if (event.status) {
                         var rtList = j$('#orderRecordTypesList');
                         if (rtList) {
                             rtList.empty();
-                            var htmlStr = rtList.html();  
-                            htmlStr += '<ul class="list-group">';                          
+                            var htmlStr = rtList.html();
+                            htmlStr += '<ul class="list-group">';
                             j$(result).each(function() {
                                 console.log('[Account_Visit.order.recordtypes] name: ' + j$(this)[0].Name + ', developername: ' + j$(this)[0].DeveloperName);
-                                //htmlStr += '<button type="button" id="' + j$(this)[0].Id + '" value="' + j$(this)[0].Name + '" class="btn-default btn recordTypeButton orderRecordTypeBtn">' + j$(this)[0].Name + '</button><p />';                                
+                                //htmlStr += '<button type="button" id="' + j$(this)[0].Id + '" value="' + j$(this)[0].Name + '" class="btn-default btn recordTypeButton orderRecordTypeBtn">' + j$(this)[0].Name + '</button><p />';
                                 htmlStr += '<li class="list-group-item list-group-item-action orderRecordTypeBtn" id="'+j$(this)[0].Id+'">' + j$(this)[0].Name + '</li>';
                             });
                             htmlStr += '</ul>';
@@ -1546,7 +1595,7 @@
             );
         }
 
-        function parseOrders() {            
+        function parseOrders() {
             showCompletedMessage = false;
             if (orderList.length > 0) { j$('#noOrdersMessage').hide(); } else { j$('#noOrdersMessage').show(); }
             j$('#orderTableBody').empty();
@@ -1557,11 +1606,11 @@
             var statusText = '';
 
             var orderHTML = '';
-            
-            if (deviceType == 'phone') {      
+
+            if (deviceType == 'phone') {
                 orderHTML = '<div class="list-group list-group-flush">';
             } else {
-                      
+
                 orderHTML = '<table class="list ordersTable orders table table-striped" border="0" cellpadding="5px" cellspacing="0" id="ordersTable">';
                 orderHTML += '<thead class="rich-table-thead"><tr class="headerRow">';
                 orderHTML += '<th class="headerRow" scope="col" colspan="1"><div>&nbsp;</div></th>';
@@ -1571,10 +1620,10 @@
                 orderHTML += '<th class="headerRow" scope="col" colspan="1"><div class="rightAlign">{!$ObjectType.Order__c.Fields.Order_Date__c.Label}</div></th>';
                 orderHTML += '<th class="headerRow" scope="col" colspan="1"><div class="rightAlign">{!$ObjectType.Order__c.Fields.Status__c.Label}</div></th>';
                 orderHTML += '</tr></thead><tbody id="orderTableBody">';
-                    
+
             }
 
-            
+
             j$(orderList).each(function() {
                 var url = '';
                 var wholesalerUrl = '';
@@ -1589,19 +1638,19 @@
                     url = j$(this)[0].link;
                     wholesalerUrl = j$(this)[0].activityLink;
                 }
-        
+
                 statusText = order.promoChannel;
                 if (orderPicklistValues != undefined) {
                     lblIndex = orderPicklistValues.values.indexOf(statusText);
                     if (lblIndex >= 0) {
                         statusText = orderPicklistValues.labels[lblIndex];
                     }
-                }                
+                }
 
                 if (deviceType == 'phone') {
                     orderHTML += '<div class="list-group-item list-group-item-action orderRows m-0 p-0"><div class="card m-0 p-0" id="' + order.id + '">';
                     orderHTML += '<div class="card-header">';
-                    if (canEditOrders) { 
+                    if (canEditOrders) {
                         orderHTML += '<i id="' + j$(this)[0].id + '" class="fas fa-2x gray mr-2 order fa-edit" title="{!$Label.Edit}" object="order"></i>';
                     }
                     if (inSF1) {
@@ -1633,11 +1682,11 @@
                     orderHTML += '<div class="text-left"><p class="font-weight-bold">{!$ObjectType.Order__c.Fields.Status__c.Label}</p><p class="">'+statusText+'</p></div>';
                     */
                     orderHTML += '</div></div></div>';
-                    
+
                 } else {
 
                     orderHTML += '<tr class="dataRow orderRows">';
-                    
+
                     // Only show edit icon/link if can edit the object
                     if (canEditOrders) {
                         orderHTML += '<td class="dataCell" colspan="1" width="5%"><i id="' + j$(this)[0].id + '" class="fas fa-2x gray col-2 text-center tab order fa-edit" title="{!$Label.Edit}" object="order"></i>';
@@ -1665,26 +1714,26 @@
                     }
                     orderHTML += '<td class="dataCell rightAlign" colspan="1" width="30%">' + statusText + '</td>';
                     orderHTML += '</tr>';
-                    
+
                 }
 
-                
+
             });
-            
+
             if (deviceType == 'desktop') {
                 orderHTML += '<tr class="dataRow orderRows"></tr></tbody></table>';
             } else {
                 orderHTML += '</div>';
             }
-            
+
             j$('#orderContainer').append(orderHTML);
 
             j$('.orderRows i').click(function() {
                 newOrder(null,null,this.id);
             });
-            
+
         }
-        
+
         function newOrder(recordTypeId, recordTypeName, orderId) {
             var returnUrl = window.location.href;
             var callCardId = '';
@@ -1707,7 +1756,7 @@
                         window.location.href = newURL;
                     }
                 }
-                    
+
             } catch(err) {
             }
         }
@@ -1720,23 +1769,23 @@
          * Begin Promotion functions
          */
 
-        function buildPromotionPage() { 
+        function buildPromotionPage() {
             buildPromotionRecordTypeSelection();
             parsePromotions();
         }
 
-        /* Build promotion table for the Promotions tab as well as add list of promotions to the 
+        /* Build promotion table for the Promotions tab as well as add list of promotions to the
         // promotions drop down in the file upload page
         */
         function parsePromotions(promotions) {
             console.log('[parsePromotions] promotions', promotions);
             console.log('[parsePromotions] promotionList', promotionList);
             showCompletedMessage = false;
-            if (promotionList.length > 0) { 
-                j$('#noPromotionsMessage').hide(); 
+            if (promotionList.length > 0) {
+                j$('#noPromotionsMessage').hide();
                 j$('.promotionTable').show();
-            } else { 
-                j$('#noPromotionsMessage').show();                 
+            } else {
+                j$('#noPromotionsMessage').show();
                 j$('#promotionContainer').hide();
                 j$('#promotionCard .card-body').addClass('bg-warning');
             }
@@ -1744,11 +1793,11 @@
             j$('#promotionContainer').empty();
 
             var lHTML = '';
-            
-            if (deviceType == 'phone') {      
+
+            if (deviceType == 'phone') {
                 lHTML = '<div class="list-group list-group-flush">';
             } else {
-                      
+
                 lHTML = '<table class="list promotionTable promotions table table-striped" border="0" cellpadding="5px" cellspacing="0" id="promotionsTable">';
                 lHTML += '<thead class="rich-table-thead"><tr class="headerRow">';
                 lHTML += '<th class="headerRow" scope="col" colspan="1"><div>&nbsp;</div></th>';
@@ -1758,15 +1807,15 @@
                 lHTML += '<th class="headerRow" scope="col" colspan="1"><div class="rightAlign">{!$ObjectType.Promotion__c.Fields.Promotion_Start_Date__c.Label}</div></th>';
                 lHTML += '<th class="headerRow" scope="col" colspan="1"><div class="rightAlign">{!$ObjectType.Promotion__c.Fields.Promotion_End_Date__c.Label}</div></th>';
                 lHTML += '</tr></thead><tbody id="promotionTableBody">';
-                    
+
             }
 
-            
+
             j$(promotionList).each(function() {
                 var url = '';
                 var activityUrl = '';
                 var promo = j$(this)[0];
-                
+
                 if(urlPrefix != ''){
                     var index = j$(this)[0].link.indexOf('.com');
                     url = j$(this)[0].link.substring(index, j$(this)[0].link.length).replace('.com', urlPrefix);
@@ -1819,7 +1868,7 @@
                     lHTML += '<div class="text-left"><p class="text-truncate font-weight-bold">{!$ObjectType.Promotion__c.Fields.Promotion_End_Date__c.Label}</p><p class="">'+promo.displayEndDate+'</span></div>';
                     */
                     lHTML += '</div></div></div>';
-                    
+
                 } else {
                     lHTML += '<tr class="dataRow promotionRows">';
                     lHTML += '<td class="dataCell" colspan="1" width="5%"><i id="' + j$(this)[0].id + '" class="fas fa-2x gray col-2 text-center tab promotion fa-edit" title="{!$Label.Edit}" object="promotion"></i></td>';
@@ -1836,7 +1885,7 @@
                     lHTML += '" data-promo-id="'+j$(this)[0].id+'"></i>';
                     // close off promotion name column
                     lHTML += '</td>';
-                    
+
                     // Record type column
                     lHTML += '<td class="dataCell" colspan="1" width="20%">' + j$(this)[0].recordTypeName + '</td>';
                     if (inSF1) {
@@ -1844,23 +1893,23 @@
                     } else {
                         lHTML += '<td class="dataCell" colspan="1" width="30%"><a href="' + activityUrl + '" target="_blank">' + j$(this)[0].activityName + '</a></td>';
                     }
-                    
+
                     // Start & end date columns
                     lHTML += '<td class="dataCell rightAlign" colspan="1" width="10%">' + j$(this)[0].displayStartDate + '</td>';
                     lHTML += '<td class="dataCell rightAlign" colspan="1" width="10%">' + j$(this)[0].displayEndDate + '</td>';
                     lHTML += '</tr>';
-                    
+
                 }
 
-                
+
             });
-            
+
             if (deviceType == 'desktop') {
                 lHTML += '<tr class="dataRow promotionRows"></tr></tbody></table>';
             } else {
                 lHTML += '</div>';
             }
-            
+
             j$('#promotionContainer').append(lHTML);
 
             j$('.promotionRows i').click(function() {
@@ -1876,9 +1925,9 @@
                         var rtList = j$('#promotionRecordTypesList');
                         if (rtList) {
                             rtList.empty();
-                            var htmlStr = rtList.html();                            
+                            var htmlStr = rtList.html();
                             j$(result).each(function() {
-                                //htmlStr += '<button type="button" id="' + j$(this)[0].Id + '" value="' + j$(this)[0].Name + '" class="btn-default btn recordTypeButton promotionRecordTypeBtn">' + j$(this)[0].Name + '</button><p />';                                
+                                //htmlStr += '<button type="button" id="' + j$(this)[0].Id + '" value="' + j$(this)[0].Name + '" class="btn-default btn recordTypeButton promotionRecordTypeBtn">' + j$(this)[0].Name + '</button><p />';
                                 htmlStr += '<li class="list-group-item list-group-item-action promotionRecordTypeBtn" id="'+j$(this)[0].Id+'">' + j$(this)[0].Name + '</li>';
                             });
                             rtList.html(htmlStr);
@@ -1931,7 +1980,7 @@
             } catch(err) {
             }
         }
-        
+
         function newPromotion(recordTypeId,recordTypeName,promotionId) {
             var returnUrl = window.location.href;
             var callcardId = '';
@@ -1940,10 +1989,10 @@
             }
             var newURL = urlPrefix + '/apex/Promotion?';
             if (promotionId != undefined) {
-                newURL += 'id=' + promotionId + '&';   
+                newURL += 'id=' + promotionId + '&';
             }
             newURL += 'promotionType=' + recordTypeName + '&recordTypeId=' + recordTypeId + '&accountId=' + account.Id + '&callcardId=' + callcardId;
-            
+
             try {
                 if (inSF1) {
                     sforce.one.navigateToURL(newURL);
@@ -1954,10 +2003,10 @@
                         window.location.href = newURL;
                     }
                 }
-                    
+
             } catch(err) {
             }
-            
+
         }
         /**
          * End Promotion functions
@@ -1981,7 +2030,7 @@
             j$('#fileUploadContainer').hide();
             j$('#fuSelectedPromotion').hide();
             j$('#busyDialog .modal-footer').hide();
-            j$('#ChatterContainer').hide();   
+            j$('#ChatterContainer').hide();
             j$('#fuPromotionActivityPromotionsListPanel').hide();
             j$('#busyDialog .modal-body .busyDialogMessage').hide();
             j$('#uploadCompletedDiv').hide();
@@ -2020,7 +2069,7 @@
                 pHTML += '<th class="headerRow" data-column-id="remove" scope="col">&nbsp;</th>';
                 pHTML += '</thead><tbody class="tableBody">';
                 pHTML += '</tbody></table></div>';
-                
+
                 paHTML = '<div class="table-responsive col-md-12"><table id="tfuPromotionsForActivityTable" class="tfuPromotionsForActivity table table-striped"><thead class="headers">';
                 paHTML += '<th class="headerRow" data-column-id="tfuPromotionSelected" scope="col">&nbsp;</th>';
                 paHTML += '<th class="headerRow" data-column-id="tfuPromotionId" scope="col">' + promotionLabel + '</th>';
@@ -2028,7 +2077,7 @@
                 paHTML += '<th class="headerRow" data-column-id="tfuPromotionStartDate" scope="col">' + startDateLabel + '</th>';
                 paHTML += '<th class="headerRow" data-column-id="tfuPromotionEndDate" scope="col">' + endDateLabel + '</th>';
                 paHTML += '</thead><tbody id="tfuPromotionsForActivityBody" class="tableBody"></tbody></table></div>';
-                
+
                 pdcHTML = '<div class="table-responsive col-md-12"><table id="tfuSelectedPromotionTable" class="tfuSelectedPromotionTable table table-striped"><thead class="headers">';
                 pdcHTML += '<th class="headerRow" data-column-id="tfuPromotionId" scope="col">' + promotionLabel + '</th>';
                 pdcHTML += '<th class="headerRow" data-column-id="tfuChannel" scope="col">' + channelLabel + '</th>';
@@ -2036,7 +2085,7 @@
                 pdcHTML += '<th class="headerRow" data-column-id="tfuPromotionEndDate" scope="col">' + endDateLabel + '</th>';
                 pdcHTML += '</thead><tbody id="tfuSelectedPromotionBody" class="tableBody"></tbody></table></div>';
             }
-            
+
             j$('#UploadItemsPanel').append(pHTML);
             j$('#fuPromotionActivityPromotionList').append(paHTML);
             j$('#fuSelectedPromotionContainer').append(pdcHTML);
@@ -2052,7 +2101,7 @@
                 j$('#UploadItemsPanel').empty();
                 j$('#fuPromotionActivityPromotionList').empty();
             }
-            
+
             j$('#fuPromotionActivityList .promotionListContent').remove();
 
             j$('#fuPromotionActivityContainer').attr('data-promo-id', '');
@@ -2063,13 +2112,13 @@
             j$('#btnRestartUploadProcess').hide();
             j$('#fuPromotionActivityPromotionsListPanel').hide();
             j$('#fuPromotionActivityPromotionListTitle').text('');
-            j$('#ChatterContainer').hide();   
+            j$('#ChatterContainer').hide();
             j$('#fuSelectedPromotion').hide();
             j$('#btnSelectOtherPromotion').removeClass('disabled');
             j$('#uploadCompletedDiv').fadeOut(500, function() {
                 j$('#fuPromotionActivityContainer').fadeIn();
             });
-            
+
             if (callback) { callback(); }
         }
         function buildPromotionActivityList() {
@@ -2080,7 +2129,7 @@
                 var premise = value.Premise__c == undefined ? '' : value.Premise__c;
                 var startDate = value.Begin_Date__c == undefined ? '' : new Date(value.Begin_Date__c).toLocaleDateString();
                 var endDate = value.End_Date__c == undefined ? '' : new Date(value.End_Date__c).toLocaleDateString();
-                
+
                 var item = '<a id="' + value.Id + '" href="javascript:void(0);" class="list-group-item list-group-item-action" data-activity-id="' + value.Id + '" data-promoactivity-name="' + value.Name + '" data-startdate="' + startDate + '" data-enddate="' + endDate + '">'+value.Name+'</a>';
                 j$('#fuPromotionActivityList').append(item);
             });
@@ -2090,11 +2139,11 @@
                 var selActivity = j$(this);
                 var activityName = selActivity.attr('data-promoactivity-name');
                 var activityId = selActivity.attr('data-activity-id');
-                                
+
                 showPromotionsForActivity(activityId, activityName);
 
             });
-            
+
         }
         function showPromotionsForActivity(activityId, activityName) {
             //j$('#btnCreateNewPromotion').attr('data-activity-id', activityId);
@@ -2120,14 +2169,14 @@
             console.log('tHTML', tHTML);
             j$(selector).empty();
             j$('#fuPromotionActivityList .promotionListContent').remove();
-        
+
             console.log('promotionList', promotionList);
             j$.each(promotionList, function(key, value) {
                 if (value.activityId == activityId) {
                     var chnl = (value.promoChannel == undefined ? '' : value.promoChannel);
                     var sDate = (value.displayStartDate == undefined ? '' : value.displayStartDate);
                     var eDate = (value.displayEndDate == undefined ? '' : value.displayEndDate);
-                    
+
                     if (deviceType == 'phone') {
                         pHTML += '<div class="row" id="' + value.id + '">';
                         pHTML += '<div class="col-xs-12 col-sm-12 col-md-6"><span style="margin-bottom: 0.5rem;"><span data-promo-id="' + value.id + '" class="glyphicon glyphicon-ok tfuPAOK hidden"/>';
@@ -2164,13 +2213,13 @@
                 	buildPromotionFromActivity(activityId);
                 } else {
                     //j$('#noPromotionsForActivityMessage').removeClass('hidden').show();
-                    //j$('#fuPromotionActivityPromotionsListPanel').hide();    
+                    //j$('#fuPromotionActivityPromotionsListPanel').hide();
                     j$('#fuPromotionActivityList a[data-activity-id="'+activityId+'"]').append('<div class="promotionListContent"><div class="card text-white bg-warning m-4"><div class="card-body">{!$Label.NoPromotionForActivityFound}</div></div></div>');
                 }
             } else {
-                j$('#fuPromotionActivityList a[data-activity-id="'+activityId+'"]').append(tHTML);                
-                /*                    
-                if (deviceType == 'desktop') {                
+                j$('#fuPromotionActivityList a[data-activity-id="'+activityId+'"]').append(tHTML);
+                /*
+                if (deviceType == 'desktop') {
                     j$('#tfuPromotionsForActivityBody').append(pHTML);
                 } else {
                     j$('#fuPromotionActivityPromotionList').append(pHTML);
@@ -2194,19 +2243,19 @@
                     event.preventDefault();
 
                     j$('.tfuPAOK').addClass('hidden');
-                    if (this.getAttribute('data-type') == 'select') {                    
+                    if (this.getAttribute('data-type') == 'select') {
                         j$('.tfuPASelectButton').text('{!$Label.Select}');
                         j$(this).text('{!$Label.Clear}');
                         this.setAttribute('data-type', 'clear');
                         this.setAttribute('data-selected', 'yes');
-                        var promotionId = this.getAttribute('data-promo-id');                    
+                        var promotionId = this.getAttribute('data-promo-id');
                         var promotionName = this.getAttribute('data-promo-name');
                         var promotionChannel = this.getAttribute('data-promo-channel');
                         var promotionStartDate = this.getAttribute('data-promo-startdate');
                         var promotionEndDate = this.getAttribute('data-promo-enddate');
                         var promotionLinkUrl = this.getAttribute('data-promo-linkurl');
                         var selector = '#fuPromotionActivityPromotionList';
-                        if (deviceType == 'desktop') {                        
+                        if (deviceType == 'desktop') {
                             selector = '#tfuPromotionsForActivityBody';
                         }
                         j$(selector + ' span[data-promo-id*="' + promotionId + '"]').removeClass('hidden');
@@ -2226,12 +2275,12 @@
                         this.setAttribute('data-type', 'select');
                         this.setAttribute('data-selected', 'no');
                     }
-                });            
+                });
                 j$('#fuPromotionActivityPromotionsListPanel').show();
             }
-        }        
+        }
         function buildPromotionFromActivity(activityId) {
-            j$('#busyDialog .modal-header .close').hide();   
+            j$('#busyDialog .modal-header .close').hide();
             j$('#busyDialog').modal('show');
             Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.Account_Visit_Controller.newPromotionFromActivity}',
@@ -2240,8 +2289,8 @@
                     j$('#busyDialog').modal('hide');
                     if (event.status) {
                         promotionList.push(result);
-                        var selector = '#fuPromotionActivityPromotionList'; 
-                        if (deviceType == 'desktop') {                        
+                        var selector = '#fuPromotionActivityPromotionList';
+                        if (deviceType == 'desktop') {
                             selector = '#tfuPromotionsForActivityBody';
                         }
                         j$(selector + ' span[data-promo-id*="' + activityId + '"]').removeClass('hidden');
@@ -2257,7 +2306,7 @@
                         j$('.tfuPASelectButton').text('{!$Label.Clear}')
                         						.attr('data-type', 'clear')
                         						.attr('data-selected', 'yes');
-						moveToUploadPage();                        
+						moveToUploadPage();
                     } else if (event.type === 'exception') {
                         console.log('buildpromotionfromactivity raised exception. ' + event.message);
                         alert(event.message);
@@ -2292,7 +2341,7 @@
             j$('#confirmDialog').modal('show');
         }
 
-    
+
         /** Begin Chatter functions */
         function buildChatterPanel() {
             var cHTML = '';
@@ -2306,28 +2355,28 @@
 				var selGroup = j$(this);
                 var groupName = selGroup.text();
                 var groupId = selGroup.attr('data-group-id');
-                
+
                 j$('#chatterGroupText').val(groupName)
                 					   .attr('data-group-id', groupId);
-               
+
                 j$('#ChatterPostDetailsPanel').removeClass('hidden');
                 var container = j$('#ChatterContainer');
                 var newWidth = container.width() - j$('#sHashtagAccount').offset().left;
 	            j$('#sHashtagAccountLabel').css('display:block; width:' + newWidth + ';');
             });
-            
+
         }
         function postToChatter() {
             console.log('[postToChatter] promotion', promotion);
             var chatterText = j$('#taChatterPost').val();
             var mentionManager = j$('#cbMentionManager').prop('checked');
 			var promotionId = j$('#fuPromotionActivityContainer').attr('data-promo-id');
-			var promotionName = j$('#fuPromotionActivityContainer').attr('data-promo-name');            
+			var promotionName = j$('#fuPromotionActivityContainer').attr('data-promo-name');
             var chatterGroupId = j$('#chatterGroupText').attr('data-group-id');
             var chatterGroupName = j$('#chatterGroupText').val();
             if (chatterGroupId == null) { chatterGroupId = ''; chatterGroupName = ''; }
             if (chatterGroupName == null) { chatterGroupName = ''; }
-            
+
             var fileIds = [];
             var linkUrl = urlPrefix + '/' + uploadedFileIds[0];
             var managerId = myManagersId;
@@ -2361,16 +2410,16 @@
                     } else {
                         console.log(event.message);
                     }
-                    
+
                 },
                 { escape:false }
             );
-        }        
+        }
         function goToChatterPost() {
             var postId = j$('#btnGoToChatterPost').attr('data-post-id');
             if (inSF1) {
 	            initialiseCameraPage(function() { sforce.one.navigateToFeedItemDetail(postId); });
-                
+
             } else {
     	        var postUrl = urlPrefix + '/' + postId;
         	    window.open(postUrl, '_blank');
@@ -2388,7 +2437,7 @@
             j$('#chatterGroupText').val('')
             					   .attr('data-group-id', '');
             j$('#ChatterPostDetailsPanel').addClass('hidden');
-            
+
             j$('#btnMoveToChatter').hide();
             j$('#fuSelectedPromotion').fadeOut(500);
             j$('#fileUploadContainer').fadeOut(500, function() {
@@ -2441,9 +2490,9 @@
                 paHTML += '<div class="col-xs-12 col-sm-6"><label for="' + promotion.id + '" class="fieldLabel" style="margin-right: 0.5em;">{!$ObjectType.Promotion__c.Fields.Channel__c.Label}</label><span style="margin-bottom: 0.5rem;">' + (promotion.channel == null ? '' : promotion.channel) + '</span></div>';
                 paHTML += '<div class="col-xs-12 col-sm-6"><label for="' + promotion.id + '" class="fieldLabel" style="margin-right: 0.5em;">{!$ObjectType.Promotion__c.Fields.Promotion_Start_Date__c.Label}</label><span style="margin-bottom: 0.5rem;">' + promotion.startDate + '</span></div>';
                 paHTML += '<div class="col-xs-12 col-sm-6"><label for="' + promotion.id + '" class="fieldLabel" style="margin-right: 0.5em;">{!$ObjectType.Promotion__c.Fields.Promotion_End_Date__c.Label}</label><span style="margin-bottom: 0.5rem;">' + promotion.endDate + '</span></div>';
-                paHTML += '</div>';                                
+                paHTML += '</div>';
             }
-            
+
             j$(selector).empty()
             			.append(paHTML);
 
@@ -2452,7 +2501,7 @@
             j$('#btnUploadAndAttach').hide();
             j$('#fileUploadInputGroup').show();
             j$('#btnSelectOtherPromotion').removeClass('disabled').prop('disabled', '').show();
-            
+
             if (deviceType == 'desktop') {
                 j$('#tUploadItems .tableBody').empty();
             } else {
@@ -2477,12 +2526,12 @@
                     completionCallback(img);
                 }
             }
-            
+
             j$.each(files, function(key, value) {
                 var reader = new FileReader();
                 reader.readAsDataURL(value);
                 reader.onloadend = function() {
-                    j$(selector + ' object[data-item-id*="' + value.name + '"]').attr('data', reader.result);                    
+                    j$(selector + ' object[data-item-id*="' + value.name + '"]').attr('data', reader.result);
                     j$(selector + '[data-item-id*="' + value.name + '"] .progress').remove();
                     var filetypes = value.type.split('/');
                     if (filetypes[0] == 'image') {
@@ -2502,21 +2551,21 @@
                                     head = head[0];
                                 }
 								var resizedImgFileSize = Math.round((resizedImg.src.length - head.length) * 3 / 4) / 1024;
-                                
+
                                 // Update size label
                                 if (deviceType == 'desktop') {
                                     j$(j$(selector + '[data-item-id="' + value.name + '"] td div')[3]).text(resizedImgFileSize.toFixed(2));
                                 } else {
                                     j$(j$(selector + '[data-item-id="' + value.name + '"] div span')[2]).text(resizedImgFileSize.toFixed(2))
                                 }
-                                
+
                                 // Hide busy dialog
                                 j$('#busyDialog').modal('hide');
                             });
                         });
                         img.src = reader.result;
                     } else {
-                        j$(selector + ' img[data-item-id*="' + value.name + '"]').remove();  
+                        j$(selector + ' img[data-item-id*="' + value.name + '"]').remove();
                         if (filetypes[0] == 'application') {
                             j$(selector + '[data-item-id*="' + value.name + '"] .fuImageContainer').html('<i class="fa fa-file-' + filetypes[1] + '-o fa-5x text-center"></i>');
                         } else {
@@ -2528,7 +2577,7 @@
         }
         function uploadAndAttachItems(event) {
             j$('#btnSelectOtherPromotion').hide();
-            
+
             var selector = '#UploadItemsPanel div';
             if (deviceType == 'desktop') {
                 selector = '#tUploadItems tr';
@@ -2543,7 +2592,7 @@
             attachmentBody = '';
             j$.each(items, function(key, value) {
                 if (value.hasAttribute('data-item-id') && value.getAttribute('data-item-uploaded') == '0') {
-                    fileName = value.getAttribute('data-item-id');  
+                    fileName = value.getAttribute('data-item-id');
                     fileType = value.getAttribute('data-item-type');
                     fileExtension = value.getAttribute('data-item-extension');
                     fileBody = value.getAttribute('data');
@@ -2568,19 +2617,19 @@
                         console.log('filename', fileName);
                         console.log('newExt', newExt);
                     }
-                    
+
                     fileContent = getFileContent(fileBody);
                     //if (showProofOfConcept) {
                     attachments.push(createContentDocument(fileName, fileType, fileContent, promotion.id, promotion.name, promotion.linkUrl));
                     //} else {
                     //	attachments.push(createFeedItem(fileName, fileType, fileContent, promotionId, promoName, linkUrl));
                     //}
-                    
+
                     value.setAttribute('data-item-uploaded', '1');
-                                        
+
                 }
             });
-            
+
             if (attachments.length > 0) {
                 console.log(attachments);
                 try {
@@ -2590,8 +2639,8 @@
                 }
             } else {
             }
-			           
-                
+
+
         }
         function validateFilenameExtension(itemId) {
             console.log('itemid', itemId);
@@ -2607,7 +2656,7 @@
                     el.val(newValue + oldExt);
                 }
             }
-        }        
+        }
         function addItemsToUploadList(event) {
             j$('#fileUploadInputGroup').hide();
             var obj = event.target;
@@ -2622,7 +2671,7 @@
                     if (j$(selector + '[data-item-id*="' + value.name + '"]').length == 0) {
                         itemCnt++;
                         var size = value.size == 0 ? 0 : (value.size / 1024);
-                        
+
                         if (deviceType == 'desktop') {
                             pHTML += '<tr id="' + value.name + '" data-item-id="' + value.name + '" data-item-extension="'+value.name.substr(-3)+'" data-item-type="' + value.type + '" data-item-uploaded="0">';
                             pHTML += '<td><object data-item-id="' + value.name + '" data-item-type="' + value.type + '" data-item-uploaded="0" class="hidden" data=""></object><div data-item-id="' + value.name + '" class="fuImageContainer center-block"><div data-item-id="' + value.name + '" class="progress"><div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%"><div class="sr-only"></div></div></div><img class="img-thumbnail hidden" data-item-id="' + value.name + '" src="" alt="' + value.name + '" width="100" height="100" /></div></td>';
@@ -2646,7 +2695,7 @@
                         alert('You have already added ' + value.name + ' to the upload list.');
                     }
                 });
-                
+
                 if (deviceType == 'desktop') {
                     j$('#tUploadItems').append(pHTML);
                 } else {
@@ -2697,20 +2746,20 @@
             feedItem.ContentFileName = fileName;
             feedItem.Type = 'ContentPost';
             feedItem.ParentId = promoId;
-            feedItem.Visibility = 'AllUsers';            
-            
+            feedItem.Visibility = 'AllUsers';
+
             return feedItem;
         }
         function attachmentSuccess(result) {
             console.log('[AttachmentSuccess] result', result);
             feedItemId = '';
             j$('#busyDialog').modal('hide');
-            if (result[0].getBoolean('success') == true) {                
-                console.log('[attachmentsuccess] result:', result); 
+            if (result[0].getBoolean('success') == true) {
+                console.log('[attachmentsuccess] result:', result);
                 var promoId = j$('#fuPromotionActivityContainer').attr('data-promo-id');
                 let promoName = j$('#fuPromotionActivityContainer').attr('data-promo-name');
                 console.log('[attachmentsuccess] promoId', promoId);
-                
+
                 var tempResult = result;
                 delete tempResult[0].success;
                 //callEinstein(result);
@@ -2720,19 +2769,19 @@
                 if (deviceType == 'desktop') {
                     selector = '#tUploadItems tr';
                 }
-                
+
                 if (promoId && promoId != '') {
                     var paperClip = j$('.promotionRows i[data-promo-id*="'+promoId+'"]');
                     if (paperClip) {
                         paperClip.removeClass('hidden');
                     }
                 }
-                
+
                 j$(selector + ' .removeButton').text('{!$Label.Attached}')
                                                .prop('disabled','disabled')
                                                .children().hide();
                 j$(selector + ' .fuInputFilename').prop('disabled', 'disabled');
-                            
+
                 j$('#btnUploadAndAttach').hide();
                 j$('#btnUploadAndAttachBadge').text('0').hide();
                 j$('#btnMoveToChatter').show();
@@ -2747,7 +2796,7 @@
                 alert(uploadAttachmentError + '\n' + result[0].errors.message);
             }
         }
-        function attachmentFailed(error) {  
+        function attachmentFailed(error) {
             console.log('[attachmentFailed] error', error);
             var dlgTitle = j$('#busyDialogLabel');
             dlgTitle.text(dlgTitle.attr('data-error-title'));
@@ -2771,8 +2820,8 @@
                 flowTaskId = templateId;
                 flowObject = 'keytasktemplate';
             }
-            j$('#flowDialog').modal('show'); 
-            */            
+            j$('#flowDialog').modal('show');
+            */
         }
         /** End File Upload and Attach functions */
 
@@ -2799,14 +2848,14 @@
                     } else {
                         console.log(event.message);
                     }
-                    
+
                 },
                 { escape:false }
             );
         }
         function storeShelfScannerImages(items) {
             console.log('[storeShelfScannerImages] items', items);
-            
+
             Visualforce.remoting.Manager.invokeAction(
                 '{!$RemoteAction.Account_Visit_Controller.storeShelfScannerImages}',
                 items,
@@ -2819,13 +2868,13 @@
                     } else {
                         console.log(event.message);
                     }
-                    
+
                 },
                 { escape:false }
             );
         }
-        */        
-         
+        */
+
         /**
          * End Einstein functions
          */
@@ -2846,10 +2895,10 @@
             var bigString = [];
             //var recordTypeName = '{!ccRecordTypeName}';
 
-            //var objectDescribe = sforce.connection.describeSObject(objectName);        
+            //var objectDescribe = sforce.connection.describeSObject(objectName);
             //console.log('objectDescribe', objectDescribe);
             //recordTypesForObject[objectName] = objectDescribe.recordTypeInfos;
-            
+
             var vl = {};
             var recordTypeMappings = sforce.connection.describeLayout(objectName).recordTypeMappings;
             console.log('recordtypes for ' + objectName, recordTypeMappings);
@@ -2860,7 +2909,7 @@
                         name: recordTypeMappings.picklistsForRecordType[x].picklistName,
                         values: vl.values,
                         labels: vl.labels
-                    };                           
+                    };
                     bigString.push(field);
                 }
             } else {
@@ -2876,7 +2925,7 @@
                                 name: recordTypeMappings[i].picklistsForRecordType.picklistName,
                                 values: vl.values,
                                 labels: vl.labels
-                            };                          
+                            };
                             bigString.push(field);
                         } else {
                             for(var x = 0; x < recordTypeMappings[i].picklistsForRecordType.length; x++){
@@ -2885,7 +2934,7 @@
                                     name: recordTypeMappings[i].picklistsForRecordType[x].picklistName,
                                     values: vl.values,
                                     labels: vl.labels
-                                };                          
+                                };
                                 bigString.push(field);
                             }
                         }
@@ -2924,11 +2973,11 @@
         /**
          * End RecordType functions
          */
-        
+
         /**
          * Begin Overflow Menu functions
          */
-        // Close (Overflow/More) Options menu when not clicked on                              
+        // Close (Overflow/More) Options menu when not clicked on
         window.onclick = function(event) {
         	if (!event.target.matches('.optionMenuButton')) {
                 var dropdowns = document.getElementsByClassName("options-dropdown-content");
@@ -2955,7 +3004,7 @@
             // Show menu if menu definition has > 0 elements
             if(menu.length > 0)
                 j$('#overflowmenu').show();
-            
+
             // Add links to menu
             var menuDiv = j$("#optionsMenuDropdown");
             menu.forEach(function(element) {
@@ -2985,7 +3034,7 @@
                     }
                 } else {
                     // Advaned button, define button behavior based on name
-                    
+
                     // Accounts Nearby (This Account)
                     if(element.name == "Accounts_Nearby_This_Account") {
                         // Detect if in Salesforce1 or not
@@ -2997,7 +3046,7 @@
                         }
                     }
                 }
-                
+
                 // Add to menu
                 menuDiv.append(a);
             });
@@ -3005,7 +3054,7 @@
         /**
          * End Overflow Menu functions
          */
-        
+
         /**
          * Begin Popup Dialog functions
          */
@@ -3022,7 +3071,7 @@
             j$('#confirmDialogMessage').text(message);
             j$('#btnConfirmDialogYes').addClass('hidden');
             j$('#btnConfirmDialogOK').removeClass('hidden');
-            j$('#confirmDialog').one('shown.bs.modal', function() { 
+            j$('#confirmDialog').one('shown.bs.modal', function() {
                 if (callback) { callback(); }
             }).one('hidden.bs.modal', function() {
                 j$('#btnConfirmDialogYes').removeClass('hidden');
@@ -3038,10 +3087,10 @@
         /**
          * End Popup Dialog functions
          */
-        
+
 
     </script>
-    <div class="bootstrap">    
+    <div class="bootstrap">
         <div class="modal fade" id="confirmDialog" tabindex="-1" role="dialog" aria-labelledby="confirmDialogLabel" data-backdrop="static" data-keyboard="false">
             <div class="modal-dialog modal-sm">
                 <div class="modal-content">
@@ -3055,7 +3104,7 @@
                         <button type="button" class="btn btn-primary" data-dismiss="modal">{!$Label.Cancel}</button>
                         <a id="btnConfirmDialogYes" class="btn btn-warning btn-ok" data-dismiss="modal">{!$Label.Yes_ImSure}</a>
                         <a id="btnConfirmDialogOK" class="btn btn-warning btn-ok hidden" data-dismiss="modal">{!$Label.OK}</a>
-                    </div>                        
+                    </div>
                 </div>
             </div>
         </div>
@@ -3069,26 +3118,26 @@
                         <div class="progress">
                             <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
                                 <div class="sr-only"></div>
-                            </div>                                                        
+                            </div>
                         </div>
                         <div class="busyDialogMessage">
                             <span id="busyDialogMessage"></span>
                         </div>
-                    </div>                        
+                    </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-primary" data-dismiss="modal" >{!$Label.Close}</button>
-                    </div>                        
+                    </div>
                 </div>
             </div>
         </div>
-    
+
         <div class="modal fade" id="newContactDialog" tabindex="-1" role="dialog" aria-labelledby="newContactModalLabel" style="overflow-y: auto;">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
                         <div id="newContactDialogMessagesContainer" class="alert alert-danger hidden">
-                            <span id="newContactDialogMessages"></span>                              
-                        </div>                            
+                            <span id="newContactDialogMessages"></span>
+                        </div>
                         <h4 class="modal-title" id="newContactModalLabel">{!$Label.CreateNewContact}</h4>
                         <span class="requiredField" style="margin-top: 5px;"></span><span style="font-size: x-small;font-weight:bold;">{!$Label.AsteriskDenotesRequireField}</span>
                     </div>
@@ -3097,7 +3146,7 @@
                             <div class="form-group">
                                 <span id="newContactAccount" ></span>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label for="newContactFirstName">{!$ObjectType.Contact.Fields.FirstName.Label} <span class="text-danger">*</span></label>
                                 <input id="newContactFirstName" type="text" class="form-control" maxLength="40" />
@@ -3122,7 +3171,7 @@
                                 <label for="newContactTitleSelect">{!$ObjectType.Contact.Fields.Title.Label}</label>
                                 <select id="newContactTitleSelect" class="form-control">
                                 </select>
-                                <input id="newContactTitleText" type="Text" class="form-control" />                                    
+                                <input id="newContactTitleText" type="Text" class="form-control" />
                             </div>
                         </div>
                     </div>
@@ -3145,7 +3194,7 @@
                     </div>
                     <div class="modal-body">
                         <div id="orderRecordTypesList">
-                            
+
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -3154,7 +3203,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="modal fade" id="promoRecordTypeDialog" tabindex="-1" role="dialog" aria-labelledby="promoRTModalLabel">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -3164,7 +3213,7 @@
                     </div>
                     <div class="modal-body">
                         <div id="promotionRecordTypesList">
-                            
+
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -3173,8 +3222,8 @@
                 </div>
             </div>
         </div>
-    
-        <div class="container-fluid theme-showcase p-0" role="main"> 
+
+        <div class="container-fluid theme-showcase p-0" role="main">
 			<nav class="navbar navbar-light bg-light fixed-top" id="top-panel">
                 <div class="navbar-brand justify-content-start">
                     <a id="sectionTitleAccountName" class="text-wrap">{!a.Name}</a> - <span id="sectionTitle">{!$Label.Surveys}</span>
@@ -3197,32 +3246,32 @@
                         <button id="optionMenuButton" type="button" class="btn-sm btn-flat btn-info optionMenuButton" onclick="showOptionsDropdown()">&#x22EE;</button>
                         <div id="optionsMenuDropdown" class="options-dropdown-content"></div>
                     </div>
-            
+
                 </div>
             </nav>
 
-            <div class="main container-fluid p-1" style="height: 500px !important;">                
-                <div class="">
+            <div class="main container-fluid p-1" style="height: 500px !important;">
+                    <div class="">
                     <div id="messagesContainer" class="card col-12 bfOnly hidden"  style="background-color: #f8edef;">
                         <div class="card-body">
                             <h3 class="card-title"><i class="fas fa-frown" aria-hidden="true"></i>&nbsp;&nbsp;{!$Label.Insufficient_Privileges_Error_Header}</h3>
                             <h4 class="card-subtitle mb-2 mt-4">{!$Label.HowToGetAccess}</h4>
                             <ul style="list-style-type: disc;">
                                 <li><h5 class="card-text">{!$Label.Insufficient_Privileges_Error_Message}</h5></li>
-                            </ul>                            
+                            </ul>
                         </div>
                     </div>
-                    <div id="pageMessages" style="text-align:center;color:red;font-weight:bold;">                    
+                    <div id="pageMessages" style="text-align:center;color:red;font-weight:bold;">
                     </div>
-            
+
                     <div id="callCardContainer" class="content object-content_container object-content_hidden callcard col-12 bfOnly" object="callcard">
                         <div style="float:left;">
                             <span class="requiredField" style="margin-left: 20px; margin-right: 10px;"></span><span style="font-size: x-small;font-weight:bold;">{!$Label.AsteriskDenotesRequireField}</span>
                         </div><br />
-            
+
                         <div id="callCardContent" class="object-content"></div>
                     </div>
-                    
+
                     <div id="tasksContainer" class="content object-content_container object-content_hidden tasks m-sm-0 p-sm-0 bfOnly" object="Tasks">
                         <div id="tasksContent" class="object-content p-0"></div>
                     </div>
@@ -3230,10 +3279,10 @@
                     <div id="surveysContainer" class="content object-content_container object-content_hidden surveys col-12 " object="Surveys">
                         <div id="surveyContent" class="object-content">
                             <div class="btn-group btn-group-lg mb-3" role="group">
-                                <button class="btn btn-primary surveyBtn surveys" type="button" tbl="surveysTable">{!$Label.LABS_SF_Open_Surveys}</button>                                    
-                                <button class="btn btn-light surveyBtn completed" type="button" tbl="completedTable" >{!$Label.LABS_SF_Completed_Surveys}</button>                                    
+                                <button class="btn btn-primary surveyBtn surveys" type="button" tbl="surveysTable">{!$Label.LABS_SF_Open_Surveys}</button>
+                                <button class="btn btn-light surveyBtn completed" type="button" tbl="completedTable" >{!$Label.LABS_SF_Completed_Surveys}</button>
                             </div>
-            
+
                             <apex:pageMessages />
 
                             <div id="noSurveysMessage" class="card text-white bg-warning m-3">
@@ -3257,7 +3306,7 @@
                                         <tr class="dataRow surveyRows singleChannelLink" >
                                             <td class="dataCell" colspan="1" width="34%">
                                                 <!--<a href="#" onclick="newAccountSurvey('Account')">{!$Label.Account_Survey}</a>-->
-                                                <a href="javascript:void(0);" class="singlechannelsurvey" onclick="startNewAccountSurvey('Account', '', this)">{!$Label.Account_Survey}</a>
+                                                <button class="singlechannelsurvey btn btn-link actionButton" onclick="startNewAccountSurvey('Account', '', this)">{!$Label.Account_Survey}</button>
                                                 <div id="existingAccountSurvey" class="existingSurvey "><i class="fas green fa-check-circle" ></i></div>
                                             </td>
                                             <td class="dataCell" colspan="1" width="16%">&nbsp;</td>
@@ -3266,7 +3315,7 @@
                                         </tr>
                                         <tr class="dataRow surveyRows cptLink">
                                             <td class="dataCell" colspan="1" width="34%">
-                                                <a href="javascript:void(0);" class="cptsurvey" onclick="startNewAccountSurvey('CPT', '', this)">{!$Label.CPT}</a>
+                                                <button class="cptsurvey btn btn-link actionButton" onclick="startNewAccountSurvey('CPT', '', this)">{!$Label.CPT}</button>
                                                 <div id="existingCPTSurvey" class="existingSurvey"><i class="fas green fa-check-circle" ></i></div>
                                             </td>
                                             <td class="dataCell" colspan="1" width="16%">&nbsp;</td>
@@ -3275,7 +3324,7 @@
                                         </tr>
                                         <tr class="dataRow surveyRows multiChannelLink onChannelLink" >
                                             <td class="dataCell" colspan="1" width="34%">
-                                                <a href="javascript:void(0);" class="onchannelsurvey" onclick="startNewAccountSurvey('Account', 'On Premise', this)">{!$Label.Account_Survey}</a>
+                                                <button class="onchannelsurvey btn btn-link actionButton" onclick="startNewAccountSurvey('Account', 'On Premise', this)">{!$Label.Account_Survey}</button>
                                                 <div id="existingOnAccountSurvey" class="existingSurvey "><i class="fas green fa-check-circle" ></i></div>
                                             </td>
                                             <td class="dataCell" colspan="1" width="16%">{!$Label.On}</td>
@@ -3284,7 +3333,7 @@
                                         </tr>
                                         <tr class="dataRow surveyRows multiChannelLink offChannelLink" >
                                             <td class="dataCell" colspan="1" width="34%">
-                                                <a href="javascript:void(0);" class="offchannelsurvey" onclick="startNewAccountSurvey('Account', 'Off Premise', this)">{!$Label.Account_Survey}</a>
+                                                <button class="offchannelsurvey btn btn-link actionButton" onclick="startNewAccountSurvey('Account', 'Off Premise', this)">{!$Label.Account_Survey}</button>
                                                 <div id="existingOffAccountSurvey" class="existingSurvey "><i class="fas green fa-check-circle" ></i></div>
                                             </td>
                                             <td class="dataCell" colspan="1" width="16%">{!$Label.Off}</td>
@@ -3312,9 +3361,9 @@
                     <div id="ordersContainer" class="content object-content_container object-content_hidden orders mx-sm-0 mx-md-auto px-sm-0 px-md-auto bfOnly" object="Orders">
                         <div id="orderContent" class="object-content">
                             <div class="btn-group btn-group-lg mb-3 mt-md-3 mt-lg-0">
-                                <button class="btn btn-primary" type="button" id="newOrderBtn" style="color: white;">{!$Label.LABS_SF_New_Order}</button>                                    
+                                <button class="btn btn-primary" type="button" id="newOrderBtn" style="color: white;">{!$Label.LABS_SF_New_Order}</button>
                             </div>
-                            
+
                             <apex:pageMessages />
 
                             <div id="noOrdersMessage" class="card text-white bg-warning m-3">
@@ -3322,8 +3371,8 @@
                                     <h3>{!$Label.LABS_SF_noOrdersFound}</h3>
                                 </div>
                             </div>
-    
-                            <div id="orderContainer" class="container m-0 p-0 m-md-auto p-md-auto">                            
+
+                            <div id="orderContainer" class="container m-0 p-0 m-md-auto p-md-auto">
                             </div>
                         </div>
                     </div>
@@ -3334,18 +3383,18 @@
                                 <div class="card-header">
                                     <h3>{!$ObjectType.Promotion_Activity__c.LabelPlural}</h3>
                                 </div>
-            
+
                                 <div id="noPromotionActivitiesMessage" class="card bg-warning m-3">
                                     <div class="card-body">
                                         {!$Label.NoPromotionActivitiesFound}
                                     </div>
                                 </div>
-                                
+
                                 <div id="fuPromotionActivityDetailsContainer" class="card-body">
                                     <div id="fuPromotionActivityList" class="list-group list-group-flush"></div>
                                 </div>
                             </div>
-                
+
                             <div id="fuSelectedPromotion" class="card m-3">
                                 <div class="card-body">
                                     <div id="fuSelectedPromotionContainer">
@@ -3359,7 +3408,7 @@
                                 <div class="card-header">
                                     <h3>{!$Label.Select_Items_To_Attach_Upload}</h3>
                                 </div>
-                                
+
                                 <div id="fileUploadItemsContainer" class="card-body">
                                     <div id="fileUploadInputGroup" class="col-12 col-sm-6 col-lg-6 ml-3" style="display:inline-block;">
                                         <div id="fileUploadInputGroupControls" class="input-group">
@@ -3372,43 +3421,43 @@
                                                 </span>
                                                 <span id="browseButton1Span" class="btn btn-primary btn-file">
                                                     {!$Label.Browse_Ellipses} <input id="browseButton1" type="file" class="browseButton" onchange="addItemsToUploadList(event)" />
-                                                </span>                                    
+                                                </span>
                                             </div>
-                                        </div>             
+                                        </div>
                                     </div>
-                                        
-                        
+
+
                                     <div id="UploadItemsPanel" class="col-12 mt-5">
                                     </div>
                                 </div>
-                                
+
                                 <div id="fileUploadActionsContainer">
                                     <button id="btnUploadAndAttach" type="button" class="btn btn-primary btn-lg center-block">
                                         <span class="glyphicon glyphicon-upload" aria-hidden="true"></span>&nbsp;&nbsp;{!$Label.Upload}&nbsp;&nbsp;<span id="btnUploadAndAttachBadge" class="badge">0</span>
                                     </button>
                                     <div class="center-block">
-                                        
+
                                     <button id="btnMoveToChatter" type="button" class="btn btn-primary btn-lg" >
                                         {!$Label.Post_to_Chatter}&nbsp;&nbsp;<i class="fas fa-long-arrow-right"></i>
                                     </button>
                                     <button id="btnRestartUploadProcess" type="button" class="btn btn-primary btn-lg" style="margin-left: 10px;" onclick="initialiseCameraPage()">
                                         {!$Label.Restart}
                                     </button>
-                                
+
                                     <button type="button" class="btn btn-primary btn-lg returnToPromotion" onclick="returnToThePromotion()">
                                         {!$Label.GoToRecord}
                                     </button>
                                     </div>
                                 </div>
-                            </div>    
+                            </div>
                             <div id="ChatterContainer" class="card m-3">
                                 <div class="card-header">
                                     <span style="font-size: 1.75em;">{!$Label.LABS_SF_Chatter}</span>
                                     <button type="button" id="btnChatterGroupRestartUpload" class="btn btn-secondary float-right" onclick="initialiseCameraPage()">{!$Label.Go_Back_Select_Other_Promotion}</button>
                                 </div>
-                                
+
                                 <div id="ChatterDetailsContainer" class="card-body">
-                                
+
                                     <div class="col-12 col-sm-12 col-lg-6 ml-3">
                                         <div class="input-group">
                                             <input id="chatterGroupText" type="text" class="form-control" readonly="true" />
@@ -3420,14 +3469,14 @@
                                                 <div id="fuChatterGroupsDropDown" class="dropdown-menu" aria-labelledby="fuChatterGroupsDropDownButton">
                                                 </div>
                                             </div>
-                                            
-                                        </div>             
-                                    </div>                               
-                        
+
+                                        </div>
+                                    </div>
+
                                     <div id="ChatterPostDetailsPanel" class="col-12 m-3 hidden">
                                         <div id="ChatterPostContainer" class="col-12 col-sm-12 col-md-6 form-group">
                                             <div>
-                                                <label for="taChatterPost" style="margin-bottom: 0.5rem;">{!$Label.Post_Something}</label>                                        
+                                                <label for="taChatterPost" style="margin-bottom: 0.5rem;">{!$Label.Post_Something}</label>
                                             </div>
                                             <div>
                                                 <div class="checkbox">
@@ -3439,22 +3488,22 @@
                                                 </div>
                                                 -->
                                                 <div>
-                                                    <span>[{!$Label.Topics}]</span><label id="sHastagAccountLabel" class="col-xs-12 col-sm-12" style="word-wrap: break-word;">&nbsp;&nbsp;<span id="sHashtagAccount" style="word-wrap:break-word;white-space:normal;" class="label label-warning">#{!account.Name}</span></label>&nbsp;&nbsp;<label><span id="sHashtagPromotion" class="label label-warning" style="word-wrap:break-word;"></span></label>                                            
+                                                    <span>[{!$Label.Topics}]</span><label id="sHastagAccountLabel" class="col-xs-12 col-sm-12" style="word-wrap: break-word;">&nbsp;&nbsp;<span id="sHashtagAccount" style="word-wrap:break-word;white-space:normal;" class="label label-warning">#{!account.Name}</span></label>&nbsp;&nbsp;<label><span id="sHashtagPromotion" class="label label-warning" style="word-wrap:break-word;"></span></label>
                                                 </div>
                                             </div>
                                             <textarea class="form-control" rows="10" id="taChatterPost"></textarea>
                                             <div>
-                                                <button id="btnPostToChatter" type="button" class="btn btn-primary pull-right" style="margin: 10px 5px 0px 10px;">{!$Label.Post}</button>                                        
+                                                <button id="btnPostToChatter" type="button" class="btn btn-primary pull-right" style="margin: 10px 5px 0px 10px;">{!$Label.Post}</button>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div id="uploadCompletedDiv" class="card m-3">   
+                            <div id="uploadCompletedDiv" class="card m-3">
                                 <div class="card-header">
                                     <h3>{!$Label.What_Would_You_Like_To_Do_Now}</h3>
                                 </div>
-                                
+
                                 <div class="card-body text-center">
                                     <div class="center-block">
                                         <i class="fas fa-2x gray col-lg-2 col-md-2 text-center tab" title="spacer"></i>
@@ -3467,34 +3516,34 @@
                                         <button type="button" class="btn btn-primary btn-lg col-lg-4 col-md-4 col-sm-12 col-xs-12 returnToPromotion" style="margin: 10px;" onclick="returnToThePromotion()">
                                             {!$Label.GoToRecord}
                                         </button>
-                                        <i class="fa fa-2x gray col-lg-2 col-md-2 text-center tab" title="spacer"></i>                                
+                                        <i class="fa fa-2x gray col-lg-2 col-md-2 text-center tab" title="spacer"></i>
                                     </div>
-                                </div>                        
+                                </div>
                             </div>
-                                        
+
                         </div>
                     </div>
 
                     <div id="promotionsContainer" class="content object-content_container object-content_hidden promotions mx-sm-0 mx-md-auto px-sm-0 mx-md-autobfOnly" object="Promotions">
                         <div id="promotionContent" class="object-content">
                             <div class="btn-group btn-group-lg mb-3 mt-md-3 mt-lg-0" role="group">
-                                <button class="btn btn-primary" type="button" id="newPromoBtn" style="color: white;">{!$Label.LABS_SF_New_Promotion}</button>                                    
-                            </div>                        
+                                <button class="btn btn-primary" type="button" id="newPromoBtn" style="color: white;">{!$Label.LABS_SF_New_Promotion}</button>
+                            </div>
 
                             <apex:pageMessages />
-                            
+
                             <div id="noPromotionsMessage" class="card text-white bg-warning m-3">
                                 <div class="card-body">
                                     <h3>{!$Label.LABS_SF_noPromotionsFound}</h3>
                                 </div>
                             </div>
-    
+
                             <div id="promotionContainer" class="container m-0 m-md-auto p-0 p-md-auto">
-                            </div>                        
+                            </div>
                         </div>
-            
+
                     </div>
-                </div>                
+                </div>
             </div>
             <nav class="navbar navbar-light bg-light fixed-bottom" id="bottom-panel">
                 <div id="navCallCard" class="nav-item pl-2 pl-md-5">
@@ -3504,18 +3553,18 @@
                     <i id="tabKeyTask" class="fas fa-2x fa-tasks gray tab tasks" title="{!$ObjectType.Key_Task__c.LabelPlural}" object="tasks"></i>
                 </div>
                 <div id="navSurveys" class="nav-item mx-sm-2 highlighted">
-                    <i id="tabSurvey" class="fas fa-2x fa-pencil-alt gray tab surveys highlighted" title="{!$Label.Surveys}" object="surveys"></i>                    
+                    <i id="tabSurvey" class="fas fa-2x fa-pencil-alt gray tab surveys highlighted" title="{!$Label.Surveys}" object="surveys"></i>
                 </div>
                 <div id="navOrders" class="nav-item mx-sm-2">
-                    <i id="tabOrder" class="fas fa-2x fa-list-alt gray tab orders" title="{!$ObjectType.Order__c.LabelPlural}" object="orders"></i>                    
+                    <i id="tabOrder" class="fas fa-2x fa-list-alt gray tab orders" title="{!$ObjectType.Order__c.LabelPlural}" object="orders"></i>
                 </div>
                 <div id="navCamera" class="nav-item mx-sm-2">
-                    <i id="tabCamera" class="fas fa-2x fa-camera gray tab camera" title="{!$Label.Camera}" object="camera"></i>                
+                    <i id="tabCamera" class="fas fa-2x fa-camera gray tab camera" title="{!$Label.Camera}" object="camera"></i>
                 </div>
                 <div id="navPromotions" class="nav-item pr-2 pr-md-5">
-                    <i id="tabPromotion" class="fas fa-2x fa-ticket-alt gray tab promotions" title="{!$ObjectType.Promotion__c.LabelPlural}" object="promotions"></i>            
+                    <i id="tabPromotion" class="fas fa-2x fa-ticket-alt gray tab promotions" title="{!$ObjectType.Promotion__c.LabelPlural}" object="promotions"></i>
                 </div>
             </nav>
         </div>
-    </div>    
+    </div>
 </apex:page>

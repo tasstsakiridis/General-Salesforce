@@ -30,6 +30,7 @@ global with sharing class Account_Visit_Controller {
     public Boolean canAutoCreatePromotionFromActivity    { get; set; }
     public Boolean hasAccessToTitlePicklist              { get; set; }
     public Integer showHistoricalPromotions              { get; set; }
+    public Boolean usePhotoKeyTaskComponent              { get; set; }
 
     //survey variables
     public String serializedAccountSurveys               { get; set; }
@@ -138,7 +139,7 @@ global with sharing class Account_Visit_Controller {
             }
         }
         
-        Market__c thisMarket = [SELECT Can_Upload_Multiple_Items__c, Store_CallCard_Geolocation__c, ImageResizeScalar__c, Show_SalesMaterials_in_Account_Visit__c , Account_Visit_Landing_Page__c, Save_all_KeyTasks_per_AccountVisit__c, Enable_CheckIn_Service__c, Can_Auto_Create_Promotion_from_Activity__c, Show_Historical_Promotions__c FROM Market__c WHERE Id =: this.a.Market__c][0];
+        Market__c thisMarket = [SELECT Can_Upload_Multiple_Items__c, Store_CallCard_Geolocation__c, ImageResizeScalar__c, Show_SalesMaterials_in_Account_Visit__c , Account_Visit_Landing_Page__c, Save_all_KeyTasks_per_AccountVisit__c, Enable_CheckIn_Service__c, Can_Auto_Create_Promotion_from_Activity__c, Show_Historical_Promotions__c, Use_Photo_Key_Task_Component__c FROM Market__c WHERE Id =: this.a.Market__c][0];
         canUploadMultipleItems = thisMarket.Can_Upload_Multiple_Items__c;        
         defaultLandingPage = thisMarket.Account_Visit_Landing_Page__c;
         saveAllKeyTasks = thisMarket.Save_all_KeyTasks_per_AccountVisit__c;
@@ -149,6 +150,7 @@ global with sharing class Account_Visit_Controller {
         showSalesMaterials = thisMarket.Show_SalesMaterials_in_Account_Visit__c;
         canAutoCreatePromotionFromActivity = thisMarket.Can_Auto_Create_Promotion_from_Activity__c;
         showHistoricalPromotions = thisMarket.Show_Historical_Promotions__c == null ? 0 : (Integer)thisMarket.Show_Historical_Promotions__c;
+        usePhotoKeyTaskComponent = thisMarket.Use_Photo_Key_Task_Component__c;
         
         // Bring in overflow menu
         System.debug('Account_Visit' + this.a.Market__c + this.a.Channel__c + this.a.Store_Type__c);
@@ -156,9 +158,25 @@ global with sharing class Account_Visit_Controller {
         System.debug(overflowButtons);
         serializedMenuJSON = overflowButtons == null ? '[]' : JSON.serialize(overflowButtons);
         
+        String soql = '';
         //get Sales Materials
         if(showSalesMaterials) {
-            allMaterial = [SELECT Sales_Material_Description__c, Sales_Material__r.Attachment_URL__c FROM Sales_Material_Junction__c WHERE Account__c = :accId ORDER BY LastModifiedDate DESC];
+            LinkedObject loSalesMaterials = SFAMetaSettingHelper.findLinkedObjectConfigurations(this.a.Market__r.Name, 'Account', 'Sales_Material__c');
+            if (loSalesMaterials == null) {
+                allMaterial = [SELECT Sales_Material_Description__c, Sales_Material__r.Attachment_URL__c FROM Sales_Material_Junction__c WHERE Account__c = :accId ORDER BY LastModifiedDate DESC];        
+            } else {
+                Boolean matchesCriteria = loSalesMaterials.recordMatchesCriteria(this.a.Id, true);
+                if (matchesCriteria) {
+                    soql = 'SELECT Attachment_URL__c, Name FROM Sales_Material__c WHERE Account__c = "' + this.a.Id + '" ';
+                    for(String s : loSalesMaterials.linkedObjectItemConfigs.keySet()) {
+                        soql += ' AND ' + s + ' = "' + loSalesMaterials.linkedObjectItemConfigs.get(s);
+                    }
+                    soql += ' ORDER BY LastModifiedDate DESC';
+                    allMaterial = Database.query(soql);
+                }
+                //soql = 'SELECT Attachment_URL__c, Name FROM Sales_Material__c WHERE ' + linkedSalesMaterialsQueryString;
+                //allMaterial = Database.query(soql);
+            }
             serializedSalesMaterials = JSON.serialize(allMaterial);
         } else {
             serializedSalesMaterials = JSON.serialize('[]');
@@ -200,7 +218,7 @@ global with sharing class Account_Visit_Controller {
         List<String> readOnlyFieldSet = FieldSetHelper.getFieldSetFieldNames('CallCard__c', rofFieldSetName);
         serializedCCReadOnlyFieldList = JSON.serialize(readOnlyFieldSet);
         
-        string ccQueryString = 'SELECT Id, Name ';
+        string ccQueryString = 'SELECT Id, Name, Last_Visit__c ';
         if (enableCheckInService == true) {
             ccQueryString += ', Check_In__c, Check_Out__c ';            
         }
@@ -256,13 +274,17 @@ global with sharing class Account_Visit_Controller {
         orderQueryString += ' ORDER BY Order_Date__c DESC';
         
         String promoId = ApexPages.currentPage().getParameters().get('uploadToPromotionId');
-        if (showHistoricalPromotions > 0) {
-            promoQueryString += ' FROM Promotion__c WHERE Is_Active__c = true AND Promotion_End_Date__c >= LAST_N_MONTHS:'+showHistoricalPromotions+' AND Account__c = \'' + this.a.Id + '\'';
+        if (promoId != null && promoId != '') {
+            promoQueryString += ' FROM Promotion__c WHERE Id = \''+promoId + '\'';
         } else {
-            promoQueryString += ' FROM Promotion__c WHERE Is_Active__c = true AND Promotion_End_Date__c >= today AND Account__c = \'' + this.a.Id + '\'';
+            if (showHistoricalPromotions > 0) {
+                promoQueryString += ' FROM Promotion__c WHERE Is_Active__c = true AND Promotion_End_Date__c >= LAST_N_MONTHS:'+showHistoricalPromotions+' AND Account__c = \'' + this.a.Id + '\'';
+            } else {
+                promoQueryString += ' FROM Promotion__c WHERE Is_Active__c = true AND Promotion_End_Date__c >= today AND Account__c = \'' + this.a.Id + '\'';
 
+            }
+            promoQueryString += ' ORDER BY Promotion_End_Date__c DESC';            
         }
-        promoQueryString += ' ORDER BY Promotion_Start_Date__c DESC';            
         System.debug('promoQuery: ' + promoQueryString);
         List<Order__c> orders = Database.query(orderQueryString);
         List<PromotionWrapper> orderList = new List<PromotionWrapper>();
@@ -379,20 +401,67 @@ global with sharing class Account_Visit_Controller {
     
     //get all open ad hoc surveys for this account whose date range fits with today's date.
     @RemoteAction
-    global static list<SurveyWrapper> buildSurveys(string accountId) {
-        list<Account_Ad_Hoc_Survey__c> mySurveys = [SELECT Survey__c, Account__c, Completed__c, Completed_Date__c, Survey__r.Repeatable__c, Survey_Link__c, Survey_URL__c, Survey__r.Name, Survey__r.Start_Date__c, Survey__r.End_Date__c FROM Account_Ad_Hoc_Survey__c
-                WHERE (Survey__r.Start_Date__c <= today OR Survey__r.Start_Date__c = null)
-                    AND (Survey__r.End_Date__c >= today OR Survey__r.End_Date__c = null)
-                    AND Account__c = :accountId
-                ORDER BY Survey__r.End_Date__c DESC];
+    global static list<SurveyWrapper> buildSurveys(string accountId, String market) {
+        Set<String> surveyIds = new Set<String>();
+        List<Account_Ad_Hoc_Survey__c> mySurveys = [SELECT Survey__c, Account__c, Completed__c, Completed_Date__c, Survey__r.Repeatable__c, Survey_Link__c, Survey_URL__c, Survey__r.Name, Survey__r.Start_Date__c, Survey__r.End_Date__c FROM Account_Ad_Hoc_Survey__c
+                                                     WHERE (Survey__r.Start_Date__c <= today OR Survey__r.Start_Date__c = null)
+                                                       AND (Survey__r.End_Date__c >= today OR Survey__r.End_Date__c = null)
+                                                       AND Account__c = :accountId
+                                                  ORDER BY Survey__r.End_Date__c DESC];
 
-        //list<Account_Ad_Hoc_Survey__c> surveys = new list<Account_Ad_Hoc_Survey__c>();
-        //list<SurveyWrapper> completed = new list<SurveyWrapper>();
-        allSurveys = new list<SurveyWrapper>();
+        allSurveys = new List<SurveyWrapper>();
         //add non-completed ad hoc surveys to surveys list, otherwise add to completed list
         for(Account_Ad_Hoc_Survey__c aahs: mySurveys){            
             allSurveys.add(new SurveyWrapper(aahs.Survey_URL__c, aahs.Survey__r.Name, aahs.Survey__r.Start_Date__c, aahs.Survey__r.End_Date__c, aahs.Completed__c, aahs.Survey__r.Repeatable__c));
+            surveyIds.add(aahs.Survey__c);
         }
+
+        LinkedObject loc = SFAMetaSettingHelper.findLinkedObjectConfigurations(market, 'Account', 'Survey__c');
+        if (loc != null) {
+            Boolean matchesCriteria = loc.recordMatchesCriteria(accountId, true);
+            /*
+            soql = '';
+            for(String key : loc.controllingObjectItemConfigs.keySet) {
+                soql += key + ',';
+            }
+            soql = soql.removeEnd(',');
+            soql = 'SELECT ' + soql + ' FROM Account WHERE ID = "' + accountId + '"';
+            SObject sobj = Database.query(soql);
+            for(String key : loc.controllingObjectItemConfigs.keySet) {
+                if (sobj.get(key) != loc.controllingObjectItemConfigs.get(key)) {
+                    matchesCriteria = false; break;
+                }
+            }
+            */
+            if (matchesCriteria) {
+                String soql = 'SELECT Id, Repeatable__c, Name, Start_Date__c, End_Date__c, URL__c';
+                soql += ' FROM Survey__c WHERE ';
+                for(String key : loc.linkedObjectItemConfigs.keySet()) {
+                    soql += key + ' = \'' + loc.linkedObjectItemConfigs.get(key) + '\' AND ';
+                }
+                soql += ' (Start_Date__c <= today OR Start_Date__c = null) AND (End_Date__c >= today OR End_Date__c = null)';
+                if (surveyIds.size() > 0) {
+                    soql += ' AND Id NOT IN (';
+                    for(String s : surveyIds) {
+                        soql += '\'' + s + '\'';
+                    }
+                    soql += ')';
+                }
+                soql += ' ORDER BY End_Date__c DESC';
+                
+                System.debug('soql: ' + soql);
+                String surveyUrl = '';
+                List<Survey__c> surveys = Database.query(soql);
+                for(Survey__c s : surveys) {
+                    surveyUrl = s.URL__c + 'id='+s.Id+'&account='+accountId;
+                    allSurveys.add(new SurveyWrapper(surveyUrl, s.Name, s.Start_Date__c, s.End_Date__c, false, s.Repeatable__c));
+                }
+            }
+
+
+        }
+        //list<Account_Ad_Hoc_Survey__c> surveys = new list<Account_Ad_Hoc_Survey__c>();
+        //list<SurveyWrapper> completed = new list<SurveyWrapper>();
         return allSurveys;
     }
     
@@ -532,13 +601,16 @@ global with sharing class Account_Visit_Controller {
         System.debug('user can create call cards?: ' + Schema.sObjectType.CallCard__c.isCreateable ());
         if(ccId == ''){
             if(skipCallCard){
-                CallCard__c cc = new CallCard__c();
-                cc.Account__c = accountId;
-                cc.Call_Card_Date__c = system.today();
-                if(surveyType == 'CPT'){
-                    cc.Call_Card_Type__c = surveyType;
+                CallCard__c cc = findCallCardsForAccount(accountId);
+                if (cc == null) {
+                    cc = new CallCard__c();
+                    cc.Account__c = accountId;
+                    cc.Call_Card_Date__c = system.today();
+                    if(surveyType == 'CPT'){
+                        cc.Call_Card_Type__c = surveyType;
+                    }
+                    insert cc;
                 }
-                insert cc;
                 ccId = cc.Id;
                 pricingSurveyURL = urlPrefix + '/apex/AccountSurvey?ccID='+ccId+'&accountId='+accountId+'&surveyType='+surveyType+'&retUrl='+retUrlEncode+'&scontrolCaching=1&sfdc.override=1';
             }else{
@@ -566,6 +638,12 @@ global with sharing class Account_Visit_Controller {
         if(rtId != null && rtId != ''){
             cc.RecordTypeId = rtId;         
         }
+        if (cc.Id == null) {
+            CallCard__c theCallCard = findCallCardsForAccount(cc.Account__c);
+            if (theCallCard != null) {
+                cc.Id = theCallCard.Id;
+            }
+        }
         upsert cc;
         return cc;
     }
@@ -576,6 +654,22 @@ global with sharing class Account_Visit_Controller {
         return tasks;
     }
 
+    private static CallCard__c findCallCardsForAccount(String accountId) {
+        CallCard__c theCallCard;
+        List<CallCard__c> callCards = [SELECT Id 
+                                            FROM CallCard__c 
+                                        WHERE Account__c =:accountId
+                                            AND CreatedDate = TODAY
+                                            AND CreatedById =:UserInfo.getUserId() 
+                                        ORDER BY CreatedDate  
+                                        LIMIT 1];
+
+        if (callCards != null && callCards.size() > 0) {
+            theCallCard = callCards[0];
+        }
+
+        return theCallCard;
+    }
     /*
     @RemoteAction
     global static void postAttachmentToChatter(String[] documentIds, String promoId, String promoName) {

@@ -15,6 +15,7 @@ public with sharing class AccountSurvey_Controller {
     public String serializedAccSurveyDIVFS                  { get; set; }
     public String serializedMenuJSON                        { get; set; }
     public String serializedCallCard                        { get; set; }
+    public String serializedASIROFFS                        { get; set; }
     
     public Boolean cashAndCarry                             { get; set; }
     public Boolean useIntNumFormat                          { get; set; }
@@ -34,6 +35,8 @@ public with sharing class AccountSurvey_Controller {
     public String accId                                     { get; set; }
     public String accountName                               { get; set; }   //needed for field sets
     public String marketName                                { get; set; }   //needed for field sets
+    public String langISOCode								{ get; set; }
+    public String accountCurrencyISOCode    				{ get; set; }
     public String channel                                   { get; set; }   //needed for field sets
     public String storeType                                 { get; set; }   //needed for field sets
     public String accountGroup                              { get; set; }   //needed for field sets
@@ -49,6 +52,7 @@ public with sharing class AccountSurvey_Controller {
     public List<Schema.fieldSetMember> accSurveyFieldSet    { get; set; }
     public List<Schema.fieldSetMember> accSurveyDIVFieldSet { get; set; }
     public List<Schema.fieldSetMember> asiFieldSet          { get; set; }
+    public List<Schema.fieldSetMember> asiROFFieldSet       { get; set; }
     public String fieldSetName                              { get; set; }
     public String fieldSetChannel                           { get; set; }
     public String fieldSetSubChannel                        { get; set; }
@@ -59,6 +63,7 @@ public with sharing class AccountSurvey_Controller {
     public AccountSurvey_Controller(ApexPages.StandardController controller) {
         //this.accSurvey = (Account_Survey__c)controller.getRecord();    
         accSurvey = new Account_Survey__c();
+        langISOCode = 'en';
         
         userType = UserInfo.getUserType();
         userTheme= UserInfo.getUiThemeDisplayed();//AMV
@@ -105,12 +110,13 @@ public with sharing class AccountSurvey_Controller {
         
         Map<String, RecordTypeInfo> rtAccountSurveyItems = Account_Survey_Item__c.sObjectType.getDescribe().getRecordTypeInfosByName();
         
-        callCard = [SELECT Id, Account__c, Account__r.Channel__c, Account__r.Name, Account__r.Store_Type__c, Account__r.Group__c, Account__r.Market__r.Name, Account__r.Market__r.Country__c, Account__r.Market__r.Strict_Product_Used_For_Account_Surveys__c FROM CallCard__c WHERE Id = :ccId];
+        callCard = [SELECT Id, Account__c, Account__r.CurrencyIsoCode, Account__r.Channel__c, Account__r.Name, Account__r.Store_Type__c, Account__r.Group__c, Account__r.Market__r.Name, Account__r.Market__r.Country__c, Account__r.Market__r.Strict_Product_Used_For_Account_Surveys__c FROM CallCard__c WHERE Id = :ccId];
         serializedCallCard = JSON.serialize(callCard);
         accId = callCard.Account__c;
         accountName = callCard.Account__r.Name;
         marketName = callCard.Account__r.Market__r.Name;
         recordTypeName = marketName;
+        accountCurrencyISOCode = callCard.Account__r.CurrencyIsoCode;
         System.debug('callcard: ' + ccId + ', market: ' + marketName + ', country: ' + callCard.Account__r.Market__r.Country__c);
         usaMarket = false;
         if(callCard.Account__r.Market__r.Country__c == 'United States'){
@@ -186,13 +192,15 @@ public with sharing class AccountSurvey_Controller {
             productUsedFor = 'Account Survey';
         }
         system.debug('fieldSetName: '+fieldSetName);
-        accSurveyFieldSet = getFieldSet('Account_Survey__c', fieldSetName, true, false);
-        asiFieldSet = getFieldSet('Account_Survey_Item__c', fieldSetName, true, false); 
-        accSurveyDIVFieldSet = getFieldSet('Account_Survey__c', fieldSetName, false, true);
+        accSurveyFieldSet = getFieldSet('Account_Survey__c', fieldSetName, true, false, false);
+        asiFieldSet = getFieldSet('Account_Survey_Item__c', fieldSetName, true, false, false); 
+        accSurveyDIVFieldSet = getFieldSet('Account_Survey__c', fieldSetName, false, true, false);
+        asiROFFieldSet = getFieldSet('Account_Survey_Item__c', fieldSetName, false, false, true);
 
         serializedAccSurveyFS = JSON.serialize(accSurveyFieldSet);
         serializedASIFS = JSON.serialize(asiFieldSet);
         serializedAccSurveyDIVFS = JSON.serialize(accSurveyDIVFieldSet);
+        serializedASIROFFS = JSON.serialize(asiROFFieldSet);
         
         accSurvey.Id = surveyId;
         //accSurvey.Survey_Type__c = surveyType;
@@ -329,12 +337,13 @@ public with sharing class AccountSurvey_Controller {
         serializedProdList = JSON.serialize(prodList);
     }
 
-    public List<Schema.FieldSetMember> getFieldSet(string objectName, string fieldSetName, boolean useDefault, boolean isDV){
+    public List<Schema.FieldSetMember> getFieldSet(string objectName, string fieldSetName, boolean useDefault, boolean isDV, boolean isROF){
         List<Schema.FieldSetMember> fieldset = new List<Schema.FieldSetMember>();
         Map<String, Schema.FieldSet> fsMap = Schema.getGlobalDescribe().get(objectName).getDescribe().FieldSets.getMap();
         String fsName = fieldSetName;
-        System.debug('[getFieldSet] fsName: ' + fsName);
+        System.debug('[getFieldSet] fsName: ' + fsName + ', useDefault: ' + useDefault + ', isDV: ' + isDV + ', isROF: ' + isROF);
         if (isDV) { fsName += '_DV'; }
+        if (isROF) { fsName += '_ROF'; }
         if(fsMap.containsKey(fsName)){
             fieldset = fsMap.get(fsName).getFields();        
         } else {
@@ -356,6 +365,9 @@ public with sharing class AccountSurvey_Controller {
                 
                 if (isDV) {
                     fsName += '_DV';
+                }
+                if (isROF) {
+                    fsName += '_ROF';
                 }
                 if (fsMap.containsKey(fsName)) { break; }
             }
@@ -386,6 +398,13 @@ public with sharing class AccountSurvey_Controller {
     @RemoteAction
     public static list<Account_Survey_Item__c> saveASI (list<Account_Survey_Item__c> asiList){
         system.debug('asiList: '+asiList);
+        /*
+        for(Account_Survey_Item__c asi : asiList) {
+            if (asi.Delisted__c) {
+                asi.Price_Label_Date__c = null;
+            }
+        }
+        */
         upsert asiList;
         return asiList;
     }   
