@@ -1,0 +1,87 @@
+<template>
+  <template if:false={keyTasks.data}>
+    <div class="slds-align_absolute-center" style="height: 100%;">
+      No Key Tasks Found
+    </div>
+  </template>
+  <template if:true={keyTasks.data}>
+    <lightning-spinner if:true={uploadButtonDisabled}></lightning-spinner>
+    <table class="slds-table slds-no-row-hover slds-cell-wrap slds-table_striped">
+      <thead>
+      <tr class="slds-line-height_reset">
+        <th class="" scope="col">
+          {label.questionLabel}
+        </th>
+        <th class="" scope="col">
+          {label.answerLabel}
+        </th>
+        <th class="" scope="col">
+          {label.imageLabel}
+        </th>
+      </tr>
+      </thead>
+      <tbody>
+      <template if:true={keyTasks.data}>
+        <template for:each={keyTasks.data} for:item="keyTask">
+          <template if:true={keyTask.isCategory}>
+            <tr key={keyTask.id} class="slds-hint-parent slds-border--top">
+              <td scope="col" colspan="3" class="slds-cell-wrap slds-text-align--center">
+                {keyTask.category}
+              </td>
+            </tr>
+          </template>
+          <tr key={keyTask.id} class="slds-hint-parent">
+            <td class="slds-cell-wrap">
+              <div class="noexpand">{keyTask.question}
+                <c-custom-tooltip if:true={keyTask.helpText}
+                                  content={keyTask.helpText}></c-custom-tooltip>
+              </div>
+            </td>
+            <td>
+              <lightning-input data-id={keyTask.keyTaskTemplateId} type="toggle" label=""
+                               message-toggle-active={label.yesLabel}
+                               message-toggle-inactive={label.noLabel}
+                               checked={keyTask.response} onchange={handleChange}></lightning-input>
+            </td>
+            <td class="slds-cell-wrap">
+              <template if:true={keyTask.isCapturePhoto}>
+                <div class="file-upload-wrapper">
+                  <span class="required" if:true={keyTask.isDisplayRequiredPhoto}>*</span>
+                  <span class="required transparent-text"
+                        if:false={keyTask.isDisplayRequiredPhoto}>*</span>
+                  <lightning-icon disabled={uploadButtonDisabled} icon-name="utility:photo"
+                                  size="medium" variant="border"></lightning-icon>
+                  <input class="file-upload-button" disabled={uploadButtonDisabled}
+                         data-id={keyTask.keyTask.Id} data-template-id={keyTask.keyTaskTemplateId}
+                         accept="image/jpeg, image/jpg, image/png, image/gif"
+                         onchange={uploadFile} type="file"/>
+                  <lightning-badge label={keyTask.numberOfPhotos}
+                                   class="slds-badge_inverse"></lightning-badge>
+                  <lightning-badge label={keyTask.numberOfNewPhotos}
+                                   class="green-badge"></lightning-badge>
+                </div>
+              </template>
+              <template if:false={keyTask.isCapturePhoto}>
+                <span>&nbsp;</span>
+              </template>
+            </td>
+          </tr>
+        </template>
+      </template>
+      </tbody>
+    </table>
+    <c-modal header={dialogHeader}>
+      <p>
+        <lightning-icon icon-name={dialogIcon}></lightning-icon>
+        <lightning-formatted-rich-text value={dialogMessage}></lightning-formatted-rich-text>
+      </p>
+      <div slot="footer">
+        <lightning-button
+                label="Ok"
+                variant="neutral"
+                onclick={handleHideModal}
+        ></lightning-button>
+      </div>
+    </c-modal>
+  </template>
+</template>

@@ -1,0 +1,37 @@
+.file-upload-wrapper {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+}
+
+.file-upload-button {
+    font-size: 100px;
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+}
+
+.camera-icon {
+    font-size: 25px;
+}
+
+.green-badge {
+    background: green;
+    color: white;
+}
+
+.required {
+    float: left;
+    padding-right: 2px;
+    color: var(--lwc-colorTextError,rgb(194,57,52));
+    font-weight: var(--lwc-fontWeightBold,700);
+}
+
+.transparent-text {
+    opacity: 0;
+}
+
+.noexpand {
+    display: inline-block;
+}
